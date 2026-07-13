@@ -288,6 +288,30 @@ async function fetchAll(){
   setStatus(failedSources.size ? 'err' : 'live');
   render();
   fetchInProgress = false;
+  retryEmptySourcesSoon();
+}
+
+/* 初回訪問などキャッシュが全くない状態だと、1ソースでも取得に失敗するとそのソースの記事が
+   ずっと0件のままになり「ニュースが取れていない」ように見えてしまう。まだ1件も取れていない
+   ソースだけを対象に、短い間隔で数回だけ追加リトライして早めに埋める(取得済みソースは対象外)。 */
+let coldRetryCount = 0;
+function retryEmptySourcesSoon(){
+  const emptyIds = SOURCES.filter(s => !(itemsBySource[s.id] && itemsBySource[s.id].length)).map(s=>s.id);
+  if(!emptyIds.length || coldRetryCount >= 3){ coldRetryCount = 0; return; }
+  coldRetryCount++;
+  setTimeout(async ()=>{
+    if(fetchInProgress) return;
+    fetchInProgress = true;
+    await Promise.all(emptyIds.map(async id=>{
+      const src = SOURCES.find(s=>s.id===id);
+      const items = await fetchSource(src);
+      if(items) itemsBySource[src.id] = items;
+    }));
+    saveCache();
+    render();
+    fetchInProgress = false;
+    retryEmptySourcesSoon();
+  }, 6000);
 }
 
 /* ================= ステータス表示 =================
