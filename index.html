@@ -7,6 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Google AdSense: 審査申請時にサイト所有権確認タグが必要な場合はここに追加。
+     承認後は下記コメントアウトを外し ca-pub-XXXXXXXXXXXXXXXX を実際のパブリッシャーIDに置き換える。
+     同時に、AdSenseダッシュボードの「プライバシーとメッセージ(Funding Choices)」で作成した
+     同意管理(CMP)タグもこの直後に追加する(EEA/UK訪問者への広告パーソナライズ同意取得に必要)。
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+-->
 <style>
 :root{
   --bg0:#0a0d18; --bg1:#0e1322; --card:#131a2d;
@@ -52,10 +58,10 @@ h1 .sub{display:block; font-family:var(--mono); font-weight:400; font-size:11px;
 /* ---------- session timeline(世界の取引時間) ---------- */
 .sessions{margin:14px 0 0; border:1px solid var(--line-soft); border-radius:10px; background:linear-gradient(180deg,#10162a,#0d1222); padding:14px 16px 12px; position:relative; overflow:hidden;}
 .sessions .cap{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3); margin-bottom:10px;}
-.sess-track{position:relative; height:74px;}
+.sess-track{position:relative; height:122px;}
 .hourgrid span{position:absolute; top:0; bottom:0; width:1px; background:var(--line-soft);}
 .hourgrid label{position:absolute; bottom:-2px; transform:translateX(-50%); font-family:var(--mono); font-size:9px; color:var(--ink-3);}
-.sess-row{position:absolute; left:0; right:0; height:14px;}
+.sess-row{position:absolute; left:0; right:0; height:13px;}
 .sess-bar{position:absolute; height:100%; border-radius:99px; background:linear-gradient(90deg,#2a3357,#3a466f); border:1px solid #3d4a76; opacity:.55;}
 .sess-bar.live{background:linear-gradient(90deg,#6a5a2e,#a5863f); border-color:var(--gold-dim); opacity:1; box-shadow:0 0 14px #d8b46e33;}
 .sess-bar b{position:absolute; left:8px; top:50%; transform:translateY(-50%); font-family:var(--mono); font-weight:500; font-size:9px; letter-spacing:.15em; color:#cfd6ea; white-space:nowrap;}
@@ -155,7 +161,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
 
 <footer>
   <div class="rule">
-    <div class="links" id="footLinks"></div>
+    <div class="links" id="footLinks"><a href="privacy.html">プライバシーポリシー</a></div>
     見出し・要約は各配信元の公開RSSフィードから取得し、原文へのリンクを付しています。株価・AI・企業関連など金融/ビジネス系キーワードを含む記事のみに絞り込む表示になっています(ヘッダーの「トピック絞込」でOFFにできます)。英語記事の日本語表示は <a href="https://mymemory.translated.net/" target="_blank" rel="noopener">MyMemory</a>(利用不可時はGoogle翻訳)による機械翻訳のため、正確な内容は必ず原文をご確認ください。緑▲/赤▼は見出し・要約中の頻出語による簡易センチメント判定、NEWバッジは前回訪問以降に配信された記事の目印です(いずれも簡易的な自動判定のため参考情報としてご利用ください)。本ボードは情報提供のみを目的とし、投資勧誘・助言を目的とするものではありません。取引・投資判断はご自身の責任で行ってください。相場ティッカーは <a href="https://jp.tradingview.com/" target="_blank" rel="noopener">TradingView</a> 提供。
   </div>
 </footer>
@@ -734,8 +740,11 @@ function tickerTape(){
    現在開いている市場は金色でハイライト、縦線が現在時刻を示す。 */
 const MKT = {
   tse :{tz:'Asia/Tokyo',        spans:[[9,0,11,30],[12,30,15,30]]},
+  sse :{tz:'Asia/Shanghai',     spans:[[9,30,11,30],[13,0,15,0]]},
   hk  :{tz:'Asia/Hong_Kong',    spans:[[9,30,12,0],[13,0,16,0]]},
+  krx :{tz:'Asia/Seoul',        spans:[[9,0,15,30]]},
   lse :{tz:'Europe/London',     spans:[[8,0,16,30]]},
+  euronext:{tz:'Europe/Paris',  spans:[[9,0,17,30]]},
   nyse:{tz:'America/New_York',  spans:[[9,30,16,0]]},
 };
 function tzParts(tz, d=new Date()){
@@ -757,10 +766,13 @@ function tzOffsetMin(tz){
   return (loc-utc)/60000;
 }
 const SESS=[
-  {label:'東京 TSE',        mkt:'tse',  tz:'Asia/Tokyo',       o:9,   c:15.5, row:0},
-  {label:'香港 HKEX',       mkt:'hk',   tz:'Asia/Hong_Kong',   o:9.5, c:16,   row:1},
-  {label:'ロンドン LSE',    mkt:'lse',  tz:'Europe/London',    o:8,   c:16.5, row:2},
-  {label:'ニューヨーク NYSE',mkt:'nyse', tz:'America/New_York', o:9.5, c:16,   row:3},
+  {label:'東京 TSE',             mkt:'tse',      tz:'Asia/Tokyo',       o:9,   c:15.5, row:0},
+  {label:'上海/深セン SSE・SZSE', mkt:'sse',      tz:'Asia/Shanghai',    o:9.5, c:15,   row:1},
+  {label:'香港 HKEX',            mkt:'hk',       tz:'Asia/Hong_Kong',   o:9.5, c:16,   row:2},
+  {label:'ソウル KRX',           mkt:'krx',      tz:'Asia/Seoul',       o:9,   c:15.5, row:3},
+  {label:'ロンドン LSE',         mkt:'lse',      tz:'Europe/London',    o:8,   c:16.5, row:4},
+  {label:'パリ ユーロネクスト',   mkt:'euronext', tz:'Europe/Paris',     o:9,   c:17.5, row:5},
+  {label:'ニューヨーク NYSE・NASDAQ',mkt:'nyse',  tz:'America/New_York', o:9.5, c:16,   row:6},
 ];
 function buildSessions(){
   const track=document.getElementById('sessTrack');
@@ -779,7 +791,7 @@ function buildSessions(){
     const shift=(jstOff-off)/60;
     let o=(s.o+shift+24)%24, c=(s.c+shift+24)%24;
     const row=document.createElement('div'); row.className='sess-row';
-    row.style.top=(s.row*17)+'px';
+    row.style.top=(s.row*15)+'px';
     const mk=(a,b)=>{
       const bar=document.createElement('div');
       bar.className='sess-bar'+(isMktOpen(s.mkt)?' live':'');
