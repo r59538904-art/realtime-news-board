@@ -49,6 +49,19 @@ h1 .sub{display:block; font-family:var(--mono); font-weight:400; font-size:11px;
 .tape{margin:18px 0 0; border:1px solid var(--line-soft); border-radius:10px; overflow:hidden; background:#0d1222;}
 .tape .tradingview-widget-container{height:46px;}
 
+/* ---------- session timeline(世界の取引時間) ---------- */
+.sessions{margin:14px 0 0; border:1px solid var(--line-soft); border-radius:10px; background:linear-gradient(180deg,#10162a,#0d1222); padding:14px 16px 12px; position:relative; overflow:hidden;}
+.sessions .cap{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3); margin-bottom:10px;}
+.sess-track{position:relative; height:74px;}
+.hourgrid span{position:absolute; top:0; bottom:0; width:1px; background:var(--line-soft);}
+.hourgrid label{position:absolute; bottom:-2px; transform:translateX(-50%); font-family:var(--mono); font-size:9px; color:var(--ink-3);}
+.sess-row{position:absolute; left:0; right:0; height:14px;}
+.sess-bar{position:absolute; height:100%; border-radius:99px; background:linear-gradient(90deg,#2a3357,#3a466f); border:1px solid #3d4a76; opacity:.55;}
+.sess-bar.live{background:linear-gradient(90deg,#6a5a2e,#a5863f); border-color:var(--gold-dim); opacity:1; box-shadow:0 0 14px #d8b46e33;}
+.sess-bar b{position:absolute; left:8px; top:50%; transform:translateY(-50%); font-family:var(--mono); font-weight:500; font-size:9px; letter-spacing:.15em; color:#cfd6ea; white-space:nowrap;}
+.now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
+.now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
+
 /* ---------- controls ---------- */
 .controls{max-width:1320px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px); display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
 .chips{display:flex; gap:8px; flex-wrap:wrap;}
@@ -124,6 +137,11 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
     </div>
   </div>
   <div class="tape" id="tape"></div>
+
+  <div class="sessions" aria-label="世界の取引セッション">
+    <div class="cap"><span>WORLD TRADING SESSIONS ─ 日本時間 24H</span><span></span></div>
+    <div class="sess-track" id="sessTrack"></div>
+  </div>
 </header>
 
 <div class="controls">
@@ -711,6 +729,79 @@ function tickerTape(){
   container.appendChild(wrap);
 }
 
+/* ================= 世界の取引セッション(各市場の開始・終了時間) =================
+   sekai-market-tv.html(market API get)からの移植。日本時間24H軸で各市場の開場帯を表示し、
+   現在開いている市場は金色でハイライト、縦線が現在時刻を示す。 */
+const MKT = {
+  tse :{tz:'Asia/Tokyo',        spans:[[9,0,11,30],[12,30,15,30]]},
+  hk  :{tz:'Asia/Hong_Kong',    spans:[[9,30,12,0],[13,0,16,0]]},
+  lse :{tz:'Europe/London',     spans:[[8,0,16,30]]},
+  nyse:{tz:'America/New_York',  spans:[[9,30,16,0]]},
+};
+function tzParts(tz, d=new Date()){
+  const p=new Intl.DateTimeFormat('en-US',{timeZone:tz,hour12:false,weekday:'short',hour:'2-digit',minute:'2-digit'}).formatToParts(d);
+  const g=t=>p.find(x=>x.type===t).value;
+  return {wd:g('weekday'), h:+g('hour')%24, m:+g('minute')};
+}
+function isMktOpen(mkt){
+  const cfg=MKT[mkt]; if(!cfg) return true;
+  const {wd,h,m}=tzParts(cfg.tz);
+  if(wd==='Sat'||wd==='Sun') return false;
+  const now=h*60+m;
+  return cfg.spans.some(([h1,m1,h2,m2])=>now>=h1*60+m1&&now<h2*60+m2);
+}
+function tzOffsetMin(tz){
+  const now=new Date();
+  const loc=new Date(now.toLocaleString('en-US',{timeZone:tz}));
+  const utc=new Date(now.toLocaleString('en-US',{timeZone:'UTC'}));
+  return (loc-utc)/60000;
+}
+const SESS=[
+  {label:'東京 TSE',        mkt:'tse',  tz:'Asia/Tokyo',       o:9,   c:15.5, row:0},
+  {label:'香港 HKEX',       mkt:'hk',   tz:'Asia/Hong_Kong',   o:9.5, c:16,   row:1},
+  {label:'ロンドン LSE',    mkt:'lse',  tz:'Europe/London',    o:8,   c:16.5, row:2},
+  {label:'ニューヨーク NYSE',mkt:'nyse', tz:'America/New_York', o:9.5, c:16,   row:3},
+];
+function buildSessions(){
+  const track=document.getElementById('sessTrack');
+  if(!track) return;
+  track.innerHTML='';
+  const grid=document.createElement('div'); grid.className='hourgrid';
+  for(let h=0;h<=24;h+=3){
+    const x=h/24*100;
+    const sp=document.createElement('span'); sp.style.left=x+'%'; grid.appendChild(sp);
+    const lb=document.createElement('label'); lb.style.left=x+'%'; lb.textContent=String(h).padStart(2,'0'); grid.appendChild(lb);
+  }
+  track.appendChild(grid);
+  const jstOff=tzOffsetMin('Asia/Tokyo');
+  SESS.forEach(s=>{
+    const off=tzOffsetMin(s.tz);
+    const shift=(jstOff-off)/60;
+    let o=(s.o+shift+24)%24, c=(s.c+shift+24)%24;
+    const row=document.createElement('div'); row.className='sess-row';
+    row.style.top=(s.row*17)+'px';
+    const mk=(a,b)=>{
+      const bar=document.createElement('div');
+      bar.className='sess-bar'+(isMktOpen(s.mkt)?' live':'');
+      bar.style.left=(a/24*100)+'%'; bar.style.width=((b-a)/24*100)+'%';
+      bar.innerHTML=`<b>${s.label}</b>`;
+      row.appendChild(bar);
+    };
+    if(o<c) mk(o,c); else { mk(o,24); mk(0,c); }
+    track.appendChild(row);
+  });
+  const cur=document.createElement('div'); cur.className='now-cursor'; cur.id='nowCursor';
+  track.appendChild(cur);
+  moveSessionCursor();
+}
+function moveSessionCursor(){
+  const p=tzParts('Asia/Tokyo');
+  const c=document.getElementById('nowCursor');
+  if(c) c.style.left=((p.h+p.m/60)/24*100)+'%';
+}
+setInterval(moveSessionCursor, 30000);
+setInterval(buildSessions, 5*60*1000);
+
 /* ================= イベント ================= */
 document.getElementById('refreshBtn').addEventListener('click', ()=>fetchAll());
 document.getElementById('trBtn').addEventListener('click', ()=>{
@@ -747,6 +838,7 @@ loadLastVisit();
 buildChips();
 buildFootLinks();
 tickerTape();
+buildSessions();
 render();
 fetchAll();
 </script>
