@@ -49,6 +49,13 @@ const TOPIC_KEYWORDS_CJK = [
   // テーマ投資
   'ロボティクス','量子コンピュータ','フィンテック','ブロックチェーン','暗号資産','ステーブルコイン',
   '宇宙開発','インバウンド','電力不足','送電網',
+  // 政治(市場を動かす政局・外交ニュース向け。芸能・スポーツ等と混同しない語を選定)
+  '大統領','首相','政権','選挙','議会','外交','国連','首脳会談','内閣','与党','野党','政局',
+  'ホワイトハウス','安全保障','G7','G20','首脳会議',
+  // 戦争・軍事・地政学(既存のホルムズ海峡・台湾有事・中東・紅海・地政学リスク等に追加)
+  '軍事','侵攻','停戦','ミサイル','核兵器','テロ','クーデター','空爆','武力衝突','紛争','交戦',
+  '軍事演習','防衛費','革命防衛隊','核合意',
+  'ウクライナ','ロシア','イスラエル','ガザ','北朝鮮','イラン','中東情勢',
 ];
 const TOPIC_KEYWORDS_LATIN = [
   'stock','shares','equity','equities','earnings','revenue','profit','merger','acquisition',
@@ -95,4 +102,11 @@ const TOPIC_KEYWORDS_LATIN = [
   // テーマ投資
   'robotics','quantum computing','fintech','blockchain','crypto assets','stablecoins',
   'space development','inbound tourism','power shortage','power grid',
+  // 政治(市場を動かす政局・外交ニュース向け)
+  'president','prime minister','parliament','election','diplomacy','white house','cabinet',
+  'geopolitics','national security','summit',
+  // 戦争・軍事・地政学(既存のhormuz・taiwan strait・red sea・geopolitical risk等に追加)
+  'military','invasion','ceasefire','missile','nuclear weapons','terrorism','coup','airstrike',
+  'armed conflict','war games','defense spending','revolutionary guard','nuclear deal',
+  'ukraine','russia','israel','gaza','north korea','iran',
 ];
