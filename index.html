@@ -20,7 +20,7 @@ try{
      同意管理(CMP)タグもこの直後に追加する(EEA/UK訪問者への広告パーソナライズ同意取得に必要)。
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
 -->
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 
@@ -303,20 +303,22 @@ function retryEmptySourcesSoon(){
 // ・個別ソースの取得失敗は前回キャッシュ表示で吸収され実害がないため、
 //   赤い警告バナーは出さず、常に落ち着いた表示にする(内部のfailedSources自体は保持し続ける)
 let statusKind = 'loading';
+let statusTimer = null;
 function setStatus(kind){
   statusKind = kind;
   const bar = document.getElementById('statusbar');
   bar.className = 'statusbar' + (kind==='loading' ? ' loading' : ' live');
+  clearInterval(statusTimer);
   renderStatusText();
+  // 取得中(loading)だけ毎秒動かす。完了したらその瞬間の時刻で表示を止める
+  if(kind === 'loading') statusTimer = setInterval(renderStatusText, 1000);
 }
-// 毎秒呼び出し、取得中・待機中いずれも時刻を生きたまま(現在時刻)表示し続ける
 function renderStatusText(){
   const txt = document.getElementById('statusText');
   const now = new Date().toLocaleTimeString('ja-JP',{hour12:false});
   if(statusKind==='loading') txt.textContent = `更新中… ${now}`;
   else txt.textContent = `最終更新 ${now} ・ リアルタイム更新中`;
 }
-setInterval(renderStatusText, 1000);
 
 // ================= 相対時刻 =================
 function relTime(ts){
