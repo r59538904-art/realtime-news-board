@@ -1,0 +1,150 @@
+:root{
+  --bg0:#0a0d18; --bg1:#0e1322; --card:#131a2d; --surface:#10162a;
+  --line:#222b4a; --line-soft:#1a2138;
+  --ink:#e9ecf6; --ink-2:#9aa3c0; --ink-3:#5d6685;
+  --gold:#d8b46e; --gold-dim:#8a7448; --gold-ink:#191305;
+  --red:#e0665f; --green:#5fbf8f;
+  --body-bg:
+    radial-gradient(1200px 600px at 80% -10%, #16204014 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, #2a1f3a10 0%, transparent 60%),
+    linear-gradient(180deg,var(--bg0),var(--bg1) 40%,var(--bg0));
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --sans:'IBM Plex Sans JP',system-ui,sans-serif;
+  --serif:'Shippori Mincho',serif;
+  color-scheme: dark;
+}
+/* ライトモード: システム設定に追従(未指定時) / data-theme属性で明示切替(優先) */
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg0:#f6f3ec; --bg1:#fdfcf9; --card:#ffffff; --surface:#efe9da;
+    --line:#ddd6c4; --line-soft:#e9e3d3;
+    --ink:#1c1a24; --ink-2:#524d5c; --ink-3:#847e91;
+    --gold:#a97a2e; --gold-dim:#c2a06a;
+    --red:#c23d36; --green:#237a54;
+    --body-bg:
+      radial-gradient(1200px 600px at 80% -10%, #a97a2e14 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, #52334d0d 0%, transparent 60%),
+      linear-gradient(180deg,var(--bg0),var(--bg1) 40%,var(--bg0));
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"]{
+  --bg0:#f6f3ec; --bg1:#fdfcf9; --card:#ffffff; --surface:#efe9da;
+  --line:#ddd6c4; --line-soft:#e9e3d3;
+  --ink:#1c1a24; --ink-2:#524d5c; --ink-3:#847e91;
+  --gold:#a97a2e; --gold-dim:#c2a06a;
+  --red:#c23d36; --green:#237a54;
+  --body-bg:
+    radial-gradient(1200px 600px at 80% -10%, #a97a2e14 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, #52334d0d 0%, transparent 60%),
+    linear-gradient(180deg,var(--bg0),var(--bg1) 40%,var(--bg0));
+  color-scheme: light;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--body-bg);
+  color:var(--ink); font-family:var(--sans); min-height:100vh;
+  font-feature-settings:'palt';
+  transition:background-color .2s, color .2s;
+}
+
+/* ---------- header ---------- */
+header{padding:26px clamp(16px,4vw,48px) 0; max-width:1320px; margin:0 auto;}
+.masthead{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;}
+h1{font-family:var(--serif); font-weight:700; font-size:clamp(24px,3.2vw,36px); letter-spacing:.06em; line-height:1.1;}
+h1 .sub{display:block; font-family:var(--mono); font-weight:400; font-size:11px; letter-spacing:.28em; color:var(--gold); margin-top:7px; text-transform:uppercase;}
+
+.statusbar{display:flex; align-items:center; gap:14px; font-family:var(--mono); font-size:11px; color:var(--ink-3);}
+.statusbar .dot{width:7px;height:7px;border-radius:99px;background:var(--ink-3);display:inline-block;}
+.statusbar.live .dot{background:var(--green); box-shadow:0 0 7px var(--green); animation:pulse 2.2s infinite;}
+.statusbar.err .dot{background:var(--red); box-shadow:0 0 7px var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+#refreshBtn,#trBtn,#topicBtn,#themeBtn{background:none;border:1px solid var(--line);border-radius:6px;color:var(--ink-2);font-family:var(--mono);font-size:11px;padding:5px 12px;cursor:pointer;letter-spacing:.08em;}
+#refreshBtn:hover,#trBtn:hover,#topicBtn:hover,#themeBtn:hover{color:var(--gold);border-color:var(--gold-dim)}
+#refreshBtn:disabled{opacity:.5;cursor:default}
+#trBtn,#topicBtn{color:var(--gold);border-color:var(--gold-dim);}
+#trBtn.off,#topicBtn.off{color:var(--ink-3);border-color:var(--line);}
+
+.tape{margin:18px 0 0; border:1px solid var(--line-soft); border-radius:10px; overflow:hidden; background:var(--card); transition:background-color .2s, border-color .2s, opacity .25s;}
+.tape.tape-loading{opacity:.35;}
+.tape .tradingview-widget-container{height:46px;}
+
+/* ---------- session timeline(世界の取引時間) ---------- */
+.sessions{margin:14px 0 0; border:1px solid var(--line-soft); border-radius:10px; background:var(--card); padding:14px 16px 12px; position:relative; overflow:hidden; transition:background-color .2s, border-color .2s;}
+.sessions .cap{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3); margin-bottom:10px;}
+.sess-track{position:relative; height:122px;}
+.hourgrid span{position:absolute; top:0; bottom:0; width:1px; background:var(--line-soft);}
+.hourgrid label{position:absolute; bottom:-2px; transform:translateX(-50%); font-family:var(--mono); font-size:9px; color:var(--ink-3);}
+.sess-row{position:absolute; left:0; right:0; height:13px;}
+.sess-bar{position:absolute; height:100%; border-radius:99px; background:linear-gradient(90deg,#2a3357,#3a466f); border:1px solid #3d4a76; opacity:.55;}
+.sess-bar.live{background:linear-gradient(90deg,#6a5a2e,#a5863f); border-color:#8a7448; opacity:1; box-shadow:0 0 14px #d8b46e33;}
+.sess-bar b{position:absolute; left:8px; top:50%; transform:translateY(-50%); font-family:var(--mono); font-weight:500; font-size:9px; letter-spacing:.15em; color:#cfd6ea; white-space:nowrap;}
+.now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
+.now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
+
+/* ---------- controls ---------- */
+.controls{max-width:1320px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px); display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+.chips{display:flex; gap:8px; flex-wrap:wrap;}
+.chip{font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:6px 13px; border-radius:99px; border:1px solid var(--line); color:var(--ink-2); cursor:pointer; background:var(--surface); transition:border-color .15s, color .15s, background-color .2s;}
+.chip:hover{border-color:var(--gold-dim); color:var(--ink)}
+.chip.on{border-color:var(--gold); color:var(--gold); background:color-mix(in srgb, var(--gold) 18%, var(--bg0));}
+.searchwrap{margin-left:auto; position:relative;}
+#search{background:var(--surface); border:1px solid var(--line); border-radius:8px; color:var(--ink); font-family:var(--sans); font-size:13px; padding:8px 12px 8px 32px; width:220px; transition:background-color .2s;}
+#search:focus{outline:none; border-color:var(--gold-dim)}
+.searchwrap::before{content:'⌕'; position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--ink-3); font-size:14px;}
+
+/* ---------- main / grid ---------- */
+main{max-width:1320px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px;}
+
+.card{
+  background:var(--card); border:1px solid var(--line-soft); border-radius:12px;
+  padding:14px 16px 15px; display:flex; flex-direction:column; gap:9px;
+  transition:transform .16s ease, border-color .2s, box-shadow .2s;
+  text-decoration:none; color:inherit;
+}
+.card:hover{transform:translateY(-2px); border-color:var(--gold-dim); box-shadow:0 8px 24px #00000055;}
+.card .meta{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.meta-left{display:flex; align-items:center; gap:6px; min-width:0;}
+.meta-right{display:flex; align-items:center; gap:7px; flex-shrink:0;}
+/* --src(配信元ごとの原色)はJSがインラインで設定。--src-inkは本文用の実際の文字色で、
+   ダーク背景では原色のまま、ライト背景では白地でも読めるよう暗く落とす(color-mixで自動計算) */
+.src-badge{--src-ink:var(--src); font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; padding:3px 9px; border-radius:99px; white-space:nowrap; border:1px solid; color:var(--src-ink);}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]) .src-badge{--src-ink:color-mix(in srgb, var(--src) 60%, black);}
+}
+:root[data-theme="light"] .src-badge{--src-ink:color-mix(in srgb, var(--src) 60%, black);}
+.card time{font-family:var(--mono); font-size:10.5px; color:var(--ink-3); white-space:nowrap;}
+.src-badge .genre{opacity:.8; margin-left:6px; padding-left:7px; border-left:1px solid currentColor;}
+.new-badge{font-family:var(--mono); font-size:9px; letter-spacing:.06em; font-weight:600; color:var(--gold-ink); background:var(--gold); padding:2px 7px; border-radius:99px; white-space:nowrap;}
+.sentiment{font-size:12px; line-height:1; white-space:nowrap;}
+.sentiment.pos{color:var(--green);}
+.sentiment.neg{color:var(--red);}
+.card h3{font-size:15px; font-weight:500; line-height:1.5; color:var(--ink);}
+.card .orig{font-size:10.5px; color:var(--ink-3); line-height:1.5; display:-webkit-box; -webkit-line-clamp:1; line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;}
+.card p{font-size:12.5px; color:var(--ink-2); line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+.card .lang{font-family:var(--mono); font-size:9px; color:var(--ink-3); letter-spacing:.1em; margin-top:auto;}
+
+.empty, .loading{grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--ink-3); font-family:var(--mono); font-size:12px; letter-spacing:.08em;}
+
+footer{max-width:1320px; margin:0 auto; padding:10px clamp(16px,4vw,48px) 40px; font-size:11px; color:var(--ink-3); line-height:1.9;}
+footer .rule{border-top:1px solid var(--line-soft); padding-top:16px;}
+footer a{color:var(--gold-dim); text-decoration:none;}
+footer a:hover{color:var(--gold); text-decoration:underline;}
+footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;}
+
+@media (max-width:640px){
+  .grid{grid-template-columns:1fr;}
+  .searchwrap{margin-left:0; width:100%;}
+  #search{width:100%;}
+  .masthead{flex-direction:column; align-items:flex-start; gap:10px;}
+  .statusbar{flex-wrap:wrap; row-gap:8px; width:100%;}
+  #refreshBtn,#trBtn,#topicBtn{padding:6px 10px; font-size:10px;}
+  header{padding-left:14px; padding-right:14px;}
+  .controls{padding-left:14px; padding-right:14px;}
+  main{padding-left:14px; padding-right:14px;}
+  footer{padding-left:14px; padding-right:14px;}
+  .chips{width:100%;}
+}
+@media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important} }

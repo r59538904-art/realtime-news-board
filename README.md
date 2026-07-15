@@ -1,6 +1,6 @@
 世界ニュース速報
 リアルタイム経済ニュースボード
-CNN、BBC、WSJ、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITmedia など約30の公開RSSフィードを集約する、サーバー不要の経済ニュースボードです。単一の index.html をブラウザで開くだけで利用できます。
+CNN、BBC、WSJ、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITmedia など約30の公開RSSフィードを集約する、サーバー不要の経済ニュースボードです。index.html をブラウザで開くだけで利用できます(ビルド不要。CSSは style.css に分離)。
 主な機能
 約30の公開RSSフィードを横断して収集
 CNN、BBC、The Japan Times、The Wall Street Journal、Financial Times、CNBC、Bloomberg（市況・経済・テック）、The Economist、Forbes、Newsweek、Business Insider、MarketWatch、Investing.com、TechCrunch、Digiday、VentureBeat、GeekWire、Tech in Asia、Nikkei Asia、NHK、ITmedia（NEWS・ビジネス・AI+）、日経ビジネス、日経クロステック、CNET Japan、ZUU online に対応
