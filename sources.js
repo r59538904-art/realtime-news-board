@@ -20,6 +20,9 @@
 // カテゴリ別フィード(既存のStock Market Newsに加えて収載)、FXStreet(為替・商品専門)、
 // WSJ Markets(既存MarketWatchと同じfeeds.content.dowjones.io配信基盤で取得できることを確認、
 // WSJ公式RSS(廃止済み)とは別ルート)、東洋経済オンライン・ダイヤモンド・オンライン(国内ビジネス誌)。
+// Investing.comの4フィード(investing-jp/fx/econ/comm)はgroupを'investing-jp'に揃えて
+// フィルターチップを1つに統合している(記事取得自体は4フィードとも継続、カード上のバッジ表示で
+// どのカテゴリの記事かは引き続き区別できる)。
 const SOURCES = [
   {id:'nhk-eco',  group:'nhk', sub:'経済',   name:'NHKニュース(経済)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat5.xml', lang:'JA', color:'#6fa8dc'},
   {id:'nhk-gen',  group:'nhk', sub:'総合',   name:'NHKニュース(主要)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat0.xml', lang:'JA', color:'#6fa8dc'},
@@ -39,9 +42,9 @@ const SOURCES = [
   {id:'zuu',      group:'zuu',       name:'ZUU online',            short:'ZUU online',  home:'https://zuuonline.com/',       rss:'https://zuuonline.com/feed',                          lang:'JA', color:'#d17ee0'},
   {id:'fed-press',group:'fed-press', name:'Federal Reserve(FRB公式発表)', short:'FRB',   home:'https://www.federalreserve.gov/', rss:'https://www.federalreserve.gov/feeds/press_all.xml', lang:'EN', color:'#4a7fc9'},
   {id:'ecb-press',group:'ecb-press', name:'European Central Bank(ECB公式発表)', short:'ECB', home:'https://www.ecb.europa.eu/', rss:'https://www.ecb.europa.eu/rss/press.xml',           lang:'EN', color:'#3d6ba8'},
-  {id:'investing-fx',group:'investing-fx',name:'Investing.com(Forex News)',short:'Investing.com FX',home:'https://www.investing.com/', rss:'https://www.investing.com/rss/news_1.rss',   lang:'EN', color:'#e0947a'},
-  {id:'investing-econ',group:'investing-econ',name:'Investing.com(Economic Indicators)',short:'Investing.com 指標',home:'https://www.investing.com/', rss:'https://www.investing.com/rss/news_95.rss', lang:'EN', color:'#d98f60'},
-  {id:'investing-comm',group:'investing-comm',name:'Investing.com(Commodities & Futures)',short:'Investing.com 商品',home:'https://www.investing.com/', rss:'https://www.investing.com/rss/news_11.rss', lang:'EN', color:'#c9825a'},
+  {id:'investing-fx',group:'investing-jp',name:'Investing.com(Forex News)',short:'Investing.com FX',home:'https://www.investing.com/', rss:'https://www.investing.com/rss/news_1.rss',   lang:'EN', color:'#e0947a'},
+  {id:'investing-econ',group:'investing-jp',name:'Investing.com(Economic Indicators)',short:'Investing.com 指標',home:'https://www.investing.com/', rss:'https://www.investing.com/rss/news_95.rss', lang:'EN', color:'#d98f60'},
+  {id:'investing-comm',group:'investing-jp',name:'Investing.com(Commodities & Futures)',short:'Investing.com 商品',home:'https://www.investing.com/', rss:'https://www.investing.com/rss/news_11.rss', lang:'EN', color:'#c9825a'},
   {id:'fxstreet', group:'fxstreet',  name:'FXStreet(Forex & Commodities)', short:'FXStreet', home:'https://www.fxstreet.com/', rss:'https://www.fxstreet.com/rss/news',              lang:'EN', color:'#6ab04c'},
   {id:'wsj-markets',group:'wsj-markets',name:'WSJ Markets(Dow Jones配信)',short:'WSJ Markets',home:'https://www.wsj.com/news/markets', rss:'https://feeds.content.dowjones.io/public/rss/RSSMarketsMain', lang:'EN', color:'#2c2c2c'},
   {id:'toyokeizai',group:'toyokeizai',name:'東洋経済オンライン',   short:'東洋経済',    home:'https://toyokeizai.net/',      rss:'https://toyokeizai.net/list/feed/rss',               lang:'JA', color:'#c94f4f'},
