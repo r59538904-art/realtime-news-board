@@ -1,6 +1,25 @@
 世界ニュース速報
 リアルタイム経済ニュースボード
-CNN、BBC、WSJ、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITmedia など約30の公開RSSフィードを集約する、サーバー不要の経済ニュースボードです。index.html をブラウザで開くだけで利用できます(ビルド不要。CSSは style.css に、トピック絞込キーワードは topic-keywords.js に分離)。
+CNN、BBC、WSJ、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITmedia など約30の公開RSSフィードを集約する、サーバー不要の経済ニュースボードです。index.html をブラウザで開くだけで利用できます(ビルド不要)。
+
+## ファイル構成
+デザイン(style.css)・データ・機能ロジックをそれぞれ役割ごとに分離しています。各ファイルの先頭に「このファイルは何を担当するか」を1行コメントで明記しているので、修正したい機能に対応するファイルだけを開けば済みます。
+
+- `index.html` — ページの骨組みと、起動処理(イベント登録・自動更新・初期化呼び出し)のみ
+- `style.css` — 画面デザイン(ダーク/ライトモード対応)
+- `sources.js` — データ: ニュース取得元(RSSフィード)の一覧
+- `topic-keywords.js` — データ: トピック絞り込み用の単語リスト
+- `sentiment-keywords.js` — データ: 簡易センチメント判定用の単語リスト
+- `market-sessions.js` — データ: 世界の株式市場の開場時間
+- `utils.js` — 共通ヘルパー関数
+- `theme.js` — ダーク/ライトモード切り替え
+- `feed.js` — RSS取得・キャッシュ・更新ステータス表示
+- `translate.js` — 英語記事の自動日本語翻訳
+- `topic-filter.js` — トピック絞り込みロジック
+- `sentiment.js` — 簡易センチメント判定ロジック
+- `render.js` — 記事一覧・フィルターチップ・フッターリンクの描画
+- `ticker.js` — TradingView相場ティッカー表示
+- `sessions.js` — 世界の取引セッション表示
 主な機能
 約30の公開RSSフィードを横断して収集
 CNN、BBC、The Japan Times、The Wall Street Journal、Financial Times、CNBC、Bloomberg（市況・経済・テック）、The Economist、Forbes、Newsweek、Business Insider、MarketWatch、Investing.com、TechCrunch、Digiday、VentureBeat、GeekWire、Tech in Asia、Nikkei Asia、NHK、ITmedia（NEWS・ビジネス・AI+）、日経ビジネス、日経クロステック、CNET Japan、ZUU online に対応

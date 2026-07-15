@@ -1,0 +1,38 @@
+'use strict';
+// このファイルは「ニュース取得元(RSSフィード)の一覧データ」を定義する。ロジックは持たない。
+// ================= ニュースソース定義 =================
+// group: フィルターチップの単位(Bloomberg 3フィードは1チップにまとめる) / sub: カードに添えるジャンル表示
+// 未収載: Reuters(公開RSSを2020年頃に廃止。reutersagency.com/feed=404, reuters.com/world/rss=401ボット遮断, Thomson Reuters IR=403)、Bloomberg Businessweek(専用RSSなし。feeds.bloomberg.com/businessweek等=404, bloomberg.com/businessweek/rss=403。既存のBloomberg 3フィードが最も近い代替)
+// 新しい配信元を増やしたいときはこの配列に1行追加するだけでOK(index.html側の変更は不要)
+const SOURCES = [
+  {id:'bbg-mkt',  group:'bbg', sub:'市況',   name:'Bloomberg Markets',    short:'Bloomberg',  home:'https://www.bloomberg.com/jp', rss:'https://feeds.bloomberg.com/markets/news.rss',    lang:'EN', color:'#d8b46e'},
+  {id:'bbg-eco',  group:'bbg', sub:'経済',   name:'Bloomberg Economics',  short:'Bloomberg',  home:'https://www.bloomberg.com/jp', rss:'https://feeds.bloomberg.com/economics/news.rss',  lang:'EN', color:'#d8b46e'},
+  {id:'bbg-tech', group:'bbg', sub:'テック', name:'Bloomberg Technology', short:'Bloomberg',  home:'https://www.bloomberg.com/jp', rss:'https://feeds.bloomberg.com/technology/news.rss', lang:'EN', color:'#d8b46e'},
+  {id:'nhk-eco',  group:'nhk', sub:'経済',   name:'NHKニュース(経済)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat5.xml', lang:'JA', color:'#6fa8dc'},
+  {id:'nhk-gen',  group:'nhk', sub:'総合',   name:'NHKニュース(主要)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat0.xml', lang:'JA', color:'#6fa8dc'},
+  {id:'nikkei-asia',group:'nikkei-asia',name:'Nikkei Asia',        short:'Nikkei Asia',home:'https://asia.nikkei.com/',     rss:'https://asia.nikkei.com/rss/feed/nar',              lang:'EN', color:'#5fbf8f'},
+  {id:'wsj',      group:'wsj',       name:'The Wall Street Journal(Markets)', short:'WSJ', home:'https://www.wsj.com/',   rss:'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',      lang:'EN', color:'#5b7fd4'},
+  {id:'ft',       group:'ft',        name:'Financial Times(Markets)', short:'FT',        home:'https://www.ft.com/',          rss:'https://www.ft.com/markets?format=rss',              lang:'EN', color:'#e28f8f'},
+  {id:'cnbc',     group:'cnbc',      name:'CNBC(US Top News)',     short:'CNBC',        home:'https://www.cnbc.com/',        rss:'https://www.cnbc.com/id/100003114/device/rss/rss.html', lang:'EN', color:'#4fa8e0'},
+  {id:'economist',group:'economist', name:'The Economist(Finance & economics)', short:'Economist', home:'https://www.economist.com/', rss:'https://www.economist.com/finance-and-economics/rss.xml', lang:'EN', color:'#d9534f'},
+  {id:'forbes',   group:'forbes',    name:'Forbes(Business)',      short:'Forbes',      home:'https://www.forbes.com/',      rss:'https://www.forbes.com/business/feed/',              lang:'EN', color:'#e0a15a'},
+  {id:'techcrunch',group:'techcrunch',name:'TechCrunch',           short:'TechCrunch',  home:'https://techcrunch.com/',      rss:'https://techcrunch.com/feed/',                       lang:'EN', color:'#2dd4bf'},
+  {id:'cnn',      group:'cnn',       name:'CNN Business',          short:'CNN',         home:'https://www.cnn.com/business', rss:'http://rss.cnn.com/rss/money_latest.rss',            lang:'EN', color:'#e35d5d'},
+  {id:'japantimes',group:'japantimes',name:'The Japan Times',      short:'Japan Times', home:'https://www.japantimes.co.jp/', rss:'https://www.japantimes.co.jp/feed/',                lang:'EN', color:'#c17a5a'},
+  {id:'newsweek', group:'newsweek',  name:'Newsweek',              short:'Newsweek',    home:'https://www.newsweek.com/',    rss:'https://www.newsweek.com/rss',                       lang:'EN', color:'#8b93c9'},
+  {id:'businessinsider',group:'businessinsider',name:'Business Insider',short:'Business Insider',home:'https://www.businessinsider.com/', rss:'https://www.businessinsider.com/rss', lang:'EN', color:'#7fd45a'},
+  {id:'digiday',  group:'digiday',   name:'Digiday',               short:'Digiday',     home:'https://digiday.com/',         rss:'https://digiday.com/feed/',                          lang:'EN', color:'#f0a83c'},
+  {id:'venturebeat',group:'venturebeat',name:'VentureBeat',        short:'VentureBeat', home:'https://venturebeat.com/',     rss:'https://venturebeat.com/feed/',                      lang:'EN', color:'#6ec9e0'},
+  {id:'geekwire', group:'geekwire',  name:'GeekWire',              short:'GeekWire',    home:'https://www.geekwire.com/',    rss:'https://www.geekwire.com/feed/',                     lang:'EN', color:'#5ecf9e'},
+  {id:'techinasia',group:'techinasia',name:'Tech in Asia',         short:'Tech in Asia',home:'https://www.techinasia.com/',  rss:'https://www.techinasia.com/feed',                    lang:'EN', color:'#c9a8e0'},
+  {id:'itmedia-news',group:'itmedia-news',name:'ITmedia NEWS',      short:'ITmedia NEWS',home:'https://www.itmedia.co.jp/news/', rss:'https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml', lang:'JA', color:'#4fb8d4'},
+  {id:'itmedia-biz',group:'itmedia-biz', name:'ITmedia ビジネスオンライン',short:'ITmediaビジネス',home:'https://www.itmedia.co.jp/business/', rss:'https://rss.itmedia.co.jp/rss/2.0/business.xml', lang:'JA', color:'#9a8cf2'},
+  {id:'nikkei-biz',group:'nikkei-biz',name:'日経ビジネス電子版',    short:'日経ビジネス', home:'https://business.nikkei.com/', rss:'https://business.nikkei.com/rss/sns/nb.rdf',        lang:'JA', color:'#d987b8'},
+  {id:'bbc-biz',  group:'bbc-biz',   name:'BBC News Business',     short:'BBC',         home:'https://www.bbc.com/news/business', rss:'http://feeds.bbci.co.uk/news/business/rss.xml', lang:'EN', color:'#b7bfd6'},
+  {id:'itmedia-ai',group:'itmedia-ai',name:'ITmedia AI+',          short:'ITmedia AI+', home:'https://www.itmedia.co.jp/aiplus/', rss:'https://rss.itmedia.co.jp/rss/2.0/aiplus.xml',      lang:'JA', color:'#b07cf0'},
+  {id:'xtech',    group:'xtech',     name:'日経クロステック',     short:'日経xTECH',   home:'https://xtech.nikkei.com/',    rss:'https://xtech.nikkei.com/rss/index.rdf',             lang:'JA', color:'#7ed09c'},
+  {id:'investing-jp',group:'investing-jp',name:'Investing.com(Stock Market News)',short:'Investing.com',home:'https://www.investing.com/', rss:'https://www.investing.com/rss/news_25.rss',      lang:'EN', color:'#e07a9e'},
+  {id:'cnet-japan',group:'cnet-japan',name:'CNET Japan',           short:'CNET Japan',  home:'https://japan.cnet.com/',      rss:'http://feed.japan.cnet.com/rss/index.rdf',           lang:'JA', color:'#55c2b8'},
+  {id:'marketwatch',group:'marketwatch',name:'MarketWatch',        short:'MarketWatch', home:'https://www.marketwatch.com/', rss:'https://feeds.content.dowjones.io/public/rss/mw_topstories', lang:'EN', color:'#c7cf6e'},
+  {id:'zuu',      group:'zuu',       name:'ZUU online',            short:'ZUU online',  home:'https://zuuonline.com/',       rss:'https://zuuonline.com/feed',                          lang:'JA', color:'#d17ee0'},
+];
