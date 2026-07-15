@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>世界ニュース速報 — リアルタイム経済ニュースボード</title>
+<script>
+/* 保存済みテーマがあれば描画前に適用し、切替時のちらつき(FOUC)を防ぐ */
+try{
+  var t = localStorage.getItem('news-board-theme-v1');
+  if(t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+}catch(e){}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,24 +22,54 @@
 -->
 <style>
 :root{
-  --bg0:#0a0d18; --bg1:#0e1322; --card:#131a2d;
+  --bg0:#0a0d18; --bg1:#0e1322; --card:#131a2d; --surface:#10162a;
   --line:#222b4a; --line-soft:#1a2138;
   --ink:#e9ecf6; --ink-2:#9aa3c0; --ink-3:#5d6685;
-  --gold:#d8b46e; --gold-dim:#8a7448;
+  --gold:#d8b46e; --gold-dim:#8a7448; --gold-ink:#191305;
   --red:#e0665f; --green:#5fbf8f;
+  --body-bg:
+    radial-gradient(1200px 600px at 80% -10%, #16204014 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, #2a1f3a10 0%, transparent 60%),
+    linear-gradient(180deg,var(--bg0),var(--bg1) 40%,var(--bg0));
   --mono:'IBM Plex Mono',ui-monospace,monospace;
   --sans:'IBM Plex Sans JP',system-ui,sans-serif;
   --serif:'Shippori Mincho',serif;
+  color-scheme: dark;
+}
+/* ライトモード: システム設定に追従(未指定時) / data-theme属性で明示切替(優先) */
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]){
+    --bg0:#f6f3ec; --bg1:#fdfcf9; --card:#ffffff; --surface:#efe9da;
+    --line:#ddd6c4; --line-soft:#e9e3d3;
+    --ink:#1c1a24; --ink-2:#524d5c; --ink-3:#847e91;
+    --gold:#a97a2e; --gold-dim:#c2a06a;
+    --red:#c23d36; --green:#237a54;
+    --body-bg:
+      radial-gradient(1200px 600px at 80% -10%, #a97a2e14 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, #52334d0d 0%, transparent 60%),
+      linear-gradient(180deg,var(--bg0),var(--bg1) 40%,var(--bg0));
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"]{
+  --bg0:#f6f3ec; --bg1:#fdfcf9; --card:#ffffff; --surface:#efe9da;
+  --line:#ddd6c4; --line-soft:#e9e3d3;
+  --ink:#1c1a24; --ink-2:#524d5c; --ink-3:#847e91;
+  --gold:#a97a2e; --gold-dim:#c2a06a;
+  --red:#c23d36; --green:#237a54;
+  --body-bg:
+    radial-gradient(1200px 600px at 80% -10%, #a97a2e14 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, #52334d0d 0%, transparent 60%),
+    linear-gradient(180deg,var(--bg0),var(--bg1) 40%,var(--bg0));
+  color-scheme: light;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{
-  background:
-    radial-gradient(1200px 600px at 80% -10%, #16204014 0%, transparent 60%),
-    radial-gradient(900px 500px at -10% 30%, #2a1f3a10 0%, transparent 60%),
-    linear-gradient(180deg,var(--bg0),var(--bg1) 40%,var(--bg0));
+  background:var(--body-bg);
   color:var(--ink); font-family:var(--sans); min-height:100vh;
   font-feature-settings:'palt';
+  transition:background-color .2s, color .2s;
 }
 
 /* ---------- header ---------- */
@@ -46,24 +83,25 @@ h1 .sub{display:block; font-family:var(--mono); font-weight:400; font-size:11px;
 .statusbar.live .dot{background:var(--green); box-shadow:0 0 7px var(--green); animation:pulse 2.2s infinite;}
 .statusbar.err .dot{background:var(--red); box-shadow:0 0 7px var(--red);}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-#refreshBtn,#trBtn,#topicBtn{background:none;border:1px solid var(--line);border-radius:6px;color:var(--ink-2);font-family:var(--mono);font-size:11px;padding:5px 12px;cursor:pointer;letter-spacing:.08em;}
-#refreshBtn:hover,#trBtn:hover,#topicBtn:hover{color:var(--gold);border-color:var(--gold-dim)}
+#refreshBtn,#trBtn,#topicBtn,#themeBtn{background:none;border:1px solid var(--line);border-radius:6px;color:var(--ink-2);font-family:var(--mono);font-size:11px;padding:5px 12px;cursor:pointer;letter-spacing:.08em;}
+#refreshBtn:hover,#trBtn:hover,#topicBtn:hover,#themeBtn:hover{color:var(--gold);border-color:var(--gold-dim)}
 #refreshBtn:disabled{opacity:.5;cursor:default}
 #trBtn,#topicBtn{color:var(--gold);border-color:var(--gold-dim);}
 #trBtn.off,#topicBtn.off{color:var(--ink-3);border-color:var(--line);}
 
-.tape{margin:18px 0 0; border:1px solid var(--line-soft); border-radius:10px; overflow:hidden; background:#0d1222;}
+.tape{margin:18px 0 0; border:1px solid var(--line-soft); border-radius:10px; overflow:hidden; background:var(--card); transition:background-color .2s, border-color .2s, opacity .25s;}
+.tape.tape-loading{opacity:.35;}
 .tape .tradingview-widget-container{height:46px;}
 
 /* ---------- session timeline(世界の取引時間) ---------- */
-.sessions{margin:14px 0 0; border:1px solid var(--line-soft); border-radius:10px; background:linear-gradient(180deg,#10162a,#0d1222); padding:14px 16px 12px; position:relative; overflow:hidden;}
+.sessions{margin:14px 0 0; border:1px solid var(--line-soft); border-radius:10px; background:var(--card); padding:14px 16px 12px; position:relative; overflow:hidden; transition:background-color .2s, border-color .2s;}
 .sessions .cap{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3); margin-bottom:10px;}
 .sess-track{position:relative; height:122px;}
 .hourgrid span{position:absolute; top:0; bottom:0; width:1px; background:var(--line-soft);}
 .hourgrid label{position:absolute; bottom:-2px; transform:translateX(-50%); font-family:var(--mono); font-size:9px; color:var(--ink-3);}
 .sess-row{position:absolute; left:0; right:0; height:13px;}
 .sess-bar{position:absolute; height:100%; border-radius:99px; background:linear-gradient(90deg,#2a3357,#3a466f); border:1px solid #3d4a76; opacity:.55;}
-.sess-bar.live{background:linear-gradient(90deg,#6a5a2e,#a5863f); border-color:var(--gold-dim); opacity:1; box-shadow:0 0 14px #d8b46e33;}
+.sess-bar.live{background:linear-gradient(90deg,#6a5a2e,#a5863f); border-color:#8a7448; opacity:1; box-shadow:0 0 14px #d8b46e33;}
 .sess-bar b{position:absolute; left:8px; top:50%; transform:translateY(-50%); font-family:var(--mono); font-weight:500; font-size:9px; letter-spacing:.15em; color:#cfd6ea; white-space:nowrap;}
 .now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
 .now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
@@ -71,11 +109,11 @@ h1 .sub{display:block; font-family:var(--mono); font-weight:400; font-size:11px;
 /* ---------- controls ---------- */
 .controls{max-width:1320px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px); display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
 .chips{display:flex; gap:8px; flex-wrap:wrap;}
-.chip{font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:6px 13px; border-radius:99px; border:1px solid var(--line); color:var(--ink-2); cursor:pointer; background:#10162a; transition:border-color .15s, color .15s;}
+.chip{font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:6px 13px; border-radius:99px; border:1px solid var(--line); color:var(--ink-2); cursor:pointer; background:var(--surface); transition:border-color .15s, color .15s, background-color .2s;}
 .chip:hover{border-color:var(--gold-dim); color:var(--ink)}
-.chip.on{border-color:var(--gold); color:var(--gold); background:#1a1508}
+.chip.on{border-color:var(--gold); color:var(--gold); background:color-mix(in srgb, var(--gold) 18%, var(--bg0));}
 .searchwrap{margin-left:auto; position:relative;}
-#search{background:#10162a; border:1px solid var(--line); border-radius:8px; color:var(--ink); font-family:var(--sans); font-size:13px; padding:8px 12px 8px 32px; width:220px;}
+#search{background:var(--surface); border:1px solid var(--line); border-radius:8px; color:var(--ink); font-family:var(--sans); font-size:13px; padding:8px 12px 8px 32px; width:220px; transition:background-color .2s;}
 #search:focus{outline:none; border-color:var(--gold-dim)}
 .searchwrap::before{content:'⌕'; position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--ink-3); font-size:14px;}
 
@@ -89,14 +127,20 @@ main{max-width:1320px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;}
   transition:transform .16s ease, border-color .2s, box-shadow .2s;
   text-decoration:none; color:inherit;
 }
-.card:hover{transform:translateY(-2px); border-color:#31406e; box-shadow:0 8px 24px #00000055;}
+.card:hover{transform:translateY(-2px); border-color:var(--gold-dim); box-shadow:0 8px 24px #00000055;}
 .card .meta{display:flex; align-items:center; justify-content:space-between; gap:8px;}
 .meta-left{display:flex; align-items:center; gap:6px; min-width:0;}
 .meta-right{display:flex; align-items:center; gap:7px; flex-shrink:0;}
-.src-badge{font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; padding:3px 9px; border-radius:99px; white-space:nowrap; border:1px solid; }
+/* --src(配信元ごとの原色)はJSがインラインで設定。--src-inkは本文用の実際の文字色で、
+   ダーク背景では原色のまま、ライト背景では白地でも読めるよう暗く落とす(color-mixで自動計算) */
+.src-badge{--src-ink:var(--src); font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; padding:3px 9px; border-radius:99px; white-space:nowrap; border:1px solid; color:var(--src-ink);}
+@media (prefers-color-scheme:light){
+  :root:not([data-theme="dark"]) .src-badge{--src-ink:color-mix(in srgb, var(--src) 60%, black);}
+}
+:root[data-theme="light"] .src-badge{--src-ink:color-mix(in srgb, var(--src) 60%, black);}
 .card time{font-family:var(--mono); font-size:10.5px; color:var(--ink-3); white-space:nowrap;}
 .src-badge .genre{opacity:.8; margin-left:6px; padding-left:7px; border-left:1px solid currentColor;}
-.new-badge{font-family:var(--mono); font-size:9px; letter-spacing:.06em; font-weight:600; color:var(--bg0); background:var(--gold); padding:2px 7px; border-radius:99px; white-space:nowrap;}
+.new-badge{font-family:var(--mono); font-size:9px; letter-spacing:.06em; font-weight:600; color:var(--gold-ink); background:var(--gold); padding:2px 7px; border-radius:99px; white-space:nowrap;}
 .sentiment{font-size:12px; line-height:1; white-space:nowrap;}
 .sentiment.pos{color:var(--green);}
 .sentiment.neg{color:var(--red);}
@@ -139,6 +183,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
       <span id="statusText">読み込み中…</span>
       <button id="topicBtn" title="株価・AI・企業など金融/ビジネス関連キーワードを含む記事だけに絞り込みます">トピック絞込 ON</button>
       <button id="trBtn" title="英語記事の見出し・要約を日本語へ自動翻訳します">翻訳 ON</button>
+      <button id="themeBtn" title="ダークモードとライトモードを切り替えます">ライト表示</button>
       <button id="refreshBtn">今すぐ更新 ⟳</button>
     </div>
   </div>
@@ -171,27 +216,38 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
 
 /* ================= ニュースソース定義 ================= */
 /* group: フィルターチップの単位(Bloomberg 3フィードは1チップにまとめる) / sub: カードに添えるジャンル表示 */
+/* 未収載: Reuters(公開RSSを2020年頃に廃止。reutersagency.com/feed=404, reuters.com/world/rss=401ボット遮断, Thomson Reuters IR=403)、Bloomberg Businessweek(専用RSSなし。feeds.bloomberg.com/businessweek等=404, bloomberg.com/businessweek/rss=403。既存のBloomberg 3フィードが最も近い代替) */
 const SOURCES = [
   {id:'bbg-mkt',  group:'bbg', sub:'市況',   name:'Bloomberg Markets',    short:'Bloomberg',  home:'https://www.bloomberg.com/jp', rss:'https://feeds.bloomberg.com/markets/news.rss',    lang:'EN', color:'#d8b46e'},
   {id:'bbg-eco',  group:'bbg', sub:'経済',   name:'Bloomberg Economics',  short:'Bloomberg',  home:'https://www.bloomberg.com/jp', rss:'https://feeds.bloomberg.com/economics/news.rss',  lang:'EN', color:'#d8b46e'},
   {id:'bbg-tech', group:'bbg', sub:'テック', name:'Bloomberg Technology', short:'Bloomberg',  home:'https://www.bloomberg.com/jp', rss:'https://feeds.bloomberg.com/technology/news.rss', lang:'EN', color:'#d8b46e'},
   {id:'nhk-eco',  group:'nhk', sub:'経済',   name:'NHKニュース(経済)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat5.xml', lang:'JA', color:'#6fa8dc'},
   {id:'nhk-gen',  group:'nhk', sub:'総合',   name:'NHKニュース(主要)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat0.xml', lang:'JA', color:'#6fa8dc'},
-  {id:'toyokeizai',group:'toyokeizai', name:'東洋経済オンライン',   short:'東洋経済',    home:'https://toyokeizai.net/',      rss:'https://toyokeizai.net/list/feed/rss',              lang:'JA', color:'#e0665f'},
   {id:'nikkei-asia',group:'nikkei-asia',name:'Nikkei Asia',        short:'Nikkei Asia',home:'https://asia.nikkei.com/',     rss:'https://asia.nikkei.com/rss/feed/nar',              lang:'EN', color:'#5fbf8f'},
+  {id:'wsj',      group:'wsj',       name:'The Wall Street Journal(Markets)', short:'WSJ', home:'https://www.wsj.com/',   rss:'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',      lang:'EN', color:'#5b7fd4'},
+  {id:'ft',       group:'ft',        name:'Financial Times(Markets)', short:'FT',        home:'https://www.ft.com/',          rss:'https://www.ft.com/markets?format=rss',              lang:'EN', color:'#e28f8f'},
+  {id:'cnbc',     group:'cnbc',      name:'CNBC(US Top News)',     short:'CNBC',        home:'https://www.cnbc.com/',        rss:'https://www.cnbc.com/id/100003114/device/rss/rss.html', lang:'EN', color:'#4fa8e0'},
+  {id:'economist',group:'economist', name:'The Economist(Finance & economics)', short:'Economist', home:'https://www.economist.com/', rss:'https://www.economist.com/finance-and-economics/rss.xml', lang:'EN', color:'#d9534f'},
+  {id:'forbes',   group:'forbes',    name:'Forbes(Business)',      short:'Forbes',      home:'https://www.forbes.com/',      rss:'https://www.forbes.com/business/feed/',              lang:'EN', color:'#e0a15a'},
+  {id:'techcrunch',group:'techcrunch',name:'TechCrunch',           short:'TechCrunch',  home:'https://techcrunch.com/',      rss:'https://techcrunch.com/feed/',                       lang:'EN', color:'#2dd4bf'},
+  {id:'cnn',      group:'cnn',       name:'CNN Business',          short:'CNN',         home:'https://www.cnn.com/business', rss:'http://rss.cnn.com/rss/money_latest.rss',            lang:'EN', color:'#e35d5d'},
+  {id:'japantimes',group:'japantimes',name:'The Japan Times',      short:'Japan Times', home:'https://www.japantimes.co.jp/', rss:'https://www.japantimes.co.jp/feed/',                lang:'EN', color:'#c17a5a'},
+  {id:'newsweek', group:'newsweek',  name:'Newsweek',              short:'Newsweek',    home:'https://www.newsweek.com/',    rss:'https://www.newsweek.com/rss',                       lang:'EN', color:'#8b93c9'},
+  {id:'businessinsider',group:'businessinsider',name:'Business Insider',short:'Business Insider',home:'https://www.businessinsider.com/', rss:'https://www.businessinsider.com/rss', lang:'EN', color:'#7fd45a'},
+  {id:'digiday',  group:'digiday',   name:'Digiday',               short:'Digiday',     home:'https://digiday.com/',         rss:'https://digiday.com/feed/',                          lang:'EN', color:'#f0a83c'},
+  {id:'venturebeat',group:'venturebeat',name:'VentureBeat',        short:'VentureBeat', home:'https://venturebeat.com/',     rss:'https://venturebeat.com/feed/',                      lang:'EN', color:'#6ec9e0'},
+  {id:'geekwire', group:'geekwire',  name:'GeekWire',              short:'GeekWire',    home:'https://www.geekwire.com/',    rss:'https://www.geekwire.com/feed/',                     lang:'EN', color:'#5ecf9e'},
+  {id:'techinasia',group:'techinasia',name:'Tech in Asia',         short:'Tech in Asia',home:'https://www.techinasia.com/',  rss:'https://www.techinasia.com/feed',                    lang:'EN', color:'#c9a8e0'},
   {id:'itmedia-news',group:'itmedia-news',name:'ITmedia NEWS',      short:'ITmedia NEWS',home:'https://www.itmedia.co.jp/news/', rss:'https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml', lang:'JA', color:'#4fb8d4'},
   {id:'itmedia-biz',group:'itmedia-biz', name:'ITmedia ビジネスオンライン',short:'ITmediaビジネス',home:'https://www.itmedia.co.jp/business/', rss:'https://rss.itmedia.co.jp/rss/2.0/business.xml', lang:'JA', color:'#9a8cf2'},
   {id:'nikkei-biz',group:'nikkei-biz',name:'日経ビジネス電子版',    short:'日経ビジネス', home:'https://business.nikkei.com/', rss:'https://business.nikkei.com/rss/sns/nb.rdf',        lang:'JA', color:'#d987b8'},
-  {id:'diamond',  group:'diamond',   name:'ダイヤモンド・オンライン',short:'ダイヤモンド', home:'https://diamond.jp/',          rss:'https://diamond.jp/list/feed/rss/dol',               lang:'JA', color:'#a8b23c'},
   {id:'bbc-biz',  group:'bbc-biz',   name:'BBC News Business',     short:'BBC',         home:'https://www.bbc.com/news/business', rss:'http://feeds.bbci.co.uk/news/business/rss.xml', lang:'EN', color:'#b7bfd6'},
   {id:'itmedia-ai',group:'itmedia-ai',name:'ITmedia AI+',          short:'ITmedia AI+', home:'https://www.itmedia.co.jp/aiplus/', rss:'https://rss.itmedia.co.jp/rss/2.0/aiplus.xml',      lang:'JA', color:'#b07cf0'},
   {id:'xtech',    group:'xtech',     name:'日経クロステック',     short:'日経xTECH',   home:'https://xtech.nikkei.com/',    rss:'https://xtech.nikkei.com/rss/index.rdf',             lang:'JA', color:'#7ed09c'},
-  {id:'investing-jp',group:'investing-jp',name:'Investing.com 日本版(株式市場)',short:'Investing.com',home:'https://jp.investing.com/', rss:'https://jp.investing.com/rss/news_25.rss',      lang:'JA', color:'#e07a9e'},
+  {id:'investing-jp',group:'investing-jp',name:'Investing.com(Stock Market News)',short:'Investing.com',home:'https://www.investing.com/', rss:'https://www.investing.com/rss/news_25.rss',      lang:'EN', color:'#e07a9e'},
   {id:'cnet-japan',group:'cnet-japan',name:'CNET Japan',           short:'CNET Japan',  home:'https://japan.cnet.com/',      rss:'http://feed.japan.cnet.com/rss/index.rdf',           lang:'JA', color:'#55c2b8'},
   {id:'marketwatch',group:'marketwatch',name:'MarketWatch',        short:'MarketWatch', home:'https://www.marketwatch.com/', rss:'https://feeds.content.dowjones.io/public/rss/mw_topstories', lang:'EN', color:'#c7cf6e'},
   {id:'zuu',      group:'zuu',       name:'ZUU online',            short:'ZUU online',  home:'https://zuuonline.com/',       rss:'https://zuuonline.com/feed',                          lang:'JA', color:'#d17ee0'},
-  {id:'response', group:'response',  name:'Response(自動車ニュース)', short:'Response',   home:'https://response.jp/',        rss:'https://response.jp/rss/index.rdf',                   lang:'JA', color:'#e0a15a'},
-  {id:'benzinga', group:'benzinga',  name:'Benzinga',              short:'Benzinga',    home:'https://www.benzinga.com/',    rss:'https://www.benzinga.com/feed',                       lang:'EN', color:'#6f9fe0'},
 ];
 const REFRESH_MS = 1*60*1000;      // 自動更新間隔(1分)
 const FETCH_CONCURRENCY = 5;       // 同時に取得するソース数の上限(プロキシ側のレート制限対策)
@@ -205,6 +261,44 @@ let failedSources  = new Set();
 let activeFilters   = new Set(SOURCES.map(s=>s.id)); // 全ソースON
 let searchTerm = '';
 let nextRefreshAt = Date.now() + REFRESH_MS;
+
+/* ================= ダーク/ライトモード ================= */
+const THEME_KEY = 'news-board-theme-v1';
+function systemPrefersLight(){
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+}
+function currentTheme(){
+  const forced = document.documentElement.getAttribute('data-theme');
+  if(forced === 'light' || forced === 'dark') return forced;
+  return systemPrefersLight() ? 'light' : 'dark';
+}
+function updateThemeBtn(){
+  const isLight = currentTheme() === 'light';
+  document.getElementById('themeBtn').textContent = isLight ? 'ダーク表示' : 'ライト表示';
+}
+function applyTheme(theme, persist){
+  if(theme === 'light' || theme === 'dark'){
+    document.documentElement.setAttribute('data-theme', theme);
+  } else {
+    document.documentElement.removeAttribute('data-theme'); // システム設定に追従
+  }
+  if(persist !== false){
+    try{
+      if(theme === 'light' || theme === 'dark') localStorage.setItem(THEME_KEY, theme);
+      else localStorage.removeItem(THEME_KEY);
+    }catch(e){}
+  }
+  updateThemeBtn();
+}
+function loadTheme(){
+  let saved = null;
+  try{ saved = localStorage.getItem(THEME_KEY); }catch(e){}
+  applyTheme(saved === 'light' || saved === 'dark' ? saved : null, false);
+}
+function toggleTheme(){
+  applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
+  tickerTape(); // TradingViewウィジェットは動的に再設定できないため、テーマ変更時に作り直す
+}
 
 /* ================= キャッシュ ================= */
 function loadCache(){
@@ -261,13 +355,31 @@ async function fetchViaAllOrigins(source, signal){
   const xml = new DOMParser().parseFromString(text, 'text/xml');
   if(xml.querySelector('parsererror')) throw new Error('xml parse error');
   const nodes = [...xml.querySelectorAll('item')];
-  return nodes.map(node=>{
+  if(nodes.length){
+    return nodes.map(node=>{
+      const get = tag => node.querySelector(tag)?.textContent || '';
+      const dateStr = get('pubDate') || get('date') || get('dc\\:date');
+      return {
+        title: stripHtml(get('title')),
+        link: get('link'),
+        desc: stripHtml(get('description')).slice(0,220),
+        pubDate: dateStr ? new Date(dateStr).getTime() : null,
+      };
+    });
+  }
+  /* <item>が1件もなければAtomフィード(<entry>)として解釈するフォールバック。
+     Business Insider などはRSS 2.0ではなくAtomで配信しており、リンクは<link href="...">属性、
+     本文は<summary>/<content>、日時は<published>/<updated>に入る。RSSと同じ形に正規化して返す */
+  const entries = [...xml.querySelectorAll('entry')];
+  return entries.map(node=>{
     const get = tag => node.querySelector(tag)?.textContent || '';
-    const dateStr = get('pubDate') || get('date') || get('dc\\:date');
+    const links = [...node.querySelectorAll(':scope > link')];
+    const alt = links.find(l=>l.getAttribute('rel')==='alternate') || links.find(l=>!l.getAttribute('rel')) || links[0];
+    const dateStr = get('published') || get('updated');
     return {
       title: stripHtml(get('title')),
-      link: get('link'),
-      desc: stripHtml(get('description')).slice(0,220),
+      link: alt ? (alt.getAttribute('href') || '') : '',
+      desc: stripHtml(get('summary') || get('content')).slice(0,220),
       pubDate: dateStr ? new Date(dateStr).getTime() : null,
     };
   });
@@ -671,7 +783,7 @@ function render(){
     a.innerHTML = `
       <div class="meta">
         <div class="meta-left">
-          <span class="src-badge" style="color:${it.source.color};border-color:${it.source.color}66;background:${it.source.color}14">${it.source.short}${it.source.sub ? '<span class="genre">'+it.source.sub+'</span>' : ''}</span>
+          <span class="src-badge" style="--src:${it.source.color};border-color:${it.source.color}66;background:${it.source.color}14">${it.source.short}${it.source.sub ? '<span class="genre">'+it.source.sub+'</span>' : ''}</span>
           ${isNew ? '<span class="new-badge">NEW</span>' : ''}
         </div>
         <div class="meta-right">
@@ -710,6 +822,8 @@ function buildFootLinks(){
 /* ================= TradingView ティッカー ================= */
 function tickerTape(){
   const container = document.getElementById('tape');
+  container.classList.add('tape-loading'); // 再取得中は薄く表示し、待たされている印象を和らげる
+  container.innerHTML = ''; // テーマ切替のたびに作り直すため既存ウィジェットを除去
   const wrap = document.createElement('div');
   wrap.className = 'tradingview-widget-container';
   const inner = document.createElement('div');
@@ -728,11 +842,12 @@ function tickerTape(){
       {proName:'TVC:USOIL', title:'WTI原油'},
       {proName:'BINANCE:BTCUSDT', title:'BTC'},
     ],
-    showSymbolLogo:true, isTransparent:true,
-    displayMode:'adaptive', colorTheme:'dark', locale:'ja'
+    showSymbolLogo:true, isTransparent:false,
+    displayMode:'adaptive', colorTheme: currentTheme() === 'light' ? 'light' : 'dark', locale:'ja'
   });
   wrap.appendChild(s);
   container.appendChild(wrap);
+  setTimeout(()=>container.classList.remove('tape-loading'), 500);
 }
 
 /* ================= 世界の取引セッション(各市場の開始・終了時間) =================
@@ -832,6 +947,7 @@ document.getElementById('search').addEventListener('input', e=>{
   searchTerm = e.target.value.trim();
   render();
 });
+document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 window.addEventListener('beforeunload', saveLastVisitNow);
 window.addEventListener('pagehide', saveLastVisitNow);
 
@@ -841,6 +957,7 @@ setInterval(()=>{
 }, 5000);
 
 /* ================= 起動 ================= */
+loadTheme();
 loadCache();
 loadTranslate();
 updateTrBtn();
