@@ -56,6 +56,12 @@ const TOPIC_KEYWORDS_CJK = [
   '軍事','侵攻','停戦','ミサイル','核兵器','テロ','クーデター','空爆','武力衝突','紛争','交戦',
   '軍事演習','防衛費','革命防衛隊','核合意',
   'ウクライナ','ロシア','イスラエル','ガザ','北朝鮮','イラン','中東情勢',
+  // 為替取引(既存の為替・円安・円高・ドル円等に追加。主要通貨ペアを網羅。
+  // "FX"は英字略語で単語境界なしの部分一致だと誤爆しうるため、単語境界ありのLATIN側に入れている)
+  '外国為替','通貨ペア','ポンド円','豪ドル','人民元','ユーロドル','ポンドドル','スイスフラン','元安','元高',
+  // 各国の中央銀行・政策金利(既存の政策金利・日銀・利上げ・利下げ等に追加)
+  '中央銀行','中国人民銀行','カナダ銀行','豪準備銀行','スイス国立銀行','韓国銀行','ニュージーランド準備銀行',
+  'インド準備銀行','金融政策決定会合','金融政策委員会',
 ];
 const TOPIC_KEYWORDS_LATIN = [
   'stock','shares','equity','equities','earnings','revenue','profit','merger','acquisition',
@@ -109,4 +115,10 @@ const TOPIC_KEYWORDS_LATIN = [
   'military','invasion','ceasefire','missile','nuclear weapons','terrorism','coup','airstrike',
   'armed conflict','war games','defense spending','revolutionary guard','nuclear deal',
   'ukraine','russia','israel','gaza','north korea','iran',
+  // 為替取引(既存のdollar-yen・usd/jpy・fx intervention等に追加。主要通貨ペアを網羅)
+  'fx','forex','currency pair','gbp/usd','eur/usd','aud/usd','chinese yuan','swiss franc','pound sterling',
+  // 各国の中央銀行・政策金利(既存のfed・frb・ecb・boe・fomc等に追加。英語記事は「Bank of Japan/BOJ」表記が多いため補強)
+  'central bank','boj','bank of japan','pboc','peoples bank of china','rba','reserve bank of australia',
+  'snb','swiss national bank','rbnz','bank of canada','bank of korea','monetary policy meeting','rate decision',
+  // 'bok'(Bank of Korea略称)は"bok choy"等の一般語と衝突するため不採用、正式名称のみ採用
 ];
