@@ -1,6 +1,6 @@
 世界ニュース速報
 リアルタイム経済ニュースボード
-CNN、BBC、WSJ、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITmedia など約28の公開RSSフィードを集約する、サーバー不要の経済ニュースボードです。index.html をブラウザで開くだけで利用できます(ビルド不要)。
+BBC、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITmedia など約26の公開RSSフィードを集約する、サーバー不要の経済ニュースボードです。index.html をブラウザで開くだけで利用できます(ビルド不要)。
 
 ## ファイル構成
 デザイン(style.css)・データ・機能ロジックをそれぞれ役割ごとに分離しています。各ファイルの先頭に「このファイルは何を担当するか」を1行コメントで明記しているので、修正したい機能に対応するファイルだけを開けば済みます。
@@ -21,8 +21,8 @@ CNN、BBC、WSJ、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechC
 - `ticker.js` — TradingView相場ティッカー表示
 - `sessions.js` — 世界の取引セッション表示
 主な機能
-約28の公開RSSフィードを横断して収集
-CNN、BBC、The Japan Times、The Wall Street Journal、Financial Times、CNBC、Bloomberg、The Economist、Forbes、Newsweek、Business Insider、MarketWatch、Investing.com、TechCrunch、Digiday、VentureBeat、GeekWire、Tech in Asia、Nikkei Asia、NHK、ITmedia（NEWS・ビジネス・AI+）、日経ビジネス、日経クロステック、CNET Japan、ZUU online に対応(Bloomberg・WSJ・CNNは公式RSSが停止/廃止されているため、Google Newsのサイト内検索RSS経由で取得)
+約26の公開RSSフィードを横断して収集
+BBC、The Japan Times、Financial Times、CNBC、Bloomberg、The Economist、Forbes、Newsweek、Business Insider、MarketWatch、Investing.com、TechCrunch、Digiday、VentureBeat、GeekWire、Tech in Asia、Nikkei Asia、NHK、ITmedia（NEWS・ビジネス・AI+）、日経ビジネス、日経クロステック、CNET Japan、ZUU online に対応(Bloombergは公式RSSが廃止されているため、Google Newsのサイト内検索RSS経由で取得。WSJ・CNNは公式RSSの配信が長期間停止していたため未収載)
 
 1分ごとの自動更新
 過去2日以内に公開された記事を自動で表示

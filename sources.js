@@ -7,22 +7,20 @@
 // group: フィルターチップの単位 / sub: カードに添えるジャンル表示
 // 未収載: Reuters(公開RSSを2020年頃に廃止。reutersagency.com/feed=404, reuters.com/world/rss=401ボット遮断, Thomson Reuters IR=403)、Bloomberg Businessweek(専用RSSなし。feeds.bloomberg.com/businessweek等=404, bloomberg.com/businessweek/rss=403)
 // 新しい配信元を増やしたいときはこの配列に1行追加するだけでOK(index.html側の変更は不要)
-// 注記(2026-07): Bloomberg公式RSS(feeds.bloomberg.com配下)は全ドメインで404となり廃止された模様。
-// WSJ・CNNも公式RSSは生きているが配信が長期間止まっており(WSJは2025年1月、CNNは2017〜2018年で更新停止)、
-// 実質的に機能していなかった。3件ともGoogle News のサイト内検索RSS(site:を使ったクエリ)で代替している。
-// リンク先はGoogle Newsのリダイレクト経由になるが、元記事(Bloomberg/WSJ/CNN)に遷移する
+// 注記(2026-07): Bloomberg公式RSS(feeds.bloomberg.com配下)は全ドメインで404となり廃止された模様のため、
+// Google News のサイト内検索RSS(site:bloomberg.comクエリ)で代替している(リンク先はGoogle Newsの
+// リダイレクト経由になるが、元記事に遷移する)。WSJ・CNNも公式RSSの配信が長期間止まっており
+// (WSJは2025年1月、CNNは2017〜2018年で更新停止、実質的に機能していなかった)、収載を見送っている
 const SOURCES = [
   {id:'bbg-news', group:'bbg-news', name:'Bloomberg(Google News経由)', short:'Bloomberg', home:'https://www.bloomberg.com/jp', rss:'https://news.google.com/rss/search?q=site:bloomberg.com&hl=en-US&gl=US&ceid=US:en', lang:'EN', color:'#d8b46e'},
   {id:'nhk-eco',  group:'nhk', sub:'経済',   name:'NHKニュース(経済)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat5.xml', lang:'JA', color:'#6fa8dc'},
   {id:'nhk-gen',  group:'nhk', sub:'総合',   name:'NHKニュース(主要)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat0.xml', lang:'JA', color:'#6fa8dc'},
   {id:'nikkei-asia',group:'nikkei-asia',name:'Nikkei Asia',        short:'Nikkei Asia',home:'https://asia.nikkei.com/',     rss:'https://asia.nikkei.com/rss/feed/nar',              lang:'EN', color:'#5fbf8f'},
-  {id:'wsj',      group:'wsj',       name:'The Wall Street Journal(Google News経由)', short:'WSJ', home:'https://www.wsj.com/',   rss:'https://news.google.com/rss/search?q=site:wsj.com&hl=en-US&gl=US&ceid=US:en',      lang:'EN', color:'#5b7fd4'},
   {id:'ft',       group:'ft',        name:'Financial Times(Markets)', short:'FT',        home:'https://www.ft.com/',          rss:'https://www.ft.com/markets?format=rss',              lang:'EN', color:'#e28f8f'},
   {id:'cnbc',     group:'cnbc',      name:'CNBC(US Top News)',     short:'CNBC',        home:'https://www.cnbc.com/',        rss:'https://www.cnbc.com/id/100003114/device/rss/rss.html', lang:'EN', color:'#4fa8e0'},
   {id:'economist',group:'economist', name:'The Economist(Finance & economics)', short:'Economist', home:'https://www.economist.com/', rss:'https://www.economist.com/finance-and-economics/rss.xml', lang:'EN', color:'#d9534f'},
   {id:'forbes',   group:'forbes',    name:'Forbes(Business)',      short:'Forbes',      home:'https://www.forbes.com/',      rss:'https://www.forbes.com/business/feed/',              lang:'EN', color:'#e0a15a'},
   {id:'techcrunch',group:'techcrunch',name:'TechCrunch',           short:'TechCrunch',  home:'https://techcrunch.com/',      rss:'https://techcrunch.com/feed/',                       lang:'EN', color:'#2dd4bf'},
-  {id:'cnn',      group:'cnn',       name:'CNN Business(Google News経由)', short:'CNN',         home:'https://www.cnn.com/business', rss:'https://news.google.com/rss/search?q=site:cnn.com+business&hl=en-US&gl=US&ceid=US:en',            lang:'EN', color:'#e35d5d'},
   {id:'japantimes',group:'japantimes',name:'The Japan Times',      short:'Japan Times', home:'https://www.japantimes.co.jp/', rss:'https://www.japantimes.co.jp/feed/',                lang:'EN', color:'#c17a5a'},
   {id:'newsweek', group:'newsweek',  name:'Newsweek',              short:'Newsweek',    home:'https://www.newsweek.com/',    rss:'https://www.newsweek.com/rss',                       lang:'EN', color:'#8b93c9'},
   {id:'businessinsider',group:'businessinsider',name:'Business Insider',short:'Business Insider',home:'https://www.businessinsider.com/', rss:'https://www.businessinsider.com/rss', lang:'EN', color:'#7fd45a'},
