@@ -1,6 +1,6 @@
 世界ニュース速報
 リアルタイム経済ニュースボード
-BBC、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITmedia など約26の公開RSSフィードを集約する、サーバー不要の経済ニュースボードです。index.html をブラウザで開くだけで利用できます(ビルド不要)。
+BBC、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITmedia など約25の公開RSSフィードを集約する、サーバー不要の経済ニュースボードです。index.html をブラウザで開くだけで利用できます(ビルド不要)。
 
 ## ファイル構成
 デザイン(style.css)・データ・機能ロジックをそれぞれ役割ごとに分離しています。各ファイルの先頭に「このファイルは何を担当するか」を1行コメントで明記しているので、修正したい機能に対応するファイルだけを開けば済みます。
@@ -21,8 +21,8 @@ BBC、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITme
 - `ticker.js` — TradingView相場ティッカー表示
 - `sessions.js` — 世界の取引セッション表示
 主な機能
-約26の公開RSSフィードを横断して収集
-BBC、The Japan Times、Financial Times、CNBC、Bloomberg、The Economist、Forbes、Newsweek、Business Insider、MarketWatch、Investing.com、TechCrunch、Digiday、VentureBeat、GeekWire、Tech in Asia、Nikkei Asia、NHK、ITmedia（NEWS・ビジネス・AI+）、日経ビジネス、日経クロステック、CNET Japan、ZUU online に対応(Bloombergは公式RSS廃止のため姉妹メディアBNN BloombergのRSS経由で取得・Investing.comは中継プロキシ経由アクセスが時々ブロックされるため稀にしか記事が取得できない場合があります。Tech in AsiaはGoogle Newsのサイト内検索RSS(日付順)経由で取得。WSJ・CNNは公式RSSの配信が長期間停止していたため未収載)
+約25の公開RSSフィードを横断して収集
+BBC、The Japan Times、Financial Times、CNBC、The Economist、Forbes、Newsweek、Business Insider、MarketWatch、Investing.com、TechCrunch、Digiday、VentureBeat、GeekWire、Tech in Asia、Nikkei Asia、NHK、ITmedia（NEWS・ビジネス・AI+）、日経ビジネス、日経クロステック、CNET Japan、ZUU online に対応(Investing.comは中継プロキシ経由アクセスが時々ブロックされるため稀にしか記事が取得できない場合があります。Tech in AsiaはGoogle Newsのサイト内検索RSS(日付順)経由で取得。Bloomberg・WSJ・CNNは公式RSSの配信が長期間停止／廃止済みで、代替の中継経由でも安定して表示できなかったため未収載)
 
 1分ごとの自動更新
 過去2日以内に公開された記事を自動で表示
@@ -31,7 +31,7 @@ BBC、The Japan Times、Financial Times、CNBC、Bloomberg、The Economist、For
 MyMemory または Google 翻訳を利用し、英語見出しを日本語へ自動翻訳。原文見出しもあわせて確認できます
 
 関心トピックで絞り込み
-株価、AI、企業関連のキーワードをワンクリックでON/OFF切替
+株価、AI、企業関連のキーワードをワンクリックでON/OFF切替(デフォルトはOFFで全記事表示。ONにすると金融/ビジネス関連のみに絞り込み)
 
 簡易センチメント表示
 見出し・要約内の頻出語から、上向き・下向きの傾向を ▲ / ▼ で表示

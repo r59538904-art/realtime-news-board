@@ -5,20 +5,17 @@
 
 // ================= ニュースソース定義 =================
 // group: フィルターチップの単位 / sub: カードに添えるジャンル表示
-// 未収載: Reuters(公開RSSを2020年頃に廃止。reutersagency.com/feed=404, reuters.com/world/rss=401ボット遮断, Thomson Reuters IR=403)
+// 未収載: Reuters(公開RSSを2020年頃に廃止。reutersagency.com/feed=404, reuters.com/world/rss=401ボット遮断, Thomson Reuters IR=403)、
+// Bloomberg(公式RSS(feeds.bloomberg.com配下)は404で廃止済み。代替の姉妹メディアBNN Bloombergも
+// 中継プロキシ越しでは安定して表示できなかったため、確実性を優先し2026-07に収載を見送った)
 // 新しい配信元を増やしたいときはこの配列に1行追加するだけでOK(index.html側の変更は不要)
-// 注記(2026-07): Bloomberg公式RSS(feeds.bloomberg.com配下、旧markets/economics/technologyの3フィード)は
-// 直接アクセスで404(廃止された模様)のため、姉妹メディアBNN Bloomberg(Bloomberg News配信記事を含む)の
-// RSSに差し替えた(直接curlで200・鮮度良好・bot遮断の兆候なしを確認済み。中継プロキシ越しの100%の
-// 疎通は保証できないが、旧URLは常時404で確実に空だったため後退にはならない)。カテゴリ別フィード
-// (technology/economy)は空だったため、市況・経済・テックの3分割はやめ単一フィードに統合。
-// Investing.comは直接アクセスは200だがサイト側のCloudflareボット対策で中継プロキシ(allorigins/rss2json)
-// からのアクセスが時々ブロックされることを確認済み。Google News経由への切替も試したが改善が不明瞭だったため、
-// 元のURLに戻している(取得に失敗した場合は前回キャッシュ表示にフォールバックする仕組みで吸収)。
-// Tech in Asiaは、Google Newsのサイト内検索が既定で関連度順ソートのため取得記事の大半が2日以上前の
-// 古い記事になり鮮度フィルタで弾かれていたことが判明。クエリに when:2d を追加し日付順ソートに変更した。
+// 注記(2026-07): Investing.comは直接アクセスは200だがサイト側のCloudflareボット対策で中継プロキシ
+// (allorigins/rss2json)からのアクセスが時々ブロックされることを確認済み。Google News経由への切替も
+// 試したが改善が不明瞭だったため、元のURLに戻している(取得に失敗した場合は前回キャッシュ表示に
+// フォールバックする仕組みで吸収)。Tech in Asiaは、Google Newsのサイト内検索が既定で関連度順ソート
+// のため取得記事の大半が2日以上前の古い記事になり鮮度フィルタで弾かれていたことが判明。クエリに
+// when:2d を追加し日付順ソートに変更した。
 const SOURCES = [
-  {id:'bbg-news', group:'bbg', name:'Bloomberg News(BNN Bloomberg配信)', short:'Bloomberg',  home:'https://www.bnnbloomberg.ca/', rss:'https://www.bnnbloomberg.ca/arc/outboundfeeds/rss/?outputType=xml', lang:'EN', color:'#d8b46e'},
   {id:'nhk-eco',  group:'nhk', sub:'経済',   name:'NHKニュース(経済)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat5.xml', lang:'JA', color:'#6fa8dc'},
   {id:'nhk-gen',  group:'nhk', sub:'総合',   name:'NHKニュース(主要)',     short:'NHK',        home:'https://news.web.nhk/newsweb', rss:'https://news.web.nhk/n-data/conf/na/rss/cat0.xml', lang:'JA', color:'#6fa8dc'},
   {id:'nikkei-asia',group:'nikkei-asia',name:'Nikkei Asia',        short:'Nikkei Asia',home:'https://asia.nikkei.com/',     rss:'https://asia.nikkei.com/rss/feed/nar',              lang:'EN', color:'#5fbf8f'},
