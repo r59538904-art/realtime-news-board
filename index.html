@@ -466,38 +466,14 @@ const TOPIC_KEYWORDS_CJK = [
   '人工知能','生成','テック','スタートアップ','企業','経営','社長','時価総額','証券','投資家','資金調達',
   '業界再編','経済','巨額',
   'ホルムズ海峡','戦争','デフレ','公開買い付け','サーキットブレーカー','投資信託','銀行','証券会社',
-  // 以下は追加分。英字の略語(PER/EPS/ROEなど)は単語境界なしの部分一致だと
-  // "heroes"→ROE、"revenue"→EV、"steps"→EPSのように誤爆するため、単語境界ありの
-  // TOPIC_KEYWORDS_LATIN側に入れている(この配列には日本語・カタカナのみを置く)
-  '日経平均','東証','プライム市場','グロース市場','NYダウ','S&P500',
-  'ボラティリティ','リスクオフ','米国債','国債','長期金利','利回り','量的緩和','量的引き締め',
-  '景気後退','リセッション','スタグフレーション','株式分割','増資','公募増資','第三者割当','希薄化',
-  '転換社債','ワラント','株主優待','上方修正','下方修正','営業利益','経常利益','純利益','売上高',
-  '株価収益率','業績ガイダンス','業績予想','コンセンサス予想','事業スピンオフ','事業売却','事業譲渡',
-  'リストラ','人員削減','破産','民事再生','上場廃止','不正会計','行政処分','訴訟',
-  'ドル円','ドル高','ドル安','ユーロ円','原油','金価格','データセンター','クラウドサービス','サイバーセキュリティ',
-  '電池','再生可能エネルギー','防衛関連','バイオ','医薬品','制裁','輸出規制','地政学リスク','台湾有事','中東','紅海',
 ];
 const TOPIC_KEYWORDS_LATIN = [
-  'stock','shares','equity','equities','earnings','revenue','profit','merger','acquisition',
+  'stock','shares','share','equity','equities','earnings','revenue','profit','merger','acquisition',
   'ipo','buyback','dividend','rating','ratings','upgrade','downgrade','price target','analyst',
   'hedge fund','investor','rate hike','rate cut','fed','frb','inflation','gdp','tariff','chip',
   'semiconductor','ai','llm','startup','ceo','tech','funding','market','economy','nasdaq','dow jones',
   's&p','m&a','billion','deal','takeover','buyout','offering','tob',
   'hormuz','war','deflation','tender offer','circuit breaker','mutual fund','bank','brokerage',
-  // 以下は追加分。単独では一般語すぎて誤爆しやすい語(forecast/outlook/beat/miss/warrant/oil/
-  // gold/cloud/battery/defense/taiwan/lawsuit/guidance/consensus等)は具体化した複合語にしている。
-  // "per"は"per day"等で英文に頻出しすぎるため不採用(日本語側の株価収益率とp/eで代替)
-  'nikkei','topix','tse','vix','volatility','risk-off','fomc','ecb','boe',
-  'treasury','treasury yield','bond yield','quantitative easing','quantitative tightening',
-  'recession','stagflation','stock split','dilution','secondary offering','private placement',
-  'convertible bond','stock warrant','earnings guidance','earnings forecast','earnings outlook',
-  'consensus estimate','earnings beat','earnings miss','eps','ebitda','valuation','p/e','p/b','pbr','roe','mbo',
-  'spin-off','divestiture','restructuring','layoffs','bankruptcy','delisting','accounting fraud','securities lawsuit',
-  'dollar-yen','usd/jpy','crude oil','gold price','wti','opec','lng','gpu',
-  'data center','cloud computing','cybersecurity','ev','ev battery','renewable energy','defense stocks','biotech',
-  'sanctions','export controls','geopolitical risk','taiwan strait','red sea',
-  'share price','shares outstanding','share buyback',
 ];
 function escapeRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 const TOPIC_RE = new RegExp(
