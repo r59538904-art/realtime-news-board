@@ -1,5 +1,8 @@
 'use strict';
 // このファイルは「ダークモード/ライトモードの切り替え機能」を担当する(状態の保存・復元・トグルボタン表示を含む)。
+
+
+
 // ================= ダーク/ライトモード =================
 const THEME_KEY = 'news-board-theme-v1';
 function systemPrefersLight(){

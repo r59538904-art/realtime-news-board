@@ -1,5 +1,8 @@
 'use strict';
 // このファイルは「株価・AI・企業など金融/ビジネス関連キーワードだけに記事を絞り込む機能」を担当する。
+
+
+
 // ================= トピック絞り込み(株価・AI・企業など金融/ビジネス関連だけ表示) =================
 // ・キーワード本体(TOPIC_KEYWORDS_CJK / TOPIC_KEYWORDS_LATIN)は topic-keywords.js に分離。
 //   このファイルより先に <script src="topic-keywords.js"> で読み込んでいるため、ここではグローバル変数として参照できる
@@ -15,12 +18,12 @@ function loadTopicPref(){
   try{ topicFilterOn = localStorage.getItem(TOPIC_PREF_KEY) !== 'off'; }catch(e){}
 }
 function updateTopicBtn(){
-  const b = document.getElementById('topicBtn');
-  b.textContent = topicFilterOn ? 'トピック絞込 ON' : 'トピック絞込 OFF';
-  b.classList.toggle('off', !topicFilterOn);
+  const btn = document.getElementById('topicBtn');
+  btn.textContent = topicFilterOn ? 'トピック絞込 ON' : 'トピック絞込 OFF';
+  btn.classList.toggle('off', !topicFilterOn);
 }
-function matchesTopic(it){
+function matchesTopic(item){
   if(!topicFilterOn) return true;
-  const text = it.title + ' ' + it.desc + ' ' + (trGet(it.title)||'') + ' ' + (trGet(it.desc)||'');
+  const text = item.title + ' ' + item.desc + ' ' + (trGet(item.title)||'') + ' ' + (trGet(item.desc)||'');
   return TOPIC_RE.test(text);
 }

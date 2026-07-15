@@ -1,5 +1,8 @@
 'use strict';
 // このファイルは「ニュース取得元(RSSフィード)の一覧データ」を定義する。ロジックは持たない。
+
+
+
 // ================= ニュースソース定義 =================
 // group: フィルターチップの単位(Bloomberg 3フィードは1チップにまとめる) / sub: カードに添えるジャンル表示
 // 未収載: Reuters(公開RSSを2020年頃に廃止。reutersagency.com/feed=404, reuters.com/world/rss=401ボット遮断, Thomson Reuters IR=403)、Bloomberg Businessweek(専用RSSなし。feeds.bloomberg.com/businessweek等=404, bloomberg.com/businessweek/rss=403。既存のBloomberg 3フィードが最も近い代替)

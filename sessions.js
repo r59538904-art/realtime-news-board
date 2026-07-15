@@ -1,63 +1,68 @@
 'use strict';
 // このファイルは「世界の株式市場の取引セッション表示(開場中ハイライト・現在時刻カーソル)」を担当する。
+
+
+
 // ================= 世界の取引セッション(各市場の開始・終了時間) =================
 // sekai-market-tv.html(market API get)からの移植。日本時間24H軸で各市場の開場帯を表示し、
 // 現在開いている市場は金色でハイライト、縦線が現在時刻を示す。
 // データ本体(MKT・SESS)は market-sessions.js に分離。
-function tzParts(tz, d=new Date()){
-  const p=new Intl.DateTimeFormat('en-US',{timeZone:tz,hour12:false,weekday:'short',hour:'2-digit',minute:'2-digit'}).formatToParts(d);
-  const g=t=>p.find(x=>x.type===t).value;
-  return {wd:g('weekday'), h:+g('hour')%24, m:+g('minute')};
+function tzParts(tz, date=new Date()){
+  const parts = new Intl.DateTimeFormat('en-US',{timeZone:tz,hour12:false,weekday:'short',hour:'2-digit',minute:'2-digit'}).formatToParts(date);
+  const getPart = partType=>parts.find(part=>part.type===partType).value;
+  return {weekday:getPart('weekday'), hour:+getPart('hour')%24, minute:+getPart('minute')};
 }
-function isMktOpen(mkt){
-  const cfg=MKT[mkt]; if(!cfg) return true;
-  const {wd,h,m}=tzParts(cfg.tz);
-  if(wd==='Sat'||wd==='Sun') return false;
-  const now=h*60+m;
-  return cfg.spans.some(([h1,m1,h2,m2])=>now>=h1*60+m1&&now<h2*60+m2);
+function isMktOpen(marketId){
+  const marketConfig=MKT[marketId]; if(!marketConfig) return true;
+  const {weekday,hour,minute}=tzParts(marketConfig.tz);
+  if(weekday==='Sat'||weekday==='Sun') return false;
+  const nowMinutes=hour*60+minute;
+  return marketConfig.spans.some(([openHour,openMin,closeHour,closeMin])=>nowMinutes>=openHour*60+openMin&&nowMinutes<closeHour*60+closeMin);
 }
 function tzOffsetMin(tz){
-  const now=new Date();
-  const loc=new Date(now.toLocaleString('en-US',{timeZone:tz}));
-  const utc=new Date(now.toLocaleString('en-US',{timeZone:'UTC'}));
-  return (loc-utc)/60000;
+  const nowDate=new Date();
+  const localDate=new Date(nowDate.toLocaleString('en-US',{timeZone:tz}));
+  const utcDate=new Date(nowDate.toLocaleString('en-US',{timeZone:'UTC'}));
+  return (localDate-utcDate)/60000;
+}
+
+// buildSessions()から呼ばれるため、buildSessions()より前(上)にここで定義しておく
+function moveSessionCursor(){
+  const parts=tzParts('Asia/Tokyo');
+  const cursorEl=document.getElementById('nowCursor');
+  if(cursorEl) cursorEl.style.left=((parts.hour+parts.minute/60)/24*100)+'%';
 }
 function buildSessions(){
   const track=document.getElementById('sessTrack');
   if(!track) return;
   track.innerHTML='';
-  const grid=document.createElement('div'); grid.className='hourgrid';
-  for(let h=0;h<=24;h+=3){
-    const x=h/24*100;
-    const sp=document.createElement('span'); sp.style.left=x+'%'; grid.appendChild(sp);
-    const lb=document.createElement('label'); lb.style.left=x+'%'; lb.textContent=String(h).padStart(2,'0'); grid.appendChild(lb);
+  const hourGridEl=document.createElement('div'); hourGridEl.className='hourgrid';
+  for(let hour=0;hour<=24;hour+=3){
+    const xPercent=hour/24*100;
+    const tickMark=document.createElement('span'); tickMark.style.left=xPercent+'%'; hourGridEl.appendChild(tickMark);
+    const hourLabel=document.createElement('label'); hourLabel.style.left=xPercent+'%'; hourLabel.textContent=String(hour).padStart(2,'0'); hourGridEl.appendChild(hourLabel);
   }
-  track.appendChild(grid);
-  const jstOff=tzOffsetMin('Asia/Tokyo');
-  SESS.forEach(s=>{
-    const off=tzOffsetMin(s.tz);
-    const shift=(jstOff-off)/60;
-    let o=(s.o+shift+24)%24, c=(s.c+shift+24)%24;
+  track.appendChild(hourGridEl);
+  const jstOffsetMinutes=tzOffsetMin('Asia/Tokyo');
+  SESS.forEach(session=>{
+    const sessionOffsetMinutes=tzOffsetMin(session.tz);
+    const shiftHours=(jstOffsetMinutes-sessionOffsetMinutes)/60;
+    let openHour=(session.o+shiftHours+24)%24, closeHour=(session.c+shiftHours+24)%24;
     const row=document.createElement('div'); row.className='sess-row';
-    row.style.top=(s.row*15)+'px';
-    const mk=(a,b)=>{
+    row.style.top=(session.row*15)+'px';
+    const addBar=(fromHour,toHour)=>{
       const bar=document.createElement('div');
-      bar.className='sess-bar'+(isMktOpen(s.mkt)?' live':'');
-      bar.style.left=(a/24*100)+'%'; bar.style.width=((b-a)/24*100)+'%';
-      bar.innerHTML=`<b>${s.label}</b>`;
+      bar.className='sess-bar'+(isMktOpen(session.mkt)?' live':'');
+      bar.style.left=(fromHour/24*100)+'%'; bar.style.width=((toHour-fromHour)/24*100)+'%';
+      bar.innerHTML=`<b>${session.label}</b>`;
       row.appendChild(bar);
     };
-    if(o<c) mk(o,c); else { mk(o,24); mk(0,c); }
+    if(openHour<closeHour) addBar(openHour,closeHour); else { addBar(openHour,24); addBar(0,closeHour); }
     track.appendChild(row);
   });
-  const cur=document.createElement('div'); cur.className='now-cursor'; cur.id='nowCursor';
-  track.appendChild(cur);
+  const cursorEl=document.createElement('div'); cursorEl.className='now-cursor'; cursorEl.id='nowCursor';
+  track.appendChild(cursorEl);
   moveSessionCursor();
-}
-function moveSessionCursor(){
-  const p=tzParts('Asia/Tokyo');
-  const c=document.getElementById('nowCursor');
-  if(c) c.style.left=((p.h+p.m/60)/24*100)+'%';
 }
 setInterval(moveSessionCursor, 30000);
 setInterval(buildSessions, 5*60*1000);

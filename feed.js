@@ -1,5 +1,8 @@
 'use strict';
 // このファイルは「RSSフィードの取得・ローカルキャッシュ・ヘッダーの更新ステータス表示」を担当する。
+
+
+
 // ================= RSS取得・キャッシュ・更新ステータス表示 =================
 const REFRESH_MS = 1*60*1000;      // 自動更新間隔(1分)
 const FETCH_CONCURRENCY = 5;       // 同時に取得するソース数の上限(プロキシ側のレート制限対策)
@@ -15,12 +18,34 @@ let nextRefreshAt = Date.now() + REFRESH_MS;
 // ---- キャッシュ ----
 function loadCache(){
   try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw) itemsBySource = JSON.parse(raw);
+    const cachedJson = localStorage.getItem(STORAGE_KEY);
+    if(cachedJson) itemsBySource = JSON.parse(cachedJson);
   }catch(e){ itemsBySource = {}; }
 }
 function saveCache(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(itemsBySource)); }catch(e){}
+}
+
+// ---- ステータス表示 ----
+// ・個別ソースの取得失敗は前回キャッシュ表示で吸収され実害がないため、
+//   赤い警告バナーは出さず、常に落ち着いた表示にする(内部のfailedSources自体は保持し続ける)
+// ・fetchAll()から呼ばれるため、fetchAllより前(上)にここで定義しておく
+let statusKind = 'loading';
+let statusTimer = null;
+function setStatus(kind){
+  statusKind = kind;
+  const statusBarEl = document.getElementById('statusbar');
+  statusBarEl.className = 'statusbar' + (kind==='loading' ? ' loading' : ' live');
+  clearInterval(statusTimer);
+  renderStatusText();
+  // 取得中(loading)だけ毎秒動かす。完了したらその瞬間の時刻で表示を止める
+  if(kind === 'loading') statusTimer = setInterval(renderStatusText, 1000);
+}
+function renderStatusText(){
+  const statusTextEl = document.getElementById('statusText');
+  const nowText = new Date().toLocaleTimeString('ja-JP',{hour12:false});
+  if(statusKind==='loading') statusTextEl.textContent = `更新中… ${nowText}`;
+  else statusTextEl.textContent = `最終更新 ${nowText} ・ リアルタイム更新中`;
 }
 
 // ---- 取得: allorigins+XMLパース → rss2json の順にフォールバック ----
@@ -39,34 +64,34 @@ async function withFetchTimeout(fn, ms){
   finally{ clearTimeout(timer); }
 }
 async function fetchViaRss2Json(source, signal){
-  const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(source.rss);
-  const res = await fetch(api, {signal});
-  if(!res.ok) throw new Error('rss2json http '+res.status);
-  const json = await res.json();
+  const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(source.rss);
+  const response = await fetch(apiUrl, {signal});
+  if(!response.ok) throw new Error('rss2json http '+response.status);
+  const json = await response.json();
   if(json.status !== 'ok' || !Array.isArray(json.items)) throw new Error('rss2json status: '+json.status);
-  return json.items.map(it=>({
-    title: stripHtml(it.title),
-    link: it.link,
-    desc: stripHtml(it.description).slice(0,220),
-    pubDate: it.pubDate ? new Date(it.pubDate.replace(' ','T')+'Z').getTime() : null,
+  return json.items.map(rawItem=>({
+    title: stripHtml(rawItem.title),
+    link: rawItem.link,
+    desc: stripHtml(rawItem.description).slice(0,220),
+    pubDate: rawItem.pubDate ? new Date(rawItem.pubDate.replace(' ','T')+'Z').getTime() : null,
   }));
 }
 async function fetchViaAllOrigins(source, signal){
-  const api = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(source.rss);
-  const res = await fetch(api, {signal});
-  if(!res.ok) throw new Error('allorigins http '+res.status);
-  const text = await res.text();
+  const apiUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(source.rss);
+  const response = await fetch(apiUrl, {signal});
+  if(!response.ok) throw new Error('allorigins http '+response.status);
+  const text = await response.text();
   const xml = new DOMParser().parseFromString(text, 'text/xml');
   if(xml.querySelector('parsererror')) throw new Error('xml parse error');
-  const nodes = [...xml.querySelectorAll('item')];
-  if(nodes.length){
-    return nodes.map(node=>{
-      const get = tag => node.querySelector(tag)?.textContent || '';
-      const dateStr = get('pubDate') || get('date') || get('dc\\:date');
+  const itemNodes = [...xml.querySelectorAll('item')];
+  if(itemNodes.length){
+    return itemNodes.map(node=>{
+      const getText = tag => node.querySelector(tag)?.textContent || '';
+      const dateStr = getText('pubDate') || getText('date') || getText('dc\\:date');
       return {
-        title: stripHtml(get('title')),
-        link: get('link'),
-        desc: stripHtml(get('description')).slice(0,220),
+        title: stripHtml(getText('title')),
+        link: getText('link'),
+        desc: stripHtml(getText('description')).slice(0,220),
         pubDate: dateStr ? new Date(dateStr).getTime() : null,
       };
     });
@@ -74,16 +99,16 @@ async function fetchViaAllOrigins(source, signal){
   // <item>が1件もなければAtomフィード(<entry>)として解釈するフォールバック。
   // Business Insider などはRSS 2.0ではなくAtomで配信しており、リンクは<link href="...">属性、
   // 本文は<summary>/<content>、日時は<published>/<updated>に入る。RSSと同じ形に正規化して返す
-  const entries = [...xml.querySelectorAll('entry')];
-  return entries.map(node=>{
-    const get = tag => node.querySelector(tag)?.textContent || '';
+  const entryNodes = [...xml.querySelectorAll('entry')];
+  return entryNodes.map(node=>{
+    const getText = tag => node.querySelector(tag)?.textContent || '';
     const links = [...node.querySelectorAll(':scope > link')];
-    const alt = links.find(l=>l.getAttribute('rel')==='alternate') || links.find(l=>!l.getAttribute('rel')) || links[0];
-    const dateStr = get('published') || get('updated');
+    const altLink = links.find(l=>l.getAttribute('rel')==='alternate') || links.find(l=>!l.getAttribute('rel')) || links[0];
+    const dateStr = getText('published') || getText('updated');
     return {
-      title: stripHtml(get('title')),
-      link: alt ? (alt.getAttribute('href') || '') : '',
-      desc: stripHtml(get('summary') || get('content')).slice(0,220),
+      title: stripHtml(getText('title')),
+      link: altLink ? (altLink.getAttribute('href') || '') : '',
+      desc: stripHtml(getText('summary') || getText('content')).slice(0,220),
       pubDate: dateStr ? new Date(dateStr).getTime() : null,
     };
   });
@@ -111,14 +136,14 @@ async function fetchAll(){
   fetchInProgress = true;
   setStatus('loading');
   document.getElementById('refreshBtn').disabled = true;
-  // 20ソースをほぼ同時に叩くとプロキシ側のレート制限にかかりやすいため、
+  // 30ソースをほぼ同時に叩くとプロキシ側のレート制限にかかりやすいため、
   // 同時実行数をFETCH_CONCURRENCYに制限したワーカープールで順番に処理する
   const queue = [...SOURCES];
   async function worker(){
-    let src;
-    while((src = queue.shift())){
-      const items = await fetchSource(src);
-      if(items) itemsBySource[src.id] = items;
+    let source;
+    while((source = queue.shift())){
+      const items = await fetchSource(source);
+      if(items) itemsBySource[source.id] = items;
     }
   }
   await Promise.all(Array.from({length:FETCH_CONCURRENCY}, worker));
@@ -136,41 +161,20 @@ async function fetchAll(){
 // ソースだけを対象に、短い間隔で数回だけ追加リトライして早めに埋める(取得済みソースは対象外)。
 let coldRetryCount = 0;
 function retryEmptySourcesSoon(){
-  const emptyIds = SOURCES.filter(s => !(itemsBySource[s.id] && itemsBySource[s.id].length)).map(s=>s.id);
+  const emptyIds = SOURCES.filter(source => !(itemsBySource[source.id] && itemsBySource[source.id].length)).map(source=>source.id);
   if(!emptyIds.length || coldRetryCount >= 3){ coldRetryCount = 0; return; }
   coldRetryCount++;
   setTimeout(async ()=>{
     if(fetchInProgress) return;
     fetchInProgress = true;
     await Promise.all(emptyIds.map(async id=>{
-      const src = SOURCES.find(s=>s.id===id);
-      const items = await fetchSource(src);
-      if(items) itemsBySource[src.id] = items;
+      const source = SOURCES.find(s=>s.id===id);
+      const items = await fetchSource(source);
+      if(items) itemsBySource[source.id] = items;
     }));
     saveCache();
     render();
     fetchInProgress = false;
     retryEmptySourcesSoon();
   }, 6000);
-}
-
-// ---- ステータス表示 ----
-// ・個別ソースの取得失敗は前回キャッシュ表示で吸収され実害がないため、
-//   赤い警告バナーは出さず、常に落ち着いた表示にする(内部のfailedSources自体は保持し続ける)
-let statusKind = 'loading';
-let statusTimer = null;
-function setStatus(kind){
-  statusKind = kind;
-  const bar = document.getElementById('statusbar');
-  bar.className = 'statusbar' + (kind==='loading' ? ' loading' : ' live');
-  clearInterval(statusTimer);
-  renderStatusText();
-  // 取得中(loading)だけ毎秒動かす。完了したらその瞬間の時刻で表示を止める
-  if(kind === 'loading') statusTimer = setInterval(renderStatusText, 1000);
-}
-function renderStatusText(){
-  const txt = document.getElementById('statusText');
-  const now = new Date().toLocaleTimeString('ja-JP',{hour12:false});
-  if(statusKind==='loading') txt.textContent = `更新中… ${now}`;
-  else txt.textContent = `最終更新 ${now} ・ リアルタイム更新中`;
 }
