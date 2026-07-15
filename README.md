@@ -22,7 +22,7 @@ BBC、Bloomberg、Financial Times、CNBC、NHK、Nikkei Asia、TechCrunch、ITme
 - `sessions.js` — 世界の取引セッション表示
 主な機能
 約26の公開RSSフィードを横断して収集
-BBC、The Japan Times、Financial Times、CNBC、Bloomberg、The Economist、Forbes、Newsweek、Business Insider、MarketWatch、Investing.com、TechCrunch、Digiday、VentureBeat、GeekWire、Tech in Asia、Nikkei Asia、NHK、ITmedia（NEWS・ビジネス・AI+）、日経ビジネス、日経クロステック、CNET Japan、ZUU online に対応(Bloombergは公式RSSが廃止されているため、Google Newsのサイト内検索RSS経由で取得。WSJ・CNNは公式RSSの配信が長期間停止していたため未収載)
+BBC、The Japan Times、Financial Times、CNBC、Bloomberg、The Economist、Forbes、Newsweek、Business Insider、MarketWatch、Investing.com、TechCrunch、Digiday、VentureBeat、GeekWire、Tech in Asia、Nikkei Asia、NHK、ITmedia（NEWS・ビジネス・AI+）、日経ビジネス、日経クロステック、CNET Japan、ZUU online に対応(Bloomberg・Investing.comは公式RSSへの中継プロキシ経由アクセスがブロックされるため、Google Newsのサイト内検索RSS経由で取得。WSJ・CNNは公式RSSの配信が長期間停止していたため未収載)
 
 1分ごとの自動更新
 過去2日以内に公開された記事を自動で表示
