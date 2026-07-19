@@ -20,6 +20,13 @@ from pathlib import Path
 import feedparser
 import requests
 
+# X(旧Twitter)の投稿取得は、ログイン不要でXの公式埋め込みウィジェットが内部で使っている
+# syndication.twitter.com のエンドポイントを利用する(ユーザー自身のログインCookieは一切不要)。
+# 非公開・無保証のエンドポイントのため仕様変更で壊れる可能性はあるが、個人のログイン情報を
+# 使う方式(規約違反・アカウント凍結リスクあり)より安全なため、この方式のみ採用する。
+X_SYNDICATION_URL = "https://syndication.twitter.com/srv/timeline-profile/screen-name/{handle}"
+_NEXT_DATA_RE = re.compile(r'__NEXT_DATA__" type="application/json">(.*?)</script>', re.S)
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCES_JSON_PATH = REPO_ROOT / "sources.json"
 SOURCES_JS_PATH = REPO_ROOT / "sources.js"
@@ -113,6 +120,68 @@ def load_previous_items() -> dict[str, list[dict]]:
         return {}
 
 
+def fetch_rss_items(source: dict) -> list[dict]:
+    response = requests.get(
+        source["rss"],
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "application/rss+xml, application/xml, text/xml, */*",
+        },
+        timeout=FETCH_TIMEOUT_SEC,
+    )
+    response.raise_for_status()
+    parsed = feedparser.parse(response.content)
+    if parsed.bozo and not parsed.entries:
+        raise ValueError(f"parse error: {parsed.bozo_exception}")
+    return [normalize_entry(entry) for entry in parsed.entries[:MAX_ITEMS_PER_SOURCE]]
+
+
+def normalize_tweet(tweet: dict) -> dict:
+    """syndication.twitter.comのtweetオブジェクトを既存のitem形式に正規化する。
+    投稿は短文で見出し/本文の区別がないため、titleに全文、descは空にする。
+    """
+    pub_date = None
+    created_at = tweet.get("created_at")  # 例: "Thu Apr 30 12:50:01 +0000 2026"
+    if created_at:
+        try:
+            pub_date = int(datetime.strptime(created_at, "%a %b %d %H:%M:%S %z %Y").timestamp() * 1000)
+        except ValueError:
+            pub_date = None
+    permalink = tweet.get("permalink", "")
+    return {
+        "title": strip_html(tweet.get("full_text") or tweet.get("text") or ""),
+        "link": ("https://x.com" + permalink) if permalink else "",
+        "desc": "",
+        "pubDate": pub_date,
+    }
+
+
+def fetch_x_items(source: dict) -> list[dict]:
+    """X(旧Twitter)の公式埋め込みウィジェットが使う公開エンドポイントから投稿を取得する。
+    ログイン不要・Cookie不要(ユーザー自身のXアカウント情報は一切使わない)。
+    非公開・無保証のエンドポイントのため、レスポンス構造が変わった場合はValueErrorとして
+    失敗扱いにし、呼び出し側の前回データ引き継ぎに委ねる。
+    """
+    response = requests.get(
+        X_SYNDICATION_URL.format(handle=source["xHandle"]),
+        headers={"User-Agent": USER_AGENT},
+        timeout=FETCH_TIMEOUT_SEC,
+    )
+    response.raise_for_status()
+    match = _NEXT_DATA_RE.search(response.text)
+    if not match:
+        raise ValueError("__NEXT_DATA__ not found (syndication endpoint may have changed)")
+    data = json.loads(match.group(1))
+    entries = data["props"]["pageProps"]["timeline"]["entries"]
+    items = [
+        normalize_tweet(entry["content"]["tweet"])
+        for entry in entries
+        if entry.get("type") == "tweet"
+    ]
+    items.sort(key=lambda it: it["pubDate"] or 0, reverse=True)  # ピン留め投稿が先頭に来るのを正規の時系列順に戻す
+    return items[:MAX_ITEMS_PER_SOURCE]
+
+
 def fetch_source(source: dict) -> tuple[str, list[dict] | None, str | None]:
     """1ソースを取得・パースする。
     戻り値: (source_id, items, error)
@@ -123,19 +192,10 @@ def fetch_source(source: dict) -> tuple[str, list[dict] | None, str | None]:
     last_error = None
     for attempt in range(1, FETCH_MAX_ATTEMPTS + 1):
         try:
-            response = requests.get(
-                source["rss"],
-                headers={
-                    "User-Agent": USER_AGENT,
-                    "Accept": "application/rss+xml, application/xml, text/xml, */*",
-                },
-                timeout=FETCH_TIMEOUT_SEC,
-            )
-            response.raise_for_status()
-            parsed = feedparser.parse(response.content)
-            if parsed.bozo and not parsed.entries:
-                raise ValueError(f"parse error: {parsed.bozo_exception}")
-            items = [normalize_entry(entry) for entry in parsed.entries[:MAX_ITEMS_PER_SOURCE]]
+            if source.get("type") == "x":
+                items = fetch_x_items(source)
+            else:
+                items = fetch_rss_items(source)
             return source_id, items, None
         except Exception as exc:  # noqa: BLE001 -- どんな例外でも他ソースの取得は止めない
             last_error = f"{type(exc).__name__}: {exc}"

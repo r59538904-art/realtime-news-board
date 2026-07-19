@@ -405,5 +405,17 @@ const SOURCES = [
     "lang": "EN",
     "color": "#e0766a",
     "note": "市場速報(market currents)フィード。bot対策が厳しめのサイトのため、Actions側で恒常的にFAILする場合は撤去する"
+  },
+  {
+    "id": "nikkei-x",
+    "group": "nikkei-x",
+    "name": "日本経済新聞(X公式)",
+    "short": "日経X",
+    "home": "https://x.com/nikkei",
+    "type": "x",
+    "xHandle": "nikkei",
+    "lang": "JA",
+    "color": "#1d9bf0",
+    "note": "通常のRSSではなくX公式埋め込みウィジェットの公開エンドポイント(syndication.twitter.com)経由。ログイン・Cookie不要。非公開の内部エンドポイントのため仕様変更で取得できなくなる可能性がある"
   }
 ];
