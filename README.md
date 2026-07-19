@@ -1,10 +1,10 @@
 世界ニュース速報
 リアルタイム経済ニュースボード
-Financial Times、CNBC、NHK、Nikkei Asia、Investing.com、FRB/ECB公式発表、FXStreet など約25の投資/金融専門RSSフィードを集約する経済ニュースボードです。RSS取得はGitHub Actions上のPythonが定期的に行い、結果を静的JSONとしてコミットする方式のため、ブラウザ側(index.html)はビルド不要のまま動作します。
+Financial Times、CNBC、NHK、Nikkei Asia、Investing.com、FRB/ECB公式発表、FXStreet など約27の投資/金融専門RSSフィードを集約する経済ニュースボードです。RSS取得はGitHub Actions上のPythonが定期的に行い、結果を静的JSONとしてコミットする方式のため、ブラウザ側(index.html)はビルド不要のまま動作します。
 
 ## アーキテクチャ
 1. `.github/workflows/fetch-news.yml`(GitHub Actions、15分おきcron)が `scripts/fetch_news.py` を実行
-2. `fetch_news.py` が `sources.json` の25ソースを直接fetchし(CORSプロキシを使わないサーバー側取得)、`news.json` と `sources.js` を生成してコミット
+2. `fetch_news.py` が `sources.json` の27ソースを直接fetchし(CORSプロキシを使わないサーバー側取得)、`news.json` と `sources.js` を生成してコミット
 3. ブラウザ側(`feed.js`)は `news.json` を2分おきにfetchして画面に反映するだけ
 
 ## ファイル構成
@@ -31,11 +31,11 @@ Financial Times、CNBC、NHK、Nikkei Asia、Investing.com、FRB/ECB公式発表
 - `ticker.js` — TradingView相場ティッカー表示
 - `sessions.js` — 世界の取引セッション表示
 主な機能
-約25の投資/金融専門RSSフィードを横断して収集(為替・政策金利・商品・国際情勢に強いソースを重視)
-BBC、Financial Times、CNBC、The Economist、Forbes、MarketWatch、Investing.com（株式・為替・経済指標・商品の4フィード）、Federal Reserve(FRB)公式発表、European Central Bank(ECB)公式発表、FXStreet、WSJ Markets、TechCrunch、Nikkei Asia、NHK、ITmedia（ビジネス・AI+）、日経ビジネス、日経クロステック、東洋経済オンライン、ダイヤモンド・オンライン、ZUU online に対応(WSJ MarketsはMarketWatchと同じDow Jones配信基盤(feeds.content.dowjones.io)経由で取得。Bloomberg・WSJ公式RSS・CNNは配信が長期間停止／廃止済みで代替経由でも安定して表示できなかったため未収載。投資/金融特化の方針のもと、一般ニュース/ライフスタイル系のNewsweek・Business Insider・Digiday・VentureBeat・GeekWire・Japan Times・ITmedia NEWS・CNET Japan・Tech in Asiaは収載を見送っています)
+約27の投資/金融専門RSSフィードを横断して収集(為替・政策金利・商品・国際情勢に強いソースを重視)
+BBC、Financial Times、CNBC、The Economist、Forbes、MarketWatch、Investing.com（株式・為替・経済指標・商品の4フィード）、Federal Reserve(FRB)公式発表、European Central Bank(ECB)公式発表、FXStreet、WSJ Markets、The Guardian(Business)、Politico、TechCrunch、Nikkei Asia、NHK、ITmedia（ビジネス・AI+）、日経ビジネス、日経クロステック、東洋経済オンライン、ダイヤモンド・オンライン、ZUU online に対応(WSJ MarketsはMarketWatchと同じDow Jones配信基盤(feeds.content.dowjones.io)経由で取得。Bloomberg・WSJ公式RSS・CNNは配信が長期間停止／廃止済みで代替経由でも安定して表示できなかったため未収載。投資/金融特化の方針のもと、一般ニュース/ライフスタイル系のNewsweek・Business Insider・Digiday・VentureBeat・GeekWire・Japan Times・ITmedia NEWS・CNET Japan・Tech in Asiaは収載を見送っています。Nikkei Asiaの公開RSSは日時情報を含まないため、記事カードの時刻表示が「時刻不明」になります)
 
 15分ごとにGitHub Actionsが記事を再取得し、ブラウザ側は2分ごとにその結果(news.json)を再取得
-過去2日以内に公開された記事を自動で表示
+過去4日以内に公開された記事を自動で表示(FRB/ECB公式発表やEconomist・日経クロステック等は更新頻度が2〜3日おきのことがあるため)
 
 英語記事の日本語表示
 MyMemory または Google 翻訳を利用し、英語見出しを日本語へ自動翻訳。原文見出しもあわせて確認できます

@@ -23,5 +23,7 @@
   {"id":"fxstreet","group":"fxstreet","name":"FXStreet(Forex & Commodities)","short":"FXStreet","home":"https://www.fxstreet.com/","rss":"https://www.fxstreet.com/rss/news","lang":"EN","color":"#6ab04c"},
   {"id":"wsj-markets","group":"wsj-markets","name":"WSJ Markets(Dow Jones配信)","short":"WSJ Markets","home":"https://www.wsj.com/news/markets","rss":"https://feeds.content.dowjones.io/public/rss/RSSMarketsMain","lang":"EN","color":"#2c2c2c","note":"廃止済みのWSJ公式RSSとは別ルート。既存MarketWatchと同じfeeds.content.dowjones.io配信基盤経由で取得"},
   {"id":"toyokeizai","group":"toyokeizai","name":"東洋経済オンライン","short":"東洋経済","home":"https://toyokeizai.net/","rss":"https://toyokeizai.net/list/feed/rss","lang":"JA","color":"#c94f4f"},
-  {"id":"diamond","group":"diamond","name":"ダイヤモンド・オンライン","short":"ダイヤモンド","home":"https://diamond.jp/","rss":"https://diamond.jp/list/feed/rss/dol","lang":"JA","color":"#5a9bd4"}
+  {"id":"diamond","group":"diamond","name":"ダイヤモンド・オンライン","short":"ダイヤモンド","home":"https://diamond.jp/","rss":"https://diamond.jp/list/feed/rss/dol","lang":"JA","color":"#5a9bd4"},
+  {"id":"guardian-biz","group":"guardian-biz","name":"The Guardian(Business)","short":"Guardian","home":"https://www.theguardian.com/uk/business","rss":"https://www.theguardian.com/uk/business/rss","lang":"EN","color":"#90dcbf"},
+  {"id":"politico","group":"politico","name":"Politico","short":"Politico","home":"https://www.politico.com/","rss":"https://rss.politico.com/politics-news.xml","lang":"EN","color":"#e0637a","note":"政治・政局ニュース(トピック絞込の政治/戦争ジャンルを補強する目的)"}
 ]
