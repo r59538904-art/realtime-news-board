@@ -1,35 +1,43 @@
 'use strict';
-// このファイルは「複数の機能から共通で使う小さな汎用ヘルパー関数」を提供する(状態は持たない)。
+// 全ファイル共通の汎用ヘルパー(状態は持たない)。
 
+// 正規表現の特殊文字をエスケープする
+function escapeRe(text){
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
-
-// ================= 汎用ユーティリティ(複数ファイルから共通で使う小さな関数) =================
-// escapeRe: 正規表現の特殊文字をエスケープ(下のbuildKeywordRe内で使用)
-function escapeRe(text){ return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-// stripHtml: HTMLタグを除去してプレーンテキスト化(feed.js・translate.js で使用)
-// セキュリティ上の注意: RSSフィードの本文は未検証・外部由来(悪意ある<img src=x onerror=...>等が
-// 混入し得る)。document.createElement('div')に直接innerHTMLで流し込む方式は、そのdivを画面に
-// 追加していなくても<img>のonerror等は実際に発火してしまう(検証済み)ため使わない。
-// 代わりにDOMParserでパースする: DOMParserが生成するdocumentはブラウジングコンテキストを
-// 持たないため、画像等のリソース読み込みもイベントハンドラの発火も一切起きない(安全)。
+// HTMLタグを除去してプレーンテキストにする(XSS対策の土台)。
+// DOMParserが生成するdocumentは画像読み込みもイベント発火も起きないため、
+// <img onerror=...> のような悪意あるHTMLを渡しても安全に無害化できる。
 function stripHtml(html){
   if(!html) return '';
   const doc = new DOMParser().parseFromString(html, 'text/html');
-  return (doc.body.textContent||'').replace(/\s+/g,' ').trim();
+  return (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
 }
 
-// isSafeUrl: RSS由来のリンク(item.link)がhttp/https以外(javascript:等)でないか確認する。
-// javascript:リンクはクリック時にページ内でそのまま実行されてしまうため、記事カードのリンク先に使う前に必ず通す
+// URLがhttp/httpsであることを確認する(javascript:等の危険なリンクを排除)
 function isSafeUrl(url){
-  try{ return ['http:','https:'].includes(new URL(url).protocol); }
+  try{ return ['http:', 'https:'].includes(new URL(url).protocol); }
   catch(e){ return false; }
 }
 
-// buildKeywordRe: 日英キーワードリストから一致判定用の正規表現を組み立てる
-// (topic-filter.js のトピック絞り込みと sentiment.js のセンチメント判定で共通使用)。
-// 日本語キーワードは部分一致、英字キーワードは英単語の一部への誤爆(例: "heroes"→ROE)を防ぐため
-// 単語境界(\b)付きで一致させる
+// 色指定が「#始まりの16進カラーコード」であることを確認する
+// (外部データ由来の色をstyle属性へ渡す前に必ず通す)
+function isSafeColor(color){
+  return typeof color === 'string' && /^#[0-9a-f]{3,8}$/i.test(color);
+}
+
+// 指定タグの要素を作る(class・テキストは省略可)。
+// テキストは必ずtextContentで入れるため、HTMLとして解釈されない。
+function el(tag, className, text){
+  const node = document.createElement(tag);
+  if(className) node.className = className;
+  if(text != null) node.textContent = text;
+  return node;
+}
+
+// 日英キーワードリストから一致判定用の正規表現を組み立てる。
+// 日本語は部分一致、英字は誤爆防止のため単語境界(\b)付きで一致させる。
 function buildKeywordRe(cjkWords, latinWords, flags){
   return new RegExp(
     '(?:' + cjkWords.map(escapeRe).join('|') + ')' +

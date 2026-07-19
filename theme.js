@@ -1,13 +1,13 @@
 'use strict';
-// このファイルは「ダークモード/ライトモードの切り替え機能」を担当する(状態の保存・復元・トグルボタン表示を含む)。
+// ダーク/ライトモードの切り替え(保存・復元・トグルボタン表示)。
+// data-theme属性が明示指定、未指定ならOSの設定に追従する。
 
-
-
-// ================= ダーク/ライトモード =================
 const THEME_KEY = 'news-board-theme-v1';
+
 function systemPrefersLight(){
   return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
 }
+// いま画面に適用されているテーマを返す(明示指定 > OS設定)
 function currentTheme(){
   const forced = document.documentElement.getAttribute('data-theme');
   if(forced === 'light' || forced === 'dark') return forced;
@@ -17,12 +17,10 @@ function updateThemeBtn(){
   const isLight = currentTheme() === 'light';
   document.getElementById('themeBtn').textContent = isLight ? 'ダーク表示' : 'ライト表示';
 }
+// テーマを適用する。themeがnullならOS設定追従に戻す。persist=falseで保存を省略
 function applyTheme(theme, persist){
-  if(theme === 'light' || theme === 'dark'){
-    document.documentElement.setAttribute('data-theme', theme);
-  } else {
-    document.documentElement.removeAttribute('data-theme'); // システム設定に追従
-  }
+  if(theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme);
+  else document.documentElement.removeAttribute('data-theme');
   if(persist !== false){
     try{
       if(theme === 'light' || theme === 'dark') localStorage.setItem(THEME_KEY, theme);
@@ -38,5 +36,5 @@ function loadTheme(){
 }
 function toggleTheme(){
   applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
-  tickerTape(); // TradingViewウィジェットは動的に再設定できないため、テーマ変更時に作り直す(定義はticker.js)
+  tickerTape();  // TradingViewウィジェットは動的に配色を変えられないため作り直す
 }

@@ -1,25 +1,23 @@
 <!--
-  世界ニュース速報 — リアルタイム経済ニュースボード
-  約38の投資/金融専門ソースを集約表示する、単一ページアプリ。
-  RSS取得自体はGitHub Actions上のPythonスクリプト(scripts/fetch_news.py)が5分おきに行い、
-  結果を静的な news.json としてコミットしている。ブラウザ側(このHTML+JS)はビルド不要のまま、
-  news.jsonをfetchするだけで動作する。
-  読み込むファイルとその役割(<script src>は読み込み順。依存関係があるため順序を変えないこと):
-    style.css               画面デザイン(ダーク/ライトモード対応)
-    sources.js              データ: ニュース取得元(RSSフィード)の一覧(sources.jsonから自動生成、手編集しない)
+  世界ニュース速報 — リアルタイム経済ニュースボード(ビルド不要の単一ページアプリ)
+  RSSの実取得はGitHub Actions(scripts/fetch_news.py)が5分おきに行い、news.jsonを静的コミットする。
+  ブラウザ側はそのnews.jsonをfetchして表示するだけ。
+  <script src>の読み込み順は「データ → ユーティリティ → 各機能 → 描画」の依存順。変更しないこと。
+    style.css               画面デザイン(ダーク/ライト対応)
+    sources.js              データ: 配信元一覧(自動生成。編集はsources.jsonへ)
     topic-keywords.js       データ: トピック絞り込み用の単語リスト
-    sentiment-keywords.js   データ: 簡易センチメント判定用の単語リスト
+    sentiment-keywords.js   データ: センチメント判定用の単語リスト
     market-sessions.js      データ: 世界の株式市場の開場時間
-    utils.js                共通ヘルパー関数(stripHtml・isSafeUrl・buildKeywordRe等)
-    theme.js                ダーク/ライトモード切り替え
-    feed.js                 静的news.jsonの取得・キャッシュ・更新ステータス表示
+    utils.js                共通ヘルパー(stripHtml・isSafeUrl・el等)
+    theme.js                ダーク/ライト切り替え
+    feed.js                 news.jsonの取得・キャッシュ・ステータス表示
     translate.js            英語記事の自動日本語翻訳
-    topic-filter.js         トピック絞り込みロジック(topic-keywords.jsの単語リストを使用)
-    sentiment.js            簡易センチメント判定ロジック(sentiment-keywords.jsの単語リストを使用)
-    render.js               記事一覧・フィルターチップ・フッターリンクの描画
-    ticker.js               TradingView相場ティッカー表示
-    sessions.js             世界の取引セッション表示(market-sessions.jsのデータを使用)
-    (末尾のインライン<script>)  イベント登録・自動更新・起動処理のみ
+    topic-filter.js         トピック絞り込み
+    sentiment.js            簡易センチメント判定
+    render.js               記事一覧・チップ・フッターリンクの描画
+    ticker.js               TradingView相場ティッカー
+    sessions.js             世界の取引セッション表示
+    (末尾のインライン<script>)  イベント登録・自動更新・起動処理
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -28,7 +26,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>世界ニュース速報 — リアルタイム経済ニュースボード</title>
 <script>
-// 保存済みテーマがあれば描画前に適用し、切替時のちらつき(FOUC)を防ぐ
+// 保存済みテーマを描画前に適用し、切替時のちらつき(FOUC)を防ぐ
 try{
   var t = localStorage.getItem('news-board-theme-v1');
   if(t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
@@ -37,7 +35,7 @@ try{
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -77,50 +75,48 @@ try{
   </div>
 </footer>
 
-<!-- 読み込み順に注意: 後続のファイルが前のファイルで定義したグローバル変数・関数を使うため、
-     依存されるファイル(データ→ユーティリティ→各機能ロジック)を先に読み込む構成にしている -->
 <script src="sources.js?v=10"></script>
-<script src="topic-keywords.js?v=3"></script>
-<script src="sentiment-keywords.js?v=2"></script>
-<script src="market-sessions.js?v=2"></script>
-<script src="utils.js?v=3"></script>
-<script src="theme.js?v=2"></script>
-<script src="feed.js?v=4"></script>
-<script src="translate.js?v=3"></script>
-<script src="topic-filter.js?v=3"></script>
-<script src="sentiment.js?v=3"></script>
-<script src="render.js?v=3"></script>
-<script src="ticker.js?v=2"></script>
-<script src="sessions.js?v=2"></script>
+<script src="topic-keywords.js?v=4"></script>
+<script src="sentiment-keywords.js?v=3"></script>
+<script src="market-sessions.js?v=3"></script>
+<script src="utils.js?v=4"></script>
+<script src="theme.js?v=3"></script>
+<script src="feed.js?v=5"></script>
+<script src="translate.js?v=4"></script>
+<script src="topic-filter.js?v=4"></script>
+<script src="sentiment.js?v=4"></script>
+<script src="render.js?v=4"></script>
+<script src="ticker.js?v=3"></script>
+<script src="sessions.js?v=3"></script>
 <script>
 'use strict';
 
-// ================= イベント =================
-document.getElementById('refreshBtn').addEventListener('click', ()=>fetchAll());
-document.getElementById('trBtn').addEventListener('click', ()=>{
+// ---- イベント登録 ----
+document.getElementById('refreshBtn').addEventListener('click', () => fetchAll());
+document.getElementById('trBtn').addEventListener('click', () => {
   translateOn = !translateOn;
   try{ localStorage.setItem(TR_PREF_KEY, translateOn ? 'on' : 'off'); }catch(e){}
   updateTrBtn();
   render();
 });
-document.getElementById('topicBtn').addEventListener('click', ()=>{
+document.getElementById('topicBtn').addEventListener('click', () => {
   topicFilterOn = !topicFilterOn;
   try{ localStorage.setItem(TOPIC_PREF_KEY, topicFilterOn ? 'on' : 'off'); }catch(e){}
   updateTopicBtn();
   render();
 });
-document.getElementById('search').addEventListener('input', e=>{
+document.getElementById('search').addEventListener('input', e => {
   searchTerm = e.target.value.trim();
   render();
 });
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 
-// ================= カウントダウン(ステータス文言の裏で自動更新を駆動) =================
-setInterval(()=>{
+// ---- 自動更新(5秒ごとに再取得時刻をチェック) ----
+setInterval(() => {
   if(Date.now() >= nextRefreshAt) fetchAll();
 }, 5000);
 
-// ================= 起動 =================
+// ---- 起動 ----
 loadTheme();
 loadCache();
 loadTranslate();
