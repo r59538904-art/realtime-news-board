@@ -86,7 +86,7 @@ h1 .sub{display:block; font-family:var(--mono); font-weight:400; font-size:11px;
 /* ---------- controls ---------- */
 .controls{max-width:1320px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px); display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
 .chips{display:flex; gap:8px; flex-wrap:wrap;}
-.chip{font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:6px 13px; border-radius:99px; border:1px solid var(--line); color:var(--ink-2); cursor:pointer; background:var(--surface); transition:border-color .15s, color .15s, background-color .2s;}
+.chip{font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:6px 13px; border-radius:6px; border:1px solid var(--line); color:var(--ink-2); cursor:pointer; background:var(--surface); transition:border-color .15s, color .15s, background-color .2s;}
 .chip:hover{border-color:var(--gold-dim); color:var(--ink)}
 .chip.on{border-color:var(--gold); color:var(--gold); background:color-mix(in srgb, var(--gold) 18%, var(--bg0));}
 .searchwrap{margin-left:auto; position:relative;}

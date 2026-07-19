@@ -29,16 +29,6 @@ const SOURCES = [
     "color": "#6fa8dc"
   },
   {
-    "id": "nikkei-asia",
-    "group": "nikkei-asia",
-    "name": "Nikkei Asia",
-    "short": "Nikkei Asia",
-    "home": "https://asia.nikkei.com/",
-    "rss": "https://asia.nikkei.com/rss/feed/nar",
-    "lang": "EN",
-    "color": "#5fbf8f"
-  },
-  {
     "id": "ft",
     "group": "ft",
     "name": "Financial Times(Markets)",
@@ -130,13 +120,14 @@ const SOURCES = [
   },
   {
     "id": "xtech",
-    "group": "xtech",
+    "group": "nikkei-biz",
     "name": "日経クロステック",
     "short": "日経xTECH",
     "home": "https://xtech.nikkei.com/",
     "rss": "https://xtech.nikkei.com/rss/index.rdf",
     "lang": "JA",
-    "color": "#7ed09c"
+    "color": "#7ed09c",
+    "note": "nikkei-bizとgroupを共有し、日経系のフィルターチップを1つに統合している"
   },
   {
     "id": "investing-jp",
@@ -319,17 +310,6 @@ const SOURCES = [
     "note": "FRB/ECBと並ぶ中央銀行公式枠。金融政策決定会合・オペ等の一次情報"
   },
   {
-    "id": "boe-press",
-    "group": "boe-press",
-    "name": "Bank of England(BOE公式発表)",
-    "short": "BOE",
-    "home": "https://www.bankofengland.co.uk/",
-    "rss": "https://www.bankofengland.co.uk/rss/news",
-    "lang": "EN",
-    "color": "#9184d6",
-    "note": "FRB/ECB/日銀と並ぶ中央銀行公式枠"
-  },
-  {
     "id": "bbc-world",
     "group": "bbc-biz",
     "name": "BBC News World",
@@ -408,7 +388,7 @@ const SOURCES = [
   },
   {
     "id": "nikkei-x",
-    "group": "nikkei-x",
+    "group": "nikkei-biz",
     "name": "日本経済新聞(X公式)",
     "short": "日経X",
     "home": "https://x.com/nikkei",
@@ -417,6 +397,6 @@ const SOURCES = [
     "maxAgeMs": 172800000,
     "lang": "JA",
     "color": "#1d9bf0",
-    "note": "通常のRSSではなくX公式埋め込みウィジェットの公開エンドポイント(syndication.twitter.com)経由。ログイン・Cookie不要。リツイートは除外。このエンドポイントは期間に関係なく常に最新約20件(+固定ポスト)しか返さず、count/limit/tweetLimit等の件数パラメータも全て無視され、カーソル等のページング手段も存在しないことを実測で確認済み(2026-07: 複数パラメータで試行しても同一21件が返る、レスポンス内にカーソル類ゼロ、widgets.js自体にページング処理なし、旧max_position対応エンドポイントは廃止済み)。1回の取得で件数・期間を直接広げることはできないため、fetch_news.py側で毎回の取得結果を前回分と統合する方式(リンクで重複排除、maxAgeMs超過分は破棄)を代替手段として採用している。5分おきの定期実行が積み重なることでmaxAgeMs(2日)いっぱいまでカバレッジが徐々に広がっていく(起動直後やActions初回実行直後は3〜4時間分から始まる)。これ以上1回の取得で一気に遡ることは、有料の公式APIか個人アカウントのログインなしには不可能。非公開の内部エンドポイントのため仕様変更で取得できなくなる可能性がある"
+    "note": "nikkei-bizとgroupを共有し、日経系のフィルターチップを1つに統合している。通常のRSSではなくX公式埋め込みウィジェットの公開エンドポイント(syndication.twitter.com)経由。ログイン・Cookie不要。リツイートは除外。このエンドポイントは期間に関係なく常に最新約20件(+固定ポスト)しか返さず、count/limit/tweetLimit等の件数パラメータも全て無視され、カーソル等のページング手段も存在しないことを実測で確認済み(2026-07: 複数パラメータで試行しても同一21件が返る、レスポンス内にカーソル類ゼロ、widgets.js自体にページング処理なし、旧max_position対応エンドポイントは廃止済み)。1回の取得で件数・期間を直接広げることはできないため、fetch_news.py側で毎回の取得結果を前回分と統合する方式(リンクで重複排除、maxAgeMs超過分は破棄)を代替手段として採用している。5分おきの定期実行が積み重なることでmaxAgeMs(2日)いっぱいまでカバレッジが徐々に広がっていく(起動直後やActions初回実行直後は3〜4時間分から始まる)。これ以上1回の取得で一気に遡ることは、有料の公式APIか個人アカウントのログインなしには不可能。非公開の内部エンドポイントのため仕様変更で取得できなくなる可能性がある"
   }
 ];
