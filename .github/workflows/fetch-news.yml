@@ -41,13 +41,29 @@ jobs:
 
       - name: Commit and push if changed
         run: |
+          # 外部cronサービス経由の高頻度(1分おき)実行と手動実行が近接すると、コミット直前は
+          # 差分が無くても、push直前にorigin/mainが進んでいて競合(non-fast-forward)することがある。
+          # news.json/sources.jsはボットが全体を生成し直すファイルであり、他ランの内容と3-way mergeする
+          # 意味がない(どちらの内容も「その時点で最新の取得結果」として等しく正しいため、後勝ちでよい)。
+          # rebaseではなく、origin/mainへの単純なreset --mixed(作業ツリーは変更しない)で
+          # 「最新のorigin/mainの上に、自分が取得した内容をそのまま積み直す」方式で再試行する。
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add news.json sources.js
-          if git diff --staged --quiet; then
-            echo "No changes to commit."
-          else
+          for i in 1 2 3 4 5; do
+            git add news.json sources.js
+            if git diff --staged --quiet; then
+              echo "No changes to commit."
+              exit 0
+            fi
             git commit -m "chore: update news.json [automated]"
-            git pull --rebase origin main
-            git push
-          fi
+            if git push; then
+              echo "Push succeeded (attempt $i)."
+              exit 0
+            fi
+            echo "Push failed (attempt $i) - likely a race with another concurrent run. Retrying..."
+            git fetch origin main
+            git reset --mixed origin/main
+            sleep $(( (RANDOM % 4) + 2 ))
+          done
+          echo "::error::Failed to push news.json after multiple attempts"
+          exit 1
