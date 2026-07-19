@@ -374,6 +374,17 @@ const SOURCES = [
     "note": "原油・エネルギー専門(商品/コモディティジャンルの補強)"
   },
   {
+    "id": "cnbc-us",
+    "group": "cnbc",
+    "name": "CNBC(US News)",
+    "short": "CNBC",
+    "home": "https://www.cnbc.com/",
+    "rss": "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=15837362",
+    "lang": "EN",
+    "color": "#4fa8e0",
+    "note": "cnbcとgroupを共有しチップを1つに統合。速報性が高いカテゴリフィード(既存のTop Newsとは別ID)"
+  },
+  {
     "id": "coindesk",
     "group": "coindesk",
     "name": "CoinDesk",

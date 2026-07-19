@@ -1,6 +1,6 @@
 <!--
   世界ニュース速報 — リアルタイム経済ニュースボード
-  約37の投資/金融専門RSSフィードを集約表示する、単一ページアプリ。
+  約38の投資/金融専門RSSフィードを集約表示する、単一ページアプリ。
   RSS取得自体はGitHub Actions上のPythonスクリプト(scripts/fetch_news.py)が5分おきに行い、
   結果を静的な news.json としてコミットしている。ブラウザ側(このHTML+JS)はビルド不要のまま、
   news.jsonをfetchするだけで動作する。
@@ -85,7 +85,7 @@ try{
 
 <!-- 読み込み順に注意: 後続のファイルが前のファイルで定義したグローバル変数・関数を使うため、
      依存されるファイル(データ→ユーティリティ→各機能ロジック)を先に読み込む構成にしている -->
-<script src="sources.js?v=4"></script>
+<script src="sources.js?v=5"></script>
 <script src="topic-keywords.js?v=3"></script>
 <script src="sentiment-keywords.js?v=2"></script>
 <script src="market-sessions.js?v=2"></script>
