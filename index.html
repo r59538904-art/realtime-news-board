@@ -17,7 +17,9 @@
     render.js               記事一覧・チップ・フッターリンクの描画
     ticker.js               TradingView相場ティッカー
     sessions.js             世界の取引セッション表示
-    (末尾のインライン<script>)  イベント登録・自動更新・起動処理
+    calendar.js             TradingView経済指標カレンダー(折りたたみ可)
+    (末尾のインライン<script>)  イベント登録・自動更新・SW登録・起動処理
+  PWA関連: manifest.webmanifest(ホーム画面追加) / sw.js(オフライン表示) / icons/(アイコン)
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -35,7 +37,10 @@ try{
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0a0d18">
 </head>
 <body>
 
@@ -56,6 +61,11 @@ try{
   <div class="sessions" aria-label="世界の取引セッション">
     <div class="cap"><span>WORLD TRADING SESSIONS ─ 日本時間 24H</span><span></span></div>
     <div class="sess-track" id="sessTrack"></div>
+  </div>
+
+  <div class="calendar" aria-label="経済指標カレンダー">
+    <div class="cap"><span>ECONOMIC CALENDAR ─ 経済指標の発表予定</span><button id="calBtn">折りたたむ ▲</button></div>
+    <div class="cal-widget" id="calWidget"></div>
   </div>
 </header>
 
@@ -80,14 +90,15 @@ try{
 <script src="sentiment-keywords.js?v=3"></script>
 <script src="market-sessions.js?v=3"></script>
 <script src="utils.js?v=4"></script>
-<script src="theme.js?v=3"></script>
-<script src="feed.js?v=6"></script>
+<script src="theme.js?v=4"></script>
+<script src="feed.js?v=7"></script>
 <script src="translate.js?v=4"></script>
 <script src="topic-filter.js?v=4"></script>
 <script src="sentiment.js?v=4"></script>
 <script src="render.js?v=4"></script>
 <script src="ticker.js?v=3"></script>
 <script src="sessions.js?v=3"></script>
+<script src="calendar.js?v=1"></script>
 <script>
 'use strict';
 
@@ -110,11 +121,17 @@ document.getElementById('search').addEventListener('input', e => {
   render();
 });
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+document.getElementById('calBtn').addEventListener('click', toggleCalendar);
 
 // ---- 自動更新(5秒ごとに再取得時刻をチェック) ----
 setInterval(() => {
   if(Date.now() >= nextRefreshAt) fetchAll();
 }, 5000);
+
+// ---- Service Worker登録(PWA: ホーム画面追加・オフライン表示) ----
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(e => {});  // file://等の非対応環境では黙って諦める
+}
 
 // ---- 起動 ----
 loadTheme();
@@ -127,6 +144,8 @@ buildChips();
 buildFootLinks();
 tickerTape();
 buildSessions();
+loadCalendarPref();
+buildEconCalendar();
 render();
 fetchAll();
 </script>

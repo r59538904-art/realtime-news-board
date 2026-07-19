@@ -93,6 +93,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .statusbar.err .dot{background:var(--gold); box-shadow:0 0 8px var(--gold);}
 .statusbar.stale .dot{background:var(--gold); box-shadow:0 0 8px var(--gold); animation:pulse 1.6s infinite;}
 .statusbar.stale{color:var(--gold);}
+.statusbar.offline .dot{background:var(--ink-3);}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
 #refreshBtn,#trBtn,#topicBtn,#themeBtn{
@@ -147,6 +148,26 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 }
 .now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
 .now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
+
+/* ---------- 経済指標カレンダー ---------- */
+.calendar{
+  margin:14px 0 0; border:1px solid var(--line-soft); border-radius:10px;
+  background:var(--card); padding:14px 16px 12px; box-shadow:var(--shadow-1);
+  transition:background-color .2s, border-color .2s;
+}
+.calendar .cap{
+  display:flex; justify-content:space-between; align-items:center;
+  font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3);
+}
+.calendar .cap button{
+  background:none; border:none; color:var(--gold-dim); cursor:pointer;
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; padding:2px 4px;
+  transition:color .15s;
+}
+.calendar .cap button:hover{color:var(--gold);}
+.cal-widget{margin-top:10px; height:360px; overflow:hidden; border-radius:6px;}
+.cal-widget:empty{display:none;}
+.cal-widget .tradingview-widget-container{height:100%;}
 
 /* ---------- コントロール(チップ・検索) ---------- */
 .controls{
@@ -269,6 +290,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   #search{width:100%;}
   #search:focus{width:100%;}
   .grid{grid-template-columns:1fr;}
+  .cal-widget{height:300px;}
 }
 
 /* ---------- アクセシビリティ ---------- */

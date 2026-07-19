@@ -74,8 +74,9 @@ function loadCache(){
 }
 
 // ---- ステータス表示 ----
-// 4状態: loading=取得中 / live=正常 / err=news.json取得失敗(前回キャッシュで表示継続)
+// 5状態: loading=取得中 / live=正常 / err=news.json取得失敗(前回キャッシュで表示継続)
 //        / stale=取得はできるがサーバー側でファイルが更新されていない(外部cron停止の簡易死活監視)
+//        / offline=端末がオフライン(PWAのService Workerがキャッシュで応答している状態)
 let statusKind = 'loading';
 let statusTimer = null;
 // サーバー側の更新が止まっているか(generatedAtが古いままか)を判定する
@@ -95,6 +96,7 @@ function renderStatusText(){
     live: `最終更新 ${nowText} ・ リアルタイム更新中`,
     err: `最終更新 ${nowText} ・ 前回取得分を表示中`,
     stale: staleText,
+    offline: `オフライン ・ 保存済みのニュースを表示中`,
   };
   document.getElementById('statusText').textContent = messages[statusKind] || messages.live;
 }
@@ -132,6 +134,11 @@ async function fetchAll(){
   nextRefreshAt = Date.now() + REFRESH_MS;
   document.getElementById('refreshBtn').disabled = false;
   fetchInProgress = false;                  // render()で例外が起きてもガードが残らないよう先に解除する
-  setStatus(lastFetchFailed ? 'err' : isServerStale() ? 'stale' : 'live');
+  setStatus(
+    lastFetchFailed ? 'err'
+    : navigator.onLine === false ? 'offline'
+    : isServerStale() ? 'stale'
+    : 'live'
+  );
   render();
 }
