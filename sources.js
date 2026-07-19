@@ -398,5 +398,16 @@ const SOURCES = [
     "lang": "JA",
     "color": "#1d9bf0",
     "note": "nikkei-bizとgroupを共有し、日経系のフィルターチップを1つに統合している。通常のRSSではなくX公式埋め込みウィジェットの公開エンドポイント(syndication.twitter.com)経由。ログイン・Cookie不要。リツイートは除外。このエンドポイントは期間に関係なく常に最新約20件(+固定ポスト)しか返さず、count/limit/tweetLimit等の件数パラメータも全て無視され、カーソル等のページング手段も存在しないことを実測で確認済み(2026-07: 複数パラメータで試行しても同一21件が返る、レスポンス内にカーソル類ゼロ、widgets.js自体にページング処理なし、旧max_position対応エンドポイントは廃止済み)。1回の取得で件数・期間を直接広げることはできないため、fetch_news.py側で毎回の取得結果を前回分と統合する方式(リンクで重複排除、maxAgeMs超過分は破棄)を代替手段として採用している。5分おきの定期実行が積み重なることでmaxAgeMs(2日)いっぱいまでカバレッジが徐々に広がっていく(起動直後やActions初回実行直後は3〜4時間分から始まる)。これ以上1回の取得で一気に遡ることは、有料の公式APIか個人アカウントのログインなしには不可能。非公開の内部エンドポイントのため仕様変更で取得できなくなる可能性がある"
+  },
+  {
+    "id": "bloomberg-jp",
+    "group": "bloomberg-jp",
+    "name": "Bloomberg.com(日本語版)",
+    "short": "Bloomberg",
+    "home": "https://www.bloomberg.com/jp",
+    "rss": "https://news.google.com/rss/search?q=site:bloomberg.co.jp+OR+site:bloomberg.com/jp&hl=ja&gl=JP&ceid=JP:ja",
+    "lang": "JA",
+    "color": "#e8a33d",
+    "note": "Bloomberg公式サイト(bloomberg.com/jp/economics・bloomberg.com/jp/latest等)は強力なボット検知(PerimeterX等)により、Actions側からの直接アクセスはHTTP 403『Are you a robot?』で一律拒否されることを実測で確認済み(スクレイピングは技術的に不可能かつBloomberg側の意思に反するため実施しない)。代わりに、認証不要かつGoogleが公式に公開しているニュース検索RSS(site:検索)経由でbloomberg.co.jp/bloomberg.com配下の記事一覧を取得している。これはBloomberg側のボット対策を回避する行為ではなく、Google News自体が提供する正規のRSS機能を利用しているだけであり、多くのニュースアグリゲーターで使われる一般的な手法。件数の都合上、economicsとlatestを別々のソースには分けず、Bloomberg Japan関連記事をまとめて1つのソースとして取得し、既存のトピック絞込で関連記事に絞り込む。リンク先はGoogle NewsのリダイレクトURL(news.google.com)経由でBloomberg記事本文へ到達する形になる(他ソースのような配信元への直接リンクではない点に注意)"
   }
 ];

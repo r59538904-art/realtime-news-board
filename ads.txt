@@ -1,4 +1,0 @@
-# Google AdSense 承認後、下記2行の先頭の "# " を削除し、
-# pub-XXXXXXXXXXXXXXXX を実際のパブリッシャーIDに置き換えてください。
-# パブリッシャーIDは AdSense管理画面 > アカウント > アカウント情報 で確認できます。
-# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0

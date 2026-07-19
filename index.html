@@ -1,6 +1,6 @@
 <!--
   世界ニュース速報 — リアルタイム経済ニュースボード
-  約37の投資/金融専門RSSフィードを集約表示する、単一ページアプリ。
+  約38の投資/金融専門ソースを集約表示する、単一ページアプリ。
   RSS取得自体はGitHub Actions上のPythonスクリプト(scripts/fetch_news.py)が5分おきに行い、
   結果を静的な news.json としてコミットしている。ブラウザ側(このHTML+JS)はビルド不要のまま、
   news.jsonをfetchするだけで動作する。
@@ -37,12 +37,6 @@ try{
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Google AdSense: 審査申請時にサイト所有権確認タグが必要な場合はここに追加。
-     承認後は下記コメントアウトを外し ca-pub-XXXXXXXXXXXXXXXX を実際のパブリッシャーIDに置き換える。
-     同時に、AdSenseダッシュボードの「プライバシーとメッセージ(Funding Choices)」で作成した
-     同意管理(CMP)タグもこの直後に追加する(EEA/UK訪問者への広告パーソナライズ同意取得に必要)。
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
--->
 <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
@@ -85,7 +79,7 @@ try{
 
 <!-- 読み込み順に注意: 後続のファイルが前のファイルで定義したグローバル変数・関数を使うため、
      依存されるファイル(データ→ユーティリティ→各機能ロジック)を先に読み込む構成にしている -->
-<script src="sources.js?v=9"></script>
+<script src="sources.js?v=10"></script>
 <script src="topic-keywords.js?v=3"></script>
 <script src="sentiment-keywords.js?v=2"></script>
 <script src="market-sessions.js?v=2"></script>

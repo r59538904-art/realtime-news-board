@@ -88,12 +88,19 @@ def extract_desc(entry) -> str:
     return ""
 
 
-def normalize_entry(entry) -> dict:
+# Google Newsのsite:検索RSS(bloomberg-jp)はdescriptionが「見出しへのリンク+配信元名」の
+# HTMLスニペットにすぎず、見出しの実質的な重複でしかないため要約として表示する意味がない。
+# 空にしておく(X系のitemがdescを持たないのと同じ考え方)。
+_DESC_BLANK_SOURCE_IDS = {"bloomberg-jp"}
+
+
+def normalize_entry(entry, source: dict) -> dict:
     pub_struct = entry.get("published_parsed") or entry.get("updated_parsed")
+    desc = "" if source["id"] in _DESC_BLANK_SOURCE_IDS else strip_html(extract_desc(entry))[:DESC_MAX_LEN]
     return {
         "title": strip_html(entry.get("title", "")),
         "link": entry.get("link", ""),
-        "desc": strip_html(extract_desc(entry))[:DESC_MAX_LEN],
+        "desc": desc,
         "pubDate": to_epoch_ms(pub_struct),
     }
 
@@ -129,18 +136,24 @@ def load_previous_items() -> dict[str, list[dict]]:
         return {}
 
 
-# 一部サイトはRSSのtitleに "見出し | カテゴリ | サイト名" の形でサイト名/カテゴリを
-# literalに付与している。東洋経済オンラインの場合「東洋経済オンライン」自体に「経済」が、
-# カテゴリラベルにも「政治・経済・投資」等がそのまま含まれるため、記事の実際の内容に
-# 関わらずトピック絞込のキーワードに誤爆し続けていた(全記事が絞込を素通りしてしまう
-# バグとして発覚)。判明しているソースに限り、この末尾を取り除いてから絞込にかける。
-_TITLE_SUFFIX_STRIP_SOURCE_IDS = {"toyokeizai"}
+# 一部サイトはRSSのtitleに見出し以外の文字列(サイト名・カテゴリ名)をliteralに付与している。
+# 東洋経済オンラインは "見出し | カテゴリ | 東洋経済オンライン" の形式で、「東洋経済オンライン」
+# 自体に「経済」が、カテゴリラベルにも「政治・経済・投資」等がそのまま含まれるため、記事の実際の
+# 内容に関わらずトピック絞込のキーワードに誤爆し続けていた(全記事が絞込を素通りしてしまう
+# バグとして発覚)。Bloomberg(Google Newsのsite:検索RSS経由)は "見出し - Bloomberg.com" の形式で
+# 末尾にサイト名が付く。いずれも見出しの可読性を下げるだけでなく前者は実害のあるバグの原因だったため、
+# ソースごとに末尾の除去ルールを定義しておく。
+_TITLE_SUFFIX_STRIPPERS = {
+    "toyokeizai": lambda title: title.split(" | ")[0].strip(),
+    "bloomberg-jp": lambda title: (
+        title[: -len(" - Bloomberg.com")].strip() if title.endswith(" - Bloomberg.com") else title
+    ),
+}
 
 
 def strip_title_suffix(title: str, source: dict) -> str:
-    if source["id"] not in _TITLE_SUFFIX_STRIP_SOURCE_IDS:
-        return title
-    return title.split(" | ")[0].strip()
+    stripper = _TITLE_SUFFIX_STRIPPERS.get(source["id"])
+    return stripper(title) if stripper else title
 
 
 def fetch_rss_items(source: dict) -> list[dict]:
@@ -156,7 +169,7 @@ def fetch_rss_items(source: dict) -> list[dict]:
     parsed = feedparser.parse(response.content)
     if parsed.bozo and not parsed.entries:
         raise ValueError(f"parse error: {parsed.bozo_exception}")
-    items = [normalize_entry(entry) for entry in parsed.entries[:MAX_ITEMS_PER_SOURCE]]
+    items = [normalize_entry(entry, source) for entry in parsed.entries[:MAX_ITEMS_PER_SOURCE]]
     for item in items:
         item["title"] = strip_title_suffix(item["title"], source)
     return items
