@@ -294,11 +294,17 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
 
 /* ---------- レスポンシブ ---------- */
 /* ワイド画面: カレンダーをコンテンツ右外側の余白へ固定表示し、ニュース一覧は全幅に戻す。
+   パネルは画面下端まで伸ばし、ウィジェットが残り高さ全部を使う。
    パネル幅は余白に合わせて自動調整(最大320px)。ブラウザ拡大率が高めの環境でも発動するよう閾値は1840px */
 @media (min-width:1840px){
   header, .controls, main, footer{max-width:1320px;}
-  .calendar{position:fixed; left:calc(50% + 672px); top:100px; width:min(320px, calc(50vw - 692px));}
-  .cal-widget{height:620px;}
+  .calendar{
+    position:fixed; left:calc(50% + 672px); top:100px; bottom:18px;
+    width:min(320px, calc(50vw - 692px));
+    display:flex; flex-direction:column;
+  }
+  .calendar:has(.cal-widget:empty){bottom:auto;}  /* 折りたたみ中は見出しバーの高さだけにする */
+  .cal-widget{flex:1; height:auto; min-height:0;}
 }
 /* サイドバーが入らない幅では、カレンダーをニュース一覧の下の全幅ブロックに切り替える */
 @media (max-width:1100px){
