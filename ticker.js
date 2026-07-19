@@ -27,7 +27,6 @@ function tickerTape(){
       {proName:'OANDA:HKDJPY', title:'香港ドル/円'},
       {proName:'OSE:DJIA1!', title:'NYダウ先物'},
       {proName:'VANTAGE:SP500FT', title:'S&P500先物'},
-      {proName:'TSE:TOPIX', title:'TOPIX'},
       {proName:'INDEX:NKY', title:'日経平均'},
       {proName:'TVC:GOLD', title:'ゴールド'},
       {proName:'TVC:USOIL', title:'WTI原油'},
