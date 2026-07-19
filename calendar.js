@@ -5,9 +5,9 @@
 const CAL_PREF_KEY = 'news-board-cal-pref-v1';
 let calendarOpen = true;
 
-// ワイド画面(1940px以上)ではコンテンツ右外の余白に固定表示するため縦長にする(style.css側と対応)。
+// ワイド画面(1840px以上)ではコンテンツ右外の余白に固定表示するため縦長にする(style.css側と対応)。
 // ウィンドウ幅が閾値をまたいだら高さを合わせるために作り直す
-const CAL_WIDE_MQ = window.matchMedia('(min-width: 1940px)');
+const CAL_WIDE_MQ = window.matchMedia('(min-width: 1840px)');
 try{ CAL_WIDE_MQ.addEventListener('change', () => buildEconCalendar()); }catch(e){}
 
 function loadCalendarPref(){
