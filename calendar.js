@@ -5,6 +5,11 @@
 const CAL_PREF_KEY = 'news-board-cal-pref-v1';
 let calendarOpen = true;
 
+// 超ワイド画面(2000px以上)ではコンテンツ右外の余白に固定表示するため縦長にする(style.css側と対応)。
+// ウィンドウ幅が閾値をまたいだら高さを合わせるために作り直す
+const CAL_WIDE_MQ = window.matchMedia('(min-width: 2000px)');
+try{ CAL_WIDE_MQ.addEventListener('change', () => buildEconCalendar()); }catch(e){}
+
 function loadCalendarPref(){
   try{ calendarOpen = localStorage.getItem(CAL_PREF_KEY) !== 'closed'; }catch(e){}
 }
@@ -29,7 +34,7 @@ function buildEconCalendar(){
     colorTheme: currentTheme() === 'light' ? 'light' : 'dark',
     isTransparent: false,                // ウィジェット自身のテーマ背景を使う(透過だと文字が沈んで見えるため)
     width: '100%',
-    height: 460,
+    height: CAL_WIDE_MQ.matches ? 620 : 460,
     locale: 'ja',
     importanceFilter: '0,1',             // 中・高重要度の指標のみ(ノイズ削減)
     countryFilter: 'us,jp,eu,cn,gb,de',  // 主要市場: 米・日・欧・中・英・独
