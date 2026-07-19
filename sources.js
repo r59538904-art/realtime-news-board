@@ -414,8 +414,9 @@ const SOURCES = [
     "home": "https://x.com/nikkei",
     "type": "x",
     "xHandle": "nikkei",
+    "maxAgeMs": 86400000,
     "lang": "JA",
     "color": "#1d9bf0",
-    "note": "通常のRSSではなくX公式埋め込みウィジェットの公開エンドポイント(syndication.twitter.com)経由。ログイン・Cookie不要。非公開の内部エンドポイントのため仕様変更で取得できなくなる可能性がある"
+    "note": "通常のRSSではなくX公式埋め込みウィジェットの公開エンドポイント(syndication.twitter.com)経由。ログイン・Cookie不要。リツイートは除外し、投稿頻度が高いため鮮度上限は他ソースより短い1日(maxAgeMs)にしている。非公開の内部エンドポイントのため仕様変更で取得できなくなる可能性がある"
   }
 ];

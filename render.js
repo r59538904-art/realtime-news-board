@@ -47,7 +47,9 @@ function render(){
       merged.push({...item, source});
     });
   });
-  merged = merged.filter(item => !item.pubDate || (Date.now()-item.pubDate) <= MAX_AGE_MS); // MAX_AGE_MS(feed.js)より古い記事は表示しない
+  // 鮮度上限はMAX_AGE_MS(feed.js)が既定だが、Xのように投稿頻度が高いソースは
+  // sources.json側で個別にmaxAgeMsを短く設定できる(例: nikkei-xは1日)
+  merged = merged.filter(item => !item.pubDate || (Date.now()-item.pubDate) <= (item.source.maxAgeMs || MAX_AGE_MS));
   if(topicFilterOn) merged = merged.filter(matchesTopic);
   if(searchTerm){
     const query = searchTerm.toLowerCase();

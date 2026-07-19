@@ -26,6 +26,7 @@ import requests
 # 使う方式(規約違反・アカウント凍結リスクあり)より安全なため、この方式のみ採用する。
 X_SYNDICATION_URL = "https://syndication.twitter.com/srv/timeline-profile/screen-name/{handle}"
 _NEXT_DATA_RE = re.compile(r'__NEXT_DATA__" type="application/json">(.*?)</script>', re.S)
+X_MAX_AGE_MS = 24 * 60 * 60 * 1000  # Xは投稿頻度が高く古い投稿を残す意味が薄いため、通常のRSSより短い1日で足切りする
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCES_JSON_PATH = REPO_ROOT / "sources.json"
@@ -173,11 +174,18 @@ def fetch_x_items(source: dict) -> list[dict]:
         raise ValueError("__NEXT_DATA__ not found (syndication endpoint may have changed)")
     data = json.loads(match.group(1))
     entries = data["props"]["pageProps"]["timeline"]["entries"]
-    items = [
-        normalize_tweet(entry["content"]["tweet"])
-        for entry in entries
-        if entry.get("type") == "tweet"
-    ]
+    now_ms = datetime.now(timezone.utc).timestamp() * 1000
+    items = []
+    for entry in entries:
+        if entry.get("type") != "tweet":
+            continue
+        tweet = entry["content"]["tweet"]
+        if tweet.get("retweeted_status") is not None:
+            continue  # リツイートは表示しない(本人の発信ではないため)
+        item = normalize_tweet(tweet)
+        if item["pubDate"] is not None and (now_ms - item["pubDate"]) > X_MAX_AGE_MS:
+            continue  # 1日より古い投稿は保存しない(フロントエンド側のmaxAgeMsとも合わせている)
+        items.append(item)
     items.sort(key=lambda it: it["pubDate"] or 0, reverse=True)  # ピン留め投稿が先頭に来るのを正規の時系列順に戻す
     return items[:MAX_ITEMS_PER_SOURCE]
 
