@@ -129,6 +129,20 @@ def load_previous_items() -> dict[str, list[dict]]:
         return {}
 
 
+# 一部サイトはRSSのtitleに "見出し | カテゴリ | サイト名" の形でサイト名/カテゴリを
+# literalに付与している。東洋経済オンラインの場合「東洋経済オンライン」自体に「経済」が、
+# カテゴリラベルにも「政治・経済・投資」等がそのまま含まれるため、記事の実際の内容に
+# 関わらずトピック絞込のキーワードに誤爆し続けていた(全記事が絞込を素通りしてしまう
+# バグとして発覚)。判明しているソースに限り、この末尾を取り除いてから絞込にかける。
+_TITLE_SUFFIX_STRIP_SOURCE_IDS = {"toyokeizai"}
+
+
+def strip_title_suffix(title: str, source: dict) -> str:
+    if source["id"] not in _TITLE_SUFFIX_STRIP_SOURCE_IDS:
+        return title
+    return title.split(" | ")[0].strip()
+
+
 def fetch_rss_items(source: dict) -> list[dict]:
     response = requests.get(
         source["rss"],
@@ -142,7 +156,10 @@ def fetch_rss_items(source: dict) -> list[dict]:
     parsed = feedparser.parse(response.content)
     if parsed.bozo and not parsed.entries:
         raise ValueError(f"parse error: {parsed.bozo_exception}")
-    return [normalize_entry(entry) for entry in parsed.entries[:MAX_ITEMS_PER_SOURCE]]
+    items = [normalize_entry(entry) for entry in parsed.entries[:MAX_ITEMS_PER_SOURCE]]
+    for item in items:
+        item["title"] = strip_title_suffix(item["title"], source)
+    return items
 
 
 def normalize_tweet(tweet: dict) -> dict:

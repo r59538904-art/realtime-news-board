@@ -1,6 +1,9 @@
 name: Fetch news
 
 on:
+  # GitHub Actionsのschedule(cron)トリガーが2026-07-19に導入以降一度も発火しなかったため
+  # (workflow_dispatchでの手動実行は毎回成功していたので、YAML構文やコード自体の問題ではない)、
+  # ワークフローファイル自体に変更を加えて再コミットすることでスケジューラーの再登録を試みている。
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch: {}
