@@ -74,7 +74,7 @@ button:focus-visible, a:focus-visible, input:focus-visible{
 }
 
 /* ---------- ヘッダー ---------- */
-header{padding:26px clamp(16px,4vw,48px) 0; max-width:1320px; margin:0 auto;}
+header{padding:26px clamp(16px,4vw,48px) 0; max-width:1440px; margin:0 auto;}
 .masthead{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;}
 h1{font-family:var(--serif); font-weight:700; font-size:clamp(24px,3.2vw,36px); letter-spacing:.06em; line-height:1.1;}
 h1 .sub{
@@ -158,9 +158,10 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
 .now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
 
-/* ---------- 経済指標カレンダー ---------- */
+/* ---------- 経済指標カレンダー(記事一覧の右のサイドバー。スクロールに追従) ---------- */
 .calendar{
-  margin:14px 0 0; border:1px solid var(--line-soft); border-radius:10px;
+  width:320px; flex-shrink:0; position:sticky; top:14px;
+  border:1px solid var(--line-soft); border-radius:10px;
   background:var(--card); padding:14px 16px 12px; box-shadow:var(--shadow-1);
   transition:background-color .2s, border-color .2s;
 }
@@ -174,13 +175,13 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   transition:color .15s;
 }
 .calendar .cap button:hover{color:var(--gold);}
-.cal-widget{margin-top:10px; height:360px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);}
+.cal-widget{margin-top:10px; height:460px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);}
 .cal-widget:empty{display:none;}
 .cal-widget .tradingview-widget-container{height:100%;}
 
 /* ---------- コントロール(チップ・検索) ---------- */
 .controls{
-  max-width:1320px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px);
+  max-width:1440px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px);
   display:flex; gap:10px; flex-wrap:wrap; align-items:center;
 }
 .chips{display:flex; gap:8px; flex-wrap:wrap;}
@@ -213,9 +214,12 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
-/* ---------- 記事グリッド ---------- */
-main{max-width:1320px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;}
-.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:13px;}
+/* ---------- 記事グリッド+カレンダーサイドバー ---------- */
+main{
+  max-width:1440px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;
+  display:flex; gap:14px; align-items:flex-start;
+}
+.grid{flex:1; min-width:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:13px;}
 
 /* 記事カード。--srcは配信元カラー(render.jsが検証済みの色だけを設定。未設定時は金色) */
 .card{
@@ -282,13 +286,19 @@ main{max-width:1320px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;}
 }
 
 /* ---------- フッター ---------- */
-footer{max-width:1320px; margin:0 auto; padding:10px clamp(16px,4vw,48px) 40px; font-size:11px; color:var(--ink-3); line-height:1.9;}
+footer{max-width:1440px; margin:0 auto; padding:10px clamp(16px,4vw,48px) 40px; font-size:11px; color:var(--ink-3); line-height:1.9;}
 footer .rule{border-top:1px solid var(--line-soft); padding-top:16px;}
 footer a{color:var(--gold-dim); text-decoration:none; transition:color .15s;}
 footer a:hover{color:var(--gold); text-decoration:underline; text-underline-offset:3px;}
 footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;}
 
 /* ---------- レスポンシブ ---------- */
+/* サイドバーが入らない幅では、カレンダーをニュース一覧の下の全幅ブロックに切り替える */
+@media (max-width:1100px){
+  main{flex-direction:column;}
+  .calendar{position:static; width:100%;}
+  .cal-widget{height:320px;}
+}
 @media (max-width:640px){
   header, .controls, main, footer{padding-left:14px; padding-right:14px;}
   .masthead{flex-direction:column; align-items:flex-start; gap:10px;}

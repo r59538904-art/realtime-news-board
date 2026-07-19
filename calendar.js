@@ -29,7 +29,7 @@ function buildEconCalendar(){
     colorTheme: currentTheme() === 'light' ? 'light' : 'dark',
     isTransparent: false,                // ウィジェット自身のテーマ背景を使う(透過だと文字が沈んで見えるため)
     width: '100%',
-    height: 360,
+    height: 460,
     locale: 'ja',
     importanceFilter: '0,1',             // 中・高重要度の指標のみ(ノイズ削減)
     countryFilter: 'us,jp,eu,cn,gb,de',  // 主要市場: 米・日・欧・中・英・独
