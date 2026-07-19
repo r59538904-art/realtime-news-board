@@ -299,7 +299,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
 @media (min-width:1840px){
   header, .controls, main, footer{max-width:1320px;}
   .calendar{
-    position:fixed; left:calc(50% + 672px); top:100px; bottom:18px;
+    position:fixed; left:calc(50% + 672px); top:18px; bottom:18px;
     width:min(320px, calc(50vw - 692px));
     display:flex; flex-direction:column;
   }
