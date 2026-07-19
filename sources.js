@@ -261,5 +261,26 @@ const SOURCES = [
     "rss": "https://diamond.jp/list/feed/rss/dol",
     "lang": "JA",
     "color": "#5a9bd4"
+  },
+  {
+    "id": "guardian-biz",
+    "group": "guardian-biz",
+    "name": "The Guardian(Business)",
+    "short": "Guardian",
+    "home": "https://www.theguardian.com/uk/business",
+    "rss": "https://www.theguardian.com/uk/business/rss",
+    "lang": "EN",
+    "color": "#90dcbf"
+  },
+  {
+    "id": "politico",
+    "group": "politico",
+    "name": "Politico",
+    "short": "Politico",
+    "home": "https://www.politico.com/",
+    "rss": "https://rss.politico.com/politics-news.xml",
+    "lang": "EN",
+    "color": "#e0637a",
+    "note": "政治・政局ニュース(トピック絞込の政治/戦争ジャンルを補強する目的)"
   }
 ];
