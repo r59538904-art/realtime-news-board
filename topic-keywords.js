@@ -62,6 +62,10 @@ const TOPIC_KEYWORDS_CJK = [
   // 各国の中央銀行・政策金利(既存の政策金利・日銀・利上げ・利下げ等に追加)
   '中央銀行','中国人民銀行','カナダ銀行','豪準備銀行','スイス国立銀行','韓国銀行','ニュージーランド準備銀行',
   'インド準備銀行','金融政策決定会合','金融政策委員会',
+  // 新規ソース対応の補強(日銀公式・NHK政治/国際・OilPrice・CoinDesk等の追加に合わせて拡充)。
+  // '日本銀行'は正式名称表記の記事が'日銀'(部分一致にならない別文字列)を含まないため別途必要
+  '日本銀行','国会','衆議院','参議院','衆院','参院','法案','消費税','減税','増税',
+  'ビットコイン','イーサリアム','仮想通貨','石油',
 ];
 const TOPIC_KEYWORDS_LATIN = [
   'stock','shares','equity','equities','earnings','revenue','profit','merger','acquisition',
@@ -121,4 +125,10 @@ const TOPIC_KEYWORDS_LATIN = [
   'central bank','boj','bank of japan','pboc','peoples bank of china','rba','reserve bank of australia',
   'snb','swiss national bank','rbnz','bank of canada','bank of korea','monetary policy meeting','rate decision',
   // 'bok'(Bank of Korea略称)は"bok choy"等の一般語と衝突するため不採用、正式名称のみ採用
+  // 新規ソース対応の補強(OilPrice・CoinDesk・Defense News・Seeking Alpha等の追加に合わせて拡充)。
+  // \b境界一致は単数形キーワードが複数形("missiles"等)に一致しないため、頻出する複数形も明示的に追加。
+  // 'crypto'は\b境界のため"cryptography"には誤爆しない。'defence'は英国綴り(BBC/Guardian等)対応
+  'bitcoin','ethereum','crypto','stablecoin',
+  'oil prices','oil production','oil exports','oil and gas','oilfield','shale','refinery','uranium','nuclear power',
+  'missiles','airstrikes','deals','defence spending','defence stocks',
 ];

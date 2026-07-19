@@ -11,11 +11,7 @@
 //   スポーツ・芸能・グルメ等の無関係ジャンルは除きつつ表示件数を確保できる。
 //   ヘッダーの「トピック絞込」トグルでいつでも全件表示に切り替えられる(localStorageに設定を保存)
 const TOPIC_PREF_KEY = 'news-board-topic-pref-v1';
-const TOPIC_RE = new RegExp(
-  '(?:' + TOPIC_KEYWORDS_CJK.map(escapeRe).join('|') + ')' +
-  '|\\b(?:' + TOPIC_KEYWORDS_LATIN.map(escapeRe).join('|') + ')\\b',
-  'i'
-);
+const TOPIC_RE = buildKeywordRe(TOPIC_KEYWORDS_CJK, TOPIC_KEYWORDS_LATIN, 'i'); // 組み立てはutils.jsの共通ヘルパー
 let topicFilterOn = true;
 function loadTopicPref(){
   try{ topicFilterOn = localStorage.getItem(TOPIC_PREF_KEY) !== 'off'; }catch(e){}

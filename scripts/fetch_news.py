@@ -161,8 +161,8 @@ def main() -> None:
                 print(f"OK   {source_id}: {len(items)} items")
             else:
                 # 取得/パース失敗 -- 前回分をそのまま引き継ぐ(pubDateは書き換えない。
-                # これにより2日鮮度フィルタが自然なTTLとして働き、恒久的に死んだフィードの記事は
-                # 手動で消さなくても2日経てば自動的に表示から消える)
+                # これによりフロントエンドの鮮度フィルタ(feed.jsのMAX_AGE_MS)が自然なTTLとして働き、
+                # 恒久的に死んだフィードの記事は手動で消さなくても期限が切れれば自動的に表示から消える)
                 carried = previous_items.get(source_id, [])
                 result_items[source_id] = carried
                 failed_ids.append(source_id)

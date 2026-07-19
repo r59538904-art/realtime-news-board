@@ -25,3 +25,15 @@ function isSafeUrl(url){
   try{ return ['http:','https:'].includes(new URL(url).protocol); }
   catch(e){ return false; }
 }
+
+// buildKeywordRe: 日英キーワードリストから一致判定用の正規表現を組み立てる
+// (topic-filter.js のトピック絞り込みと sentiment.js のセンチメント判定で共通使用)。
+// 日本語キーワードは部分一致、英字キーワードは英単語の一部への誤爆(例: "heroes"→ROE)を防ぐため
+// 単語境界(\b)付きで一致させる
+function buildKeywordRe(cjkWords, latinWords, flags){
+  return new RegExp(
+    '(?:' + cjkWords.map(escapeRe).join('|') + ')' +
+    '|\\b(?:' + latinWords.map(escapeRe).join('|') + ')\\b',
+    flags
+  );
+}

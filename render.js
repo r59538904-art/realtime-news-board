@@ -47,7 +47,7 @@ function render(){
       merged.push({...item, source});
     });
   });
-  merged = merged.filter(item => !item.pubDate || (Date.now()-item.pubDate) <= MAX_AGE_MS); // 2日より古い記事は表示しない
+  merged = merged.filter(item => !item.pubDate || (Date.now()-item.pubDate) <= MAX_AGE_MS); // MAX_AGE_MS(feed.js)より古い記事は表示しない
   if(topicFilterOn) merged = merged.filter(matchesTopic);
   if(searchTerm){
     const query = searchTerm.toLowerCase();

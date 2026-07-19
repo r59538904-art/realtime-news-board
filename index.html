@@ -1,7 +1,7 @@
 <!--
   世界ニュース速報 — リアルタイム経済ニュースボード
-  約25の投資/金融専門RSSフィードを集約表示する、単一ページアプリ。
-  RSS取得自体はGitHub Actions上のPythonスクリプト(scripts/fetch_news.py)が15分おきに行い、
+  約37の投資/金融専門RSSフィードを集約表示する、単一ページアプリ。
+  RSS取得自体はGitHub Actions上のPythonスクリプト(scripts/fetch_news.py)が5分おきに行い、
   結果を静的な news.json としてコミットしている。ブラウザ側(このHTML+JS)はビルド不要のまま、
   news.jsonをfetchするだけで動作する。
   読み込むファイルとその役割(<script src>は読み込み順。依存関係があるため順序を変えないこと):
@@ -43,7 +43,7 @@ try{
      同意管理(CMP)タグもこの直後に追加する(EEA/UK訪問者への広告パーソナライズ同意取得に必要)。
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
 -->
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
@@ -85,16 +85,16 @@ try{
 
 <!-- 読み込み順に注意: 後続のファイルが前のファイルで定義したグローバル変数・関数を使うため、
      依存されるファイル(データ→ユーティリティ→各機能ロジック)を先に読み込む構成にしている -->
-<script src="sources.js?v=3"></script>
-<script src="topic-keywords.js?v=2"></script>
+<script src="sources.js?v=4"></script>
+<script src="topic-keywords.js?v=3"></script>
 <script src="sentiment-keywords.js?v=2"></script>
 <script src="market-sessions.js?v=2"></script>
-<script src="utils.js?v=2"></script>
+<script src="utils.js?v=3"></script>
 <script src="theme.js?v=2"></script>
 <script src="feed.js?v=3"></script>
 <script src="translate.js?v=3"></script>
-<script src="topic-filter.js?v=2"></script>
-<script src="sentiment.js?v=2"></script>
+<script src="topic-filter.js?v=3"></script>
+<script src="sentiment.js?v=3"></script>
 <script src="render.js?v=2"></script>
 <script src="ticker.js?v=2"></script>
 <script src="sessions.js?v=2"></script>
