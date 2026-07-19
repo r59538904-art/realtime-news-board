@@ -33,13 +33,20 @@ function sanitizeItems(rawItems){
 
 // ---- キャッシュ ----
 // 保存(=整理)のタイミングは取得成功のたび(最短1分間隔)。
-// 保存前に「鮮度上限(4日)を超えた記事を捨てる → 1ソース100件に丸める」の順で整理し、
-// localStorage(約5MB)を溜め込みで圧迫しないようにする。
+// 整理で捨てるのは「画面に表示され得ない記事」だけ:
+//   ・鮮度上限を過ぎた記事(render.jsの表示判定と同じ条件。既定4日、sources.jsonのmaxAgeMs優先)
+//   ・1ソース100件を超えた分(news.json自体がサーバー側で100件/ソース上限のため実際には発生しない保険)
+// つまり通常運転では表示対象がこの整理で減ることはない。
+function sourceMaxAge(sourceId){
+  const source = SOURCES.find(s => s.id === sourceId);
+  return (source && source.maxAgeMs) || MAX_AGE_MS;
+}
 function trimForCache(maxPerSource){
   const trimmed = {};
   for(const sourceId of Object.keys(itemsBySource)){
+    const maxAge = sourceMaxAge(sourceId);
     trimmed[sourceId] = itemsBySource[sourceId]
-      .filter(item => !item.pubDate || (Date.now() - item.pubDate) <= MAX_AGE_MS)
+      .filter(item => !item.pubDate || (Date.now() - item.pubDate) <= maxAge)
       .slice(0, maxPerSource);
   }
   return trimmed;
