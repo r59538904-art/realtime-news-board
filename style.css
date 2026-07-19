@@ -84,12 +84,15 @@ h1 .sub{
 }
 h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex-shrink:0;}
 
-/* ステータスバー: loading=取得中(赤) / live=最新(緑) / err=前回分を表示中(金) */
+/* ステータスバー: loading=取得中(赤) / live=最新(緑) / err=前回分を表示中(金)
+   / stale=サーバー側の更新停止を検知(金・点滅) */
 .statusbar{display:flex; align-items:center; gap:14px; font-family:var(--mono); font-size:11px; color:var(--ink-3);}
 .statusbar .dot{width:7px; height:7px; border-radius:99px; background:var(--ink-3); flex-shrink:0;}
 .statusbar.live .dot{background:var(--green); box-shadow:0 0 8px var(--green); animation:pulse 2.2s infinite;}
 .statusbar.loading .dot{background:var(--red); box-shadow:0 0 8px var(--red); animation:pulse 1s infinite;}
 .statusbar.err .dot{background:var(--gold); box-shadow:0 0 8px var(--gold);}
+.statusbar.stale .dot{background:var(--gold); box-shadow:0 0 8px var(--gold); animation:pulse 1.6s infinite;}
+.statusbar.stale{color:var(--gold);}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
 #refreshBtn,#trBtn,#topicBtn,#themeBtn{

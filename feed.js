@@ -11,10 +11,12 @@ const STORAGE_KEY = 'news-board-cache-v1';
 const NEWS_JSON_PATH = 'news.json';
 const CACHE_MAX_PER_SOURCE = 100;            // キャッシュ保存時の1ソースあたり件数上限(サーバー側の上限と同値)
 const CACHE_MIN_PER_SOURCE = 30;             // localStorage容量超過時に絞り込む縮小上限
+const STALE_AFTER_MS = 15 * 60 * 1000;       // news.jsonの生成時刻がこれ以上古ければ「サーバー側の更新停止」とみなす
 
 // ---- 状態 ----
 let itemsBySource = {};                      // ソースid -> 記事配列
 let lastFetchFailed = false;
+let lastGeneratedAt = null;                  // news.jsonのgeneratedAt(サーバー側でファイルが生成された時刻)
 let nextRefreshAt = Date.now() + REFRESH_MS;
 let fetchInProgress = false;
 
@@ -72,16 +74,27 @@ function loadCache(){
 }
 
 // ---- ステータス表示 ----
-// 取得失敗時(file://で直接開いた場合など)も前回キャッシュで表示は継続できるため、
-// 警告色は使わず「前回取得分を表示中」と控えめに知らせるだけにする。
+// 4状態: loading=取得中 / live=正常 / err=news.json取得失敗(前回キャッシュで表示継続)
+//        / stale=取得はできるがサーバー側でファイルが更新されていない(外部cron停止の簡易死活監視)
 let statusKind = 'loading';
 let statusTimer = null;
+// サーバー側の更新が止まっているか(generatedAtが古いままか)を判定する
+function isServerStale(){
+  return !!lastGeneratedAt && (Date.now() - lastGeneratedAt) > STALE_AFTER_MS;
+}
 function renderStatusText(){
   const nowText = new Date().toLocaleTimeString('ja-JP', {hour12: false});
+  let staleText = '';
+  if(statusKind === 'stale'){
+    const staleMin = Math.round((Date.now() - lastGeneratedAt) / 60000);
+    const genText = new Date(lastGeneratedAt).toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'});
+    staleText = `サーバー側の更新が約${staleMin}分止まっています(最終生成 ${genText})`;
+  }
   const messages = {
     loading: `更新中… ${nowText}`,
     live: `最終更新 ${nowText} ・ リアルタイム更新中`,
     err: `最終更新 ${nowText} ・ 前回取得分を表示中`,
+    stale: staleText,
   };
   document.getElementById('statusText').textContent = messages[statusKind] || messages.live;
 }
@@ -109,6 +122,7 @@ async function fetchAll(){
       nextItemsBySource[sourceId] = sanitizeItems(data.items[sourceId]);
     }
     itemsBySource = nextItemsBySource;
+    lastGeneratedAt = Date.parse(data.generatedAt) || null;
     lastFetchFailed = false;
     saveCache();
   }catch(e){
@@ -118,6 +132,6 @@ async function fetchAll(){
   nextRefreshAt = Date.now() + REFRESH_MS;
   document.getElementById('refreshBtn').disabled = false;
   fetchInProgress = false;                  // render()で例外が起きてもガードが残らないよう先に解除する
-  setStatus(lastFetchFailed ? 'err' : 'live');
+  setStatus(lastFetchFailed ? 'err' : isServerStale() ? 'stale' : 'live');
   render();
 }
