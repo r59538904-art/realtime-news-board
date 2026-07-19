@@ -27,6 +27,10 @@ import requests
 X_SYNDICATION_URL = "https://syndication.twitter.com/srv/timeline-profile/screen-name/{handle}"
 _NEXT_DATA_RE = re.compile(r'__NEXT_DATA__" type="application/json">(.*?)</script>', re.S)
 X_MAX_AGE_MS = 24 * 60 * 60 * 1000  # Xは投稿頻度が高く古い投稿を残す意味が薄いため、通常のRSSより短い1日で足切りする
+# 注意: このエンドポイントは期間に関係なく常に「最新約20件+固定ポスト」しか返さない(実測確認済み。
+# レスポンスにカーソル類は一切なく、count等のパラメータも無視されるためページングは不可能)。
+# つまり実際の取得範囲を決めているのはエンドポイント側の件数上限であり、X_MAX_AGE_MSは単なる上限。
+# 高頻度アカウント(例: 日経)では3〜4時間分程度しか取れないが、これはこのコードのバグではない。
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCES_JSON_PATH = REPO_ROOT / "sources.json"
@@ -190,6 +194,27 @@ def fetch_x_items(source: dict) -> list[dict]:
     return items[:MAX_ITEMS_PER_SOURCE]
 
 
+def merge_x_items(fresh: list[dict], previous: list[dict], source: dict) -> list[dict]:
+    """X系ソースはsyndicationエンドポイントの仕様上、1回の取得では常に最新約20件程度しか
+    得られない(ページング手段が存在しないことを実測で確認済み。X_MAX_AGE_MS付近のコメント参照)。
+    そのため成功時も前回分を破棄せず統合し、5分おきの定期実行を重ねることで実質的なカバレッジを
+    maxAgeMs(sources.jsonで指定、既定はX_MAX_AGE_MS)いっぱいまで徐々に広げていく。
+    リンクで重複排除し(新しい方の内容を優先)、鮮度上限を超えたものは捨てる。
+    """
+    max_age = source.get("maxAgeMs", X_MAX_AGE_MS)
+    now_ms = datetime.now(timezone.utc).timestamp() * 1000
+    by_link: dict[str, dict] = {}
+    for item in previous + fresh:  # freshを後に処理し、同一linkならfresh側の内容で上書きする
+        link = item.get("link")
+        if not link:
+            continue
+        if item.get("pubDate") is not None and (now_ms - item["pubDate"]) > max_age:
+            continue
+        by_link[link] = item
+    merged = sorted(by_link.values(), key=lambda it: it["pubDate"] or 0, reverse=True)
+    return merged[:MAX_ITEMS_PER_SOURCE]
+
+
 def fetch_source(source: dict) -> tuple[str, list[dict] | None, str | None]:
     """1ソースを取得・パースする。
     戻り値: (source_id, items, error)
@@ -215,6 +240,7 @@ def fetch_source(source: dict) -> tuple[str, list[dict] | None, str | None]:
 def main() -> None:
     sources = load_sources()
     generate_sources_js(sources)
+    source_by_id = {source["id"]: source for source in sources}
 
     previous_items = load_previous_items()
     result_items: dict[str, list[dict]] = {}
@@ -225,6 +251,10 @@ def main() -> None:
         for future in as_completed(futures):
             source_id, items, error = future.result()
             if items is not None:
+                source = source_by_id[source_id]
+                if source.get("type") == "x":
+                    # X系は成功時も前回分と統合する(理由はmerge_x_itemsのdocstring参照)
+                    items = merge_x_items(items, previous_items.get(source_id, []), source)
                 result_items[source_id] = items
                 print(f"OK   {source_id}: {len(items)} items")
             else:
