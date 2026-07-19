@@ -48,7 +48,7 @@ function render(){
     });
   });
   // 鮮度上限はMAX_AGE_MS(feed.js)が既定だが、Xのように投稿頻度が高いソースは
-  // sources.json側で個別にmaxAgeMsを短く設定できる(例: nikkei-xは1日)
+  // sources.json側で個別にmaxAgeMsを短く設定できる(例: nikkei-xは2日=172800000ms)
   merged = merged.filter(item => !item.pubDate || (Date.now()-item.pubDate) <= (item.source.maxAgeMs || MAX_AGE_MS));
   if(topicFilterOn) merged = merged.filter(matchesTopic);
   if(searchTerm){

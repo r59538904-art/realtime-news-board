@@ -4,7 +4,7 @@
 
 
 // ================= 汎用ユーティリティ(複数ファイルから共通で使う小さな関数) =================
-// escapeRe: 正規表現の特殊文字をエスケープ(topic-filter.js・sentiment.js のキーワード一致で使用)
+// escapeRe: 正規表現の特殊文字をエスケープ(下のbuildKeywordRe内で使用)
 function escapeRe(text){ return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 // stripHtml: HTMLタグを除去してプレーンテキスト化(feed.js・translate.js で使用)

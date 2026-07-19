@@ -90,7 +90,9 @@ async function fetchAll(){
   }
   nextRefreshAt = Date.now() + REFRESH_MS;
   document.getElementById('refreshBtn').disabled = false;
+  // 二重実行ガードの解除はrender()より前に行う。後に置くと、万一render()内で例外が起きたときに
+  // ガードがtrueのまま残り、以後の自動更新・手動更新が全て無視され続けてしまう
+  fetchInProgress = false;
   setStatus(failedSources.size ? 'err' : 'live');
   render();
-  fetchInProgress = false;
 }
