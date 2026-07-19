@@ -1,19 +1,29 @@
 世界ニュース速報
 リアルタイム経済ニュースボード
-Financial Times、CNBC、NHK、Nikkei Asia、Investing.com、FRB/ECB公式発表、FXStreet など約25の投資/金融専門RSSフィードを集約する、サーバー不要の経済ニュースボードです。index.html をブラウザで開くだけで利用できます(ビルド不要)。
+Financial Times、CNBC、NHK、Nikkei Asia、Investing.com、FRB/ECB公式発表、FXStreet など約25の投資/金融専門RSSフィードを集約する経済ニュースボードです。RSS取得はGitHub Actions上のPythonが定期的に行い、結果を静的JSONとしてコミットする方式のため、ブラウザ側(index.html)はビルド不要のまま動作します。
+
+## アーキテクチャ
+1. `.github/workflows/fetch-news.yml`(GitHub Actions、15分おきcron)が `scripts/fetch_news.py` を実行
+2. `fetch_news.py` が `sources.json` の25ソースを直接fetchし(CORSプロキシを使わないサーバー側取得)、`news.json` と `sources.js` を生成してコミット
+3. ブラウザ側(`feed.js`)は `news.json` を2分おきにfetchして画面に反映するだけ
 
 ## ファイル構成
 デザイン(style.css)・データ・機能ロジックをそれぞれ役割ごとに分離しています。各ファイルの先頭に「このファイルは何を担当するか」を1行コメントで明記しているので、修正したい機能に対応するファイルだけを開けば済みます。
 
 - `index.html` — ページの骨組みと、起動処理(イベント登録・自動更新・初期化呼び出し)のみ
 - `style.css` — 画面デザイン(ダーク/ライトモード対応)
-- `sources.js` — データ: ニュース取得元(RSSフィード)の一覧
+- `sources.json` — 配信元(RSSフィード)定義の正本。**配信元を追加/削除/変更したい場合はこのファイルを編集する**
+- `sources.js` — `sources.json` から自動生成されるJS版データ(**手編集しない**。`scripts/fetch_news.py` が再生成する)
+- `scripts/fetch_news.py` — RSS取得本体(Python)。`sources.json`→`sources.js`の再生成、25ソースの並列fetch、`news.json`の書き出しを行う
+- `scripts/requirements.txt` — 上記スクリプトの依存パッケージ(`requests`, `feedparser`)
+- `.github/workflows/fetch-news.yml` — 上記スクリプトを15分おきに自動実行するGitHub Actions定義
+- `news.json` — 取得済み記事データ(自動生成・自動コミットされる静的JSON)
 - `topic-keywords.js` — データ: トピック絞り込み用の単語リスト
 - `sentiment-keywords.js` — データ: 簡易センチメント判定用の単語リスト
 - `market-sessions.js` — データ: 世界の株式市場の開場時間
 - `utils.js` — 共通ヘルパー関数
 - `theme.js` — ダーク/ライトモード切り替え
-- `feed.js` — RSS取得・キャッシュ・更新ステータス表示
+- `feed.js` — 静的news.jsonの取得・キャッシュ・更新ステータス表示
 - `translate.js` — 英語記事の自動日本語翻訳
 - `topic-filter.js` — トピック絞り込みロジック
 - `sentiment.js` — 簡易センチメント判定ロジック
@@ -22,9 +32,9 @@ Financial Times、CNBC、NHK、Nikkei Asia、Investing.com、FRB/ECB公式発表
 - `sessions.js` — 世界の取引セッション表示
 主な機能
 約25の投資/金融専門RSSフィードを横断して収集(為替・政策金利・商品・国際情勢に強いソースを重視)
-BBC、Financial Times、CNBC、The Economist、Forbes、MarketWatch、Investing.com（株式・為替・経済指標・商品の4フィード）、Federal Reserve(FRB)公式発表、European Central Bank(ECB)公式発表、FXStreet、WSJ Markets、TechCrunch、Nikkei Asia、NHK、ITmedia（ビジネス・AI+）、日経ビジネス、日経クロステック、東洋経済オンライン、ダイヤモンド・オンライン、ZUU online に対応(Investing.comは中継プロキシ経由アクセスが時々ブロックされるため稀にしか記事が取得できない場合があります。WSJ MarketsはMarketWatchと同じDow Jones配信基盤(feeds.content.dowjones.io)経由で取得。Bloomberg・WSJ公式RSS・CNNは配信が長期間停止／廃止済みで代替の中継経由でも安定して表示できなかったため未収載。投資/金融特化の方針のもと、一般ニュース/ライフスタイル系のNewsweek・Business Insider・Digiday・VentureBeat・GeekWire・Japan Times・ITmedia NEWS・CNET Japan・Tech in Asiaは収載を見送っています)
+BBC、Financial Times、CNBC、The Economist、Forbes、MarketWatch、Investing.com（株式・為替・経済指標・商品の4フィード）、Federal Reserve(FRB)公式発表、European Central Bank(ECB)公式発表、FXStreet、WSJ Markets、TechCrunch、Nikkei Asia、NHK、ITmedia（ビジネス・AI+）、日経ビジネス、日経クロステック、東洋経済オンライン、ダイヤモンド・オンライン、ZUU online に対応(WSJ MarketsはMarketWatchと同じDow Jones配信基盤(feeds.content.dowjones.io)経由で取得。Bloomberg・WSJ公式RSS・CNNは配信が長期間停止／廃止済みで代替経由でも安定して表示できなかったため未収載。投資/金融特化の方針のもと、一般ニュース/ライフスタイル系のNewsweek・Business Insider・Digiday・VentureBeat・GeekWire・Japan Times・ITmedia NEWS・CNET Japan・Tech in Asiaは収載を見送っています)
 
-1分ごとの自動更新
+15分ごとにGitHub Actionsが記事を再取得し、ブラウザ側は2分ごとにその結果(news.json)を再取得
 過去2日以内に公開された記事を自動で表示
 
 英語記事の日本語表示
@@ -43,8 +53,8 @@ NEWバッジ、配信元フィルター、キーワード検索に対応
 TradingViewティッカーにより、為替や主要株価指数を同一画面で確認可能
 
 使い方
-index.html をブラウザで直接開くだけで動作します。
-GitHub Pagesなどの静的ホスティングサービスに配置して公開することもできます。インストールやビルドは不要です。
+GitHub Pagesなどのhttp(s)ホスティングに配置して公開してください。インストールやビルドは不要です(GitHub Actions側にPython実行環境は必要ですが、GitHub Actionsが自動的に用意するため利用者側の準備は不要です)。
+注意: index.html を `file://` で直接開いた場合、`news.json` のfetchがブラウザのローカルファイル制限で失敗するため、ライブ更新は動作しません(初回訪問でキャッシュが全く無い場合は記事0件表示になります)。動作確認・開発時は `python -m http.server` 等のローカルサーバー経由で開いてください。
 免責事項
 本ボードは情報提供を目的としており、投資勧誘または投資助言を目的とするものではありません。
 記事の見出し・要約は各配信元の公開RSSフィードから取得し、原文へのリンクを掲載しています。機械翻訳およびセンチメント判定は簡易的な自動処理であるため、内容の正確性は必ず原文でご確認ください。

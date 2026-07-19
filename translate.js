@@ -49,8 +49,8 @@ function trGet(text){
   const cached = text && trCache[text];
   return cached ? cached.ja : null;
 }
-// fetch用のAbortSignalをタイムアウト付きで作る(feed.js の withFetchTimeout とは呼び出し形が異なるため
-// 別名にしている: こちらは {signal, done} を返し、呼び出し側が自分でfetchして最後にdone()を呼ぶ形)
+// fetch用のAbortSignalをタイムアウト付きで作る({signal, done} を返し、呼び出し側が自分でfetchして
+// 最後にdone()を呼ぶ形)
 function makeTimeoutSignal(ms){
   const controller = new AbortController();
   const timer = setTimeout(()=>controller.abort(), ms);

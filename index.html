@@ -1,15 +1,18 @@
 <!--
   世界ニュース速報 — リアルタイム経済ニュースボード
-  約30の公開RSSフィードを集約表示する、サーバー不要(ビルド不要)の単一ページアプリ。
+  約25の投資/金融専門RSSフィードを集約表示する、単一ページアプリ。
+  RSS取得自体はGitHub Actions上のPythonスクリプト(scripts/fetch_news.py)が15分おきに行い、
+  結果を静的な news.json としてコミットしている。ブラウザ側(このHTML+JS)はビルド不要のまま、
+  news.jsonをfetchするだけで動作する。
   読み込むファイルとその役割(<script src>は読み込み順。依存関係があるため順序を変えないこと):
     style.css              画面デザイン(ダーク/ライトモード対応)
-    sources.js              データ: ニュース取得元(RSSフィード)の一覧
+    sources.js              データ: ニュース取得元(RSSフィード)の一覧(sources.jsonから自動生成、手編集しない)
     topic-keywords.js       データ: トピック絞り込み用の単語リスト
     sentiment-keywords.js   データ: 簡易センチメント判定用の単語リスト
     market-sessions.js      データ: 世界の株式市場の開場時間
     utils.js                共通ヘルパー関数(escapeRe・stripHtml)
     theme.js                ダーク/ライトモード切り替え
-    feed.js                 RSS取得・キャッシュ・更新ステータス表示
+    feed.js                 静的news.jsonの取得・キャッシュ・更新ステータス表示
     translate.js             英語記事の自動日本語翻訳
     topic-filter.js          トピック絞り込みロジック(topic-keywords.jsの単語リストを使用)
     sentiment.js             簡易センチメント判定ロジック(sentiment-keywords.jsの単語リストを使用)
@@ -82,14 +85,14 @@ try{
 
 <!-- 読み込み順に注意: 後続のファイルが前のファイルで定義したグローバル変数・関数を使うため、
      依存されるファイル(データ→ユーティリティ→各機能ロジック)を先に読み込む構成にしている -->
-<script src="sources.js?v=2"></script>
+<script src="sources.js?v=3"></script>
 <script src="topic-keywords.js?v=2"></script>
 <script src="sentiment-keywords.js?v=2"></script>
 <script src="market-sessions.js?v=2"></script>
 <script src="utils.js?v=2"></script>
 <script src="theme.js?v=2"></script>
-<script src="feed.js?v=2"></script>
-<script src="translate.js?v=2"></script>
+<script src="feed.js?v=3"></script>
+<script src="translate.js?v=3"></script>
 <script src="topic-filter.js?v=2"></script>
 <script src="sentiment.js?v=2"></script>
 <script src="render.js?v=2"></script>
