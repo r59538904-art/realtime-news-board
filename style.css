@@ -128,24 +128,33 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   transition:background-color .2s, border-color .2s;
 }
 .sessions .cap{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3); margin-bottom:10px;}
+/* セクション見出しの頭に短い金線を付けてマストヘッドと揃える */
+.sessions .cap span:first-child::before, .calendar .cap span:first-child::before{
+  content:''; display:inline-block; width:14px; height:1px;
+  background:var(--gold-dim); margin-right:8px; vertical-align:middle;
+}
 .sess-track{position:relative; height:122px;}
 .hourgrid span{position:absolute; top:0; bottom:0; width:1px; background:var(--line-soft);}
 .hourgrid label{position:absolute; bottom:-2px; transform:translateX(-50%); font-family:var(--mono); font-size:9px; color:var(--ink-3);}
 .sess-row{position:absolute; left:0; right:0; height:13px;}
+/* 休場中の市場は控えめなグレー、開場中は金色グラデーション(どちらもテーマ変数から算出し、
+   ダーク/ライト両方で沈まない・飛ばない配色にする) */
 .sess-bar{
   position:absolute; height:100%; border-radius:99px;
-  background:linear-gradient(90deg,#2a3357,#3a466f); border:1px solid #3d4a76; opacity:.55;
-  transition:opacity .2s;
+  background:color-mix(in srgb, var(--ink-3) 18%, transparent);
+  border:1px solid color-mix(in srgb, var(--ink-3) 32%, transparent);
 }
 .sess-bar.live{
-  background:linear-gradient(90deg,#6a5a2e,#a5863f); border-color:#8a7448; opacity:1;
-  box-shadow:0 0 14px #d8b46e33;
+  background:linear-gradient(90deg, var(--gold-dim), var(--gold));
+  border-color:var(--gold-dim);
+  box-shadow:0 0 12px color-mix(in srgb, var(--gold) 30%, transparent);
 }
 .sess-bar b{
   position:absolute; left:8px; top:50%; transform:translateY(-50%);
   font-family:var(--mono); font-weight:500; font-size:9px; letter-spacing:.15em;
-  color:#cfd6ea; white-space:nowrap;
+  color:var(--ink-2); white-space:nowrap;
 }
+.sess-bar.live b{color:#191305; font-weight:600;}
 .now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
 .now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
 
@@ -165,7 +174,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   transition:color .15s;
 }
 .calendar .cap button:hover{color:var(--gold);}
-.cal-widget{margin-top:10px; height:360px; overflow:hidden; border-radius:6px;}
+.cal-widget{margin-top:10px; height:360px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);}
 .cal-widget:empty{display:none;}
 .cal-widget .tradingview-widget-container{height:100%;}
 

@@ -27,7 +27,7 @@ function buildEconCalendar(){
   widgetScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-events.js';
   widgetScript.text = JSON.stringify({
     colorTheme: currentTheme() === 'light' ? 'light' : 'dark',
-    isTransparent: true,
+    isTransparent: false,                // ウィジェット自身のテーマ背景を使う(透過だと文字が沈んで見えるため)
     width: '100%',
     height: 360,
     locale: 'ja',
