@@ -26,11 +26,15 @@ import requests
 # 使う方式(規約違反・アカウント凍結リスクあり)より安全なため、この方式のみ採用する。
 X_SYNDICATION_URL = "https://syndication.twitter.com/srv/timeline-profile/screen-name/{handle}"
 _NEXT_DATA_RE = re.compile(r'__NEXT_DATA__" type="application/json">(.*?)</script>', re.S)
-X_MAX_AGE_MS = 24 * 60 * 60 * 1000  # Xは投稿頻度が高く古い投稿を残す意味が薄いため、通常のRSSより短い1日で足切りする
+X_MAX_AGE_MS = 48 * 60 * 60 * 1000  # 蓄積(merge_x_items)の保持上限。単発の取得ではこの時間分を
+                                     # 得ることはできない(下記の注意参照)ため、5分おきの定期実行を
+                                     # 積み重ねて徐々にこの上限まで埋めていく前提の値
 # 注意: このエンドポイントは期間に関係なく常に「最新約20件+固定ポスト」しか返さない(実測確認済み。
-# レスポンスにカーソル類は一切なく、count等のパラメータも無視されるためページングは不可能)。
-# つまり実際の取得範囲を決めているのはエンドポイント側の件数上限であり、X_MAX_AGE_MSは単なる上限。
-# 高頻度アカウント(例: 日経)では3〜4時間分程度しか取れないが、これはこのコードのバグではない。
+# レスポンスにカーソル類は一切なく、count等のパラメータも無視され、widgets.js自体にもページング
+# 処理がなく、旧cdn.syndication.twimg.comの後継エンドポイントも空応答で廃止済み — Fable5による
+# 網羅調査で確認済みで、これ以上の抜け道はない)。つまり1回の取得で得られる範囲はエンドポイント側の
+# 固定件数で決まり、X_MAX_AGE_MSを直接大きくしても1回の取得結果は増えない。そのため「毎回の取得を
+# 前回分と統合して蓄積する」(merge_x_items)方式を、直接取得できない場合の代替手段として採用している。
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SOURCES_JSON_PATH = REPO_ROOT / "sources.json"
@@ -188,7 +192,8 @@ def fetch_x_items(source: dict) -> list[dict]:
             continue  # リツイートは表示しない(本人の発信ではないため)
         item = normalize_tweet(tweet)
         if item["pubDate"] is not None and (now_ms - item["pubDate"]) > X_MAX_AGE_MS:
-            continue  # 1日より古い投稿は保存しない(フロントエンド側のmaxAgeMsとも合わせている)
+            continue  # X_MAX_AGE_MS(48時間)より古い投稿は保存しない(通常は無意味 -- 単発の取得は
+                      # 常に直近3〜4時間分しか返らないため -- だが保険として残している)
         items.append(item)
     items.sort(key=lambda it: it["pubDate"] or 0, reverse=True)  # ピン留め投稿が先頭に来るのを正規の時系列順に戻す
     return items[:MAX_ITEMS_PER_SOURCE]
