@@ -175,6 +175,17 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   transition:color .15s;
 }
 .calendar .cap button:hover{color:var(--gold);}
+
+.cal-tools{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; flex-wrap:wrap;}
+#calImpBtn{
+  background:none; border:1px solid var(--line); border-radius:6px;
+  color:var(--ink-2); font-family:var(--mono); font-size:10px; letter-spacing:.04em;
+  padding:4px 10px; cursor:pointer; transition:color .15s, border-color .15s, background-color .15s;
+}
+#calImpBtn:hover{color:var(--gold); border-color:var(--gold-dim);}
+#calImpBtn.on{color:var(--gold); border-color:var(--gold); background:color-mix(in srgb, var(--gold) 14%, transparent);}
+.cal-note{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); letter-spacing:.02em;}
+
 .cal-widget{margin-top:10px; height:460px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);}
 .cal-widget:empty{display:none;}
 .cal-widget .tradingview-widget-container{height:100%;}
@@ -304,6 +315,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
     display:flex; flex-direction:column;
   }
   .calendar:has(.cal-widget:empty){bottom:auto;}  /* 折りたたみ中は見出しバーの高さだけにする */
+  .cal-tools{flex-shrink:0;}
   .cal-widget{flex:1; height:auto; min-height:0;}
 }
 /* サイドバーが入らない幅では、カレンダーをニュース一覧の下の全幅ブロックに切り替える */
@@ -323,6 +335,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   #search:focus{width:100%;}
   .grid{grid-template-columns:1fr;}
   .cal-widget{height:300px;}
+  .cal-note{display:none;}
 }
 
 /* ---------- アクセシビリティ ---------- */

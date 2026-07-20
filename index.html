@@ -37,7 +37,7 @@ try{
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style.css?v=15">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0d18">
@@ -73,6 +73,10 @@ try{
   <div class="grid" id="grid"><div class="loading">ニュースを取得しています…</div></div>
   <aside class="calendar" aria-label="経済指標カレンダー">
     <div class="cap"><span>ECONOMIC CALENDAR ─ 経済指標</span><button id="calBtn">折りたたむ ▲</button></div>
+    <div class="cal-tools">
+      <button id="calImpBtn" title="★★★のみ(米雇用統計・CPI・政策金利クラスだけ)と★★以上の表示を切り替えます">重要度: ★★以上</button>
+      <span class="cal-note">棒アイコンの数 = 重要度</span>
+    </div>
     <div class="cal-widget" id="calWidget"></div>
   </aside>
 </main>
@@ -97,7 +101,7 @@ try{
 <script src="render.js?v=4"></script>
 <script src="ticker.js?v=3"></script>
 <script src="sessions.js?v=3"></script>
-<script src="calendar.js?v=7"></script>
+<script src="calendar.js?v=8"></script>
 <script>
 'use strict';
 
@@ -121,6 +125,7 @@ document.getElementById('search').addEventListener('input', e => {
 });
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 document.getElementById('calBtn').addEventListener('click', toggleCalendar);
+document.getElementById('calImpBtn').addEventListener('click', toggleCalImportance);
 
 // ---- 自動更新(5秒ごとに再取得時刻をチェック) ----
 setInterval(() => {
