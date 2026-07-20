@@ -345,8 +345,9 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   .statusbar{flex-direction:column; align-items:flex-start; gap:10px; width:100%;}
   .status-actions{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; width:100%;}
   /* min-width:0が無いと、グリッド項目はデフォルトでボタン内テキストの1行分の幅より
-     縮まなくなり(min-width:autoの既定挙動)、2列目が右にはみ出す原因になる */
-  #refreshBtn,#trBtn,#topicBtn,#themeBtn{padding:7px 10px; font-size:10px; text-align:center; min-width:0;}
+     縮まなくなり(min-width:autoの既定挙動)、2列目が右にはみ出す原因になる。
+     white-space:normalは<button>のUA既定(テキストを折り返さない実装が多い)を上書きするために必要 */
+  #refreshBtn,#trBtn,#topicBtn,#themeBtn{padding:7px 10px; font-size:10px; text-align:center; min-width:0; white-space:normal; line-height:1.3;}
   .chips{width:100%;}
   .searchwrap{margin-left:0; width:100%;}
   #search{width:100%;}
