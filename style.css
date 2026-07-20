@@ -86,7 +86,12 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 
 /* ステータスバー: loading=取得中(赤) / live=最新(緑) / err=前回分を表示中(金)
    / stale=サーバー側の更新停止を検知(金・点滅) */
+/* status-info(点+文言)とstatus-actions(4ボタン)の2グループ構成。
+   デスクトップは両方とも横並びflexにして従来通り1行に見せ、モバイルだけ後述のmedia queryで
+   「状態1行+ボタン2×2グリッド」に組み替える */
 .statusbar{display:flex; align-items:center; gap:14px; font-family:var(--mono); font-size:11px; color:var(--ink-3);}
+.status-info{display:flex; align-items:center; gap:8px;}
+.status-actions{display:flex; align-items:center; gap:14px;}
 .statusbar .dot{width:7px; height:7px; border-radius:99px; background:var(--ink-3); flex-shrink:0;}
 .statusbar.live .dot{background:var(--green); box-shadow:0 0 8px var(--green); animation:pulse 2.2s infinite;}
 .statusbar.loading .dot{background:var(--red); box-shadow:0 0 8px var(--red); animation:pulse 1s infinite;}
@@ -335,8 +340,11 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
 @media (max-width:640px){
   header, .controls, main, footer{padding-left:14px; padding-right:14px;}
   .masthead{flex-direction:column; align-items:flex-start; gap:10px;}
-  .statusbar{flex-wrap:wrap; row-gap:8px; width:100%;}
-  #refreshBtn,#trBtn,#topicBtn{padding:6px 10px; font-size:10px;}
+  /* 状態行(点+文言)を単独の1行にし、4ボタンは2×2の均等グリッドにまとめて整列させる
+     (flex-wrapの自動折り返しに任せると行ごとに幅がバラつき、隙間が不揃いに見えるため) */
+  .statusbar{flex-direction:column; align-items:flex-start; gap:10px; width:100%;}
+  .status-actions{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; width:100%;}
+  #refreshBtn,#trBtn,#topicBtn,#themeBtn{padding:7px 10px; font-size:10px; text-align:center;}
   .chips{width:100%;}
   .searchwrap{margin-left:0; width:100%;}
   #search{width:100%;}
