@@ -45,3 +45,9 @@ function buildKeywordRe(cjkWords, latinWords, flags){
     flags
   );
 }
+
+// キーワード判定(トピック絞り込み・センチメント判定)で共通して使う「判定対象テキスト」を作る。
+// 原文(title・desc)と、翻訳が届いていればその訳文も対象に含める
+function keywordSearchText(item){
+  return item.title + ' ' + item.desc + ' ' + (trGet(item.title) || '') + ' ' + (trGet(item.desc) || '');
+}

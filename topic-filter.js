@@ -17,6 +17,5 @@ function updateTopicBtn(){
 // タイトル+要約(原文・翻訳文の両方)のどこかにキーワードがあれば通す
 function matchesTopic(item){
   if(!topicFilterOn) return true;
-  const text = item.title + ' ' + item.desc + ' ' + (trGet(item.title) || '') + ' ' + (trGet(item.desc) || '');
-  return TOPIC_RE.test(text);
+  return TOPIC_RE.test(keywordSearchText(item));
 }

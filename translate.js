@@ -37,7 +37,9 @@ function loadTranslate(){
     const now = Date.now();
     for(const [text, entry] of Object.entries(parsed.map)){
       if(entry && typeof entry.ja === 'string' && (now - (entry.savedAt || 0)) <= TR_TTL_MS){
-        trCache[text] = entry;
+        // 保存前は必ずstripHtml済みだが、localStorage経由の読み込みは信頼しすぎず
+        // 多層防御としてここでも通す(feed.jsのsanitizeItemsと同じ考え方)
+        trCache[text] = {ja: stripHtml(entry.ja), savedAt: entry.savedAt};
       }
     }
   }catch(e){ trCache = {}; }

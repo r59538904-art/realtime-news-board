@@ -96,13 +96,13 @@ try{
 <script src="topic-keywords.js?v=4"></script>
 <script src="sentiment-keywords.js?v=3"></script>
 <script src="market-sessions.js?v=3"></script>
-<script src="utils.js?v=4"></script>
+<script src="utils.js?v=5"></script>
 <script src="theme.js?v=4"></script>
 <script src="feed.js?v=8"></script>
-<script src="translate.js?v=5"></script>
-<script src="topic-filter.js?v=4"></script>
-<script src="sentiment.js?v=4"></script>
-<script src="render.js?v=5"></script>
+<script src="translate.js?v=6"></script>
+<script src="topic-filter.js?v=5"></script>
+<script src="sentiment.js?v=5"></script>
+<script src="render.js?v=6"></script>
 <script src="ticker.js?v=3"></script>
 <script src="sessions.js?v=3"></script>
 <script src="calendar.js?v=9"></script>
@@ -123,9 +123,12 @@ document.getElementById('topicBtn').addEventListener('click', () => {
   updateTopicBtn();
   render();
 });
+let searchDebounceTimer = null;
 document.getElementById('search').addEventListener('input', e => {
-  searchTerm = e.target.value.trim();
-  render();
+  const value = e.target.value.trim();
+  clearTimeout(searchDebounceTimer);
+  // 高速に連続入力された時、1文字ごとの全件再描画(最大500件)を避けるため軽く間引く
+  searchDebounceTimer = setTimeout(() => { searchTerm = value; render(); }, 150);
 });
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 document.getElementById('calBtn').addEventListener('click', toggleCalendar);

@@ -173,16 +173,27 @@ function buildChips(){
 let userTouching = false;
 let userScrolling = false;
 let scrollSettleTimer = null;
+let touchSafetyTimer = null;
 let renderPending = false;
 function flushPendingRender(){
   if(renderPending){ renderPending = false; render(); }
 }
-document.addEventListener('touchstart', () => { userTouching = true; }, {passive: true});
-document.addEventListener('touchend', () => {
-  userTouching = false;
-  if(!userScrolling) flushPendingRender();
-}, {passive: true});
-document.addEventListener('touchcancel', () => { userTouching = false; }, {passive: true});
+// e.touches.lengthで「残っている指の本数」を見る(2本指ピンチ等で片方だけ離れても
+// touchendは発火するため、単純にtrue/falseを決め打ちすると誤って離した扱いになる)。
+// touchSafetyTimerは、何らかの理由でtouchend/touchcancelが来ないまま指が離れた場合の保険
+// (通常発生しないが、保留され続けると自動更新が永久に反映されなくなるため上限を設ける)
+function updateTouchState(e){
+  userTouching = e.touches.length > 0;
+  clearTimeout(touchSafetyTimer);
+  if(userTouching){
+    touchSafetyTimer = setTimeout(() => { userTouching = false; if(!userScrolling) flushPendingRender(); }, 15000);
+  } else if(!userScrolling){
+    flushPendingRender();
+  }
+}
+document.addEventListener('touchstart', updateTouchState, {passive: true});
+document.addEventListener('touchend', updateTouchState, {passive: true});
+document.addEventListener('touchcancel', updateTouchState, {passive: true});
 window.addEventListener('scroll', () => {
   userScrolling = true;
   clearTimeout(scrollSettleTimer);

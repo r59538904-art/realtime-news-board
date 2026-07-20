@@ -7,7 +7,7 @@ const SENTIMENT_POS_RE = buildKeywordRe(SENTIMENT_POS_CJK, SENTIMENT_POS_LATIN, 
 const SENTIMENT_NEG_RE = buildKeywordRe(SENTIMENT_NEG_CJK, SENTIMENT_NEG_LATIN, 'gi');
 
 function getSentiment(item){
-  const text = item.title + ' ' + item.desc + ' ' + (trGet(item.title) || '') + ' ' + (trGet(item.desc) || '');
+  const text = keywordSearchText(item);
   const posCount = (text.match(SENTIMENT_POS_RE) || []).length;
   const negCount = (text.match(SENTIMENT_NEG_RE) || []).length;
   if(posCount > negCount) return 'pos';
