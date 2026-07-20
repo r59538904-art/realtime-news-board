@@ -186,7 +186,12 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 #calImpBtn.on{color:var(--gold); border-color:var(--gold); background:color-mix(in srgb, var(--gold) 14%, transparent);}
 .cal-note{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); letter-spacing:.02em;}
 
-.cal-widget{margin-top:10px; height:460px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);}
+/* overscroll-behavior: TradingViewウィジェット(iframe)内部の独自スクロールが端に達した時、
+   ページ側のスクロールを巻き込まないようにする(モバイルでの「スクロールが引っかかる」対策) */
+.cal-widget{
+  margin-top:10px; height:460px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);
+  overscroll-behavior:contain; touch-action:pan-y;
+}
 .cal-widget:empty{display:none;}
 .cal-widget .tradingview-widget-container{height:100%;}
 

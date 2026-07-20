@@ -14,9 +14,14 @@ let calHighOnly = false;
 const CAL_WIDE_MQ = window.matchMedia('(min-width: 1840px)');
 try{ CAL_WIDE_MQ.addEventListener('change', () => buildEconCalendar()); }catch(e){}
 
+// カレンダーはTradingViewのiframeで、内部に独自スクロール領域を持つ。
+// スマホでは指がその上に乗った瞬間にページ全体のスクロールでなく内部スクロールを奪ってしまい
+// 「スクロールが引っかかる」体感になりやすいため、狭い画面(幅1100px以下)では
+// 明示的な設定が保存されていない初回訪問時に限り、初期状態を折りたたみにする
 function loadCalendarPref(){
   try{
-    calendarOpen = localStorage.getItem(CAL_PREF_KEY) !== 'closed';
+    const saved = localStorage.getItem(CAL_PREF_KEY);
+    calendarOpen = saved ? saved !== 'closed' : window.innerWidth > 1100;
     calHighOnly = localStorage.getItem(CAL_IMP_KEY) === 'high';
   }catch(e){}
 }
