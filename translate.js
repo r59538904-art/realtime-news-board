@@ -106,10 +106,12 @@ const TR_PROVIDERS = [
 ];
 
 // ---- 翻訳キュー ----
-// 翻訳が届くたびの再描画を400msにまとめる(1件ごとの全再描画を防ぐ)
+// 翻訳が届くたびの再描画を1200msにまとめる(1件ごとの全再描画を防ぎ、スマホでの
+// スクロール中断の頻度も下げる)。実際の反映タイミングはrequestRender()(render.js)が
+// タッチ・スクロール中かどうかを見てさらに調整する
 function scheduleRender(){
   if(trRenderTimer) return;
-  trRenderTimer = setTimeout(() => { trRenderTimer = null; render(); }, 400);
+  trRenderTimer = setTimeout(() => { trRenderTimer = null; requestRender(); }, 1200);
 }
 // キューを1件ずつ直列で処理する(同時実行は常に1つ)
 async function trPump(){

@@ -140,5 +140,7 @@ async function fetchAll(){
     : isServerStale() ? 'stale'
     : 'live'
   );
-  render();
+  // 自動更新(定期実行・手動更新どちらも)による再描画はrequestRender()経由にし、
+  // スマホでスクロール中に割り込んで強制的に位置が戻る事故を防ぐ(render.js側で実装)
+  requestRender();
 }

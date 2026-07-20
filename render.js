@@ -87,9 +87,13 @@ function buildCard(item, jaTitle, jaDesc){
 // ---- 一覧描画 ----
 function render(){
   const grid = document.getElementById('grid');
-  // grid全体を作り直すとスクロール位置が先頭側へずれるため、前後で保存・復元する
+  // grid全体を作り直すとスクロール位置が先頭側へずれることがあるため、前後で保存・復元する。
+  // ただし実際にずれていない限りscrollTo自体を呼ばない(モバイルでは位置が変わらない
+  // scrollTo呼び出しでも慣性スクロールが打ち切られてしまうため、無駄な呼び出しを避ける)
   const scrollYBeforeRebuild = window.scrollY;
-  const restoreScroll = () => window.scrollTo({top: scrollYBeforeRebuild, left: 0, behavior: 'instant'});
+  const restoreScroll = () => {
+    if(window.scrollY !== scrollYBeforeRebuild) window.scrollTo({top: scrollYBeforeRebuild, left: 0, behavior: 'instant'});
+  };
 
   const items = visibleItems();
   grid.textContent = '';
@@ -157,6 +161,40 @@ function buildChips(){
     };
     chipsEl.appendChild(chip);
   });
+}
+
+// ---- 自動再描画の遅延(スマホでのスクロール中断防止) ----
+// render()は毎回scrollToで位置を復元するため、翻訳結果の反映や自動更新など
+// 「ユーザー操作によらない」再描画がスワイプ中・指を離した直後の慣性スクロール中に
+// 割り込むと、スクロールが強制的に打ち切られ「かくかく」「ロールバックする」ように感じる。
+// 自動系の再描画はrequestRender()を経由させ、タッチ中・スクロール中は保留して
+// 落ち着いてから1回だけ反映する。ボタン操作や検索など直接の操作はrender()を直接呼び、
+// 従来通り即座に反映させる(スワイプ中に同時操作されることは実質ないため)。
+let userTouching = false;
+let userScrolling = false;
+let scrollSettleTimer = null;
+let renderPending = false;
+function flushPendingRender(){
+  if(renderPending){ renderPending = false; render(); }
+}
+document.addEventListener('touchstart', () => { userTouching = true; }, {passive: true});
+document.addEventListener('touchend', () => {
+  userTouching = false;
+  if(!userScrolling) flushPendingRender();
+}, {passive: true});
+document.addEventListener('touchcancel', () => { userTouching = false; }, {passive: true});
+window.addEventListener('scroll', () => {
+  userScrolling = true;
+  clearTimeout(scrollSettleTimer);
+  // スクロールイベントが150ms止まったら「慣性スクロールも含めて止まった」とみなす
+  scrollSettleTimer = setTimeout(() => {
+    userScrolling = false;
+    if(!userTouching) flushPendingRender();
+  }, 150);
+}, {passive: true});
+function requestRender(){
+  if(userTouching || userScrolling){ renderPending = true; return; }
+  render();
 }
 
 // ---- フッターリンク ----
