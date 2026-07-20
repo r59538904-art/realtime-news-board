@@ -18,8 +18,17 @@
     ticker.js               TradingView相場ティッカー
     sessions.js             世界の取引セッション表示
     calendar.js             TradingView経済指標カレンダー(折りたたみ可)
-    (末尾のインライン<script>)  イベント登録・自動更新・SW登録・起動処理
+    theme-init.js            <head>内で同期実行するFOUC防止スニペット(外部化: CSP script-src対応)
+    main.js                  イベント登録・自動更新・SW登録・起動処理(外部化: CSP script-src対応)
   PWA関連: manifest.webmanifest(ホーム画面追加) / sw.js(オフライン表示) / icons/(アイコン)
+
+  CSP(下記meta)の要点:
+    script-src 'self'に外部インラインscriptを一切許可していない(main.js/theme-init.jsの
+    外部化はこのため)。style-src だけ 'unsafe-inline' を許可しているのは、TradingView
+    ウィジェットが自身のスクリプトから<style>を動的注入する仕様のため回避不可
+    (script-srcには'unsafe-inline'を含めていないので、XSS対策上の実効性は保たれる)。
+    frame-srcにtradingview.com/tradingview-widget.comの2ドメインを許可しているのは、
+    ウィジェットのiframeがこの2つを使い分けているため(実際にCSP違反ゼロになるまで検証済み)。
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -27,29 +36,35 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>世界ニュース速報 — リアルタイム経済ニュースボード</title>
-<script>
-// 保存済みテーマを描画前に適用し、切替時のちらつき(FOUC)を防ぐ
-try{
-  var t = localStorage.getItem('news-board-theme-v1');
-  if(t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
-}catch(e){}
-</script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://s3.tradingview.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self' https://api.mymemory.translated.net https://translate.googleapis.com; frame-src https://*.tradingview.com https://*.tradingview-widget.com; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none';">
+<meta name="description" content="NHK・Financial Times・Bloomberg・ITmediaなど約38の投資/金融専門ソースを集約表示するリアルタイム経済ニュースボード。株価・為替・AI・企業関連ニュースを自動翻訳・トピック絞込・簡易センチメント判定つきで表示します。">
+<link rel="canonical" href="https://r59538904-art.github.io/realtime-news-board/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="世界ニュース速報 — リアルタイム経済ニュースボード">
+<meta property="og:description" content="約38の投資/金融専門ソースを集約表示するリアルタイム経済ニュースボード。">
+<meta property="og:url" content="https://r59538904-art.github.io/realtime-news-board/">
+<meta property="og:image" content="https://r59538904-art.github.io/realtime-news-board/icons/icon-512.png">
+<meta name="twitter:card" content="summary">
+<script src="theme-init.js?v=1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=21">
+<link rel="stylesheet" href="style.css?v=22">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="theme-color" content="#0a0d18">
 </head>
 <body>
+
+<a class="skip-link" href="#grid">ニュース一覧へスキップ</a>
 
 <header>
   <div class="masthead">
     <h1>世界ニュース速報<span class="sub">REAL-TIME MULTI-SOURCE NEWS BOARD</span></h1>
     <div class="statusbar" id="statusbar">
       <span class="status-info">
-        <span class="dot"></span>
+        <span class="dot" aria-hidden="true"></span>
         <span id="statusText">読み込み中…</span>
       </span>
       <div class="status-actions">
@@ -69,8 +84,8 @@ try{
 </header>
 
 <div class="controls">
-  <div class="chips" id="chips"></div>
-  <div class="searchwrap"><input id="search" type="text" placeholder="キーワードで絞り込み…"></div>
+  <div class="chips" id="chips" role="group" aria-label="配信元フィルター"></div>
+  <div class="searchwrap"><input id="search" type="text" placeholder="キーワードで絞り込み…" aria-label="キーワードで絞り込み"></div>
 </div>
 
 <main>
@@ -102,63 +117,10 @@ try{
 <script src="translate.js?v=6"></script>
 <script src="topic-filter.js?v=5"></script>
 <script src="sentiment.js?v=5"></script>
-<script src="render.js?v=6"></script>
+<script src="render.js?v=7"></script>
 <script src="ticker.js?v=3"></script>
 <script src="sessions.js?v=3"></script>
 <script src="calendar.js?v=9"></script>
-<script>
-'use strict';
-
-// ---- イベント登録 ----
-document.getElementById('refreshBtn').addEventListener('click', () => fetchAll());
-document.getElementById('trBtn').addEventListener('click', () => {
-  translateOn = !translateOn;
-  try{ localStorage.setItem(TR_PREF_KEY, translateOn ? 'on' : 'off'); }catch(e){}
-  updateTrBtn();
-  render();
-});
-document.getElementById('topicBtn').addEventListener('click', () => {
-  topicFilterOn = !topicFilterOn;
-  try{ localStorage.setItem(TOPIC_PREF_KEY, topicFilterOn ? 'on' : 'off'); }catch(e){}
-  updateTopicBtn();
-  render();
-});
-let searchDebounceTimer = null;
-document.getElementById('search').addEventListener('input', e => {
-  const value = e.target.value.trim();
-  clearTimeout(searchDebounceTimer);
-  // 高速に連続入力された時、1文字ごとの全件再描画(最大500件)を避けるため軽く間引く
-  searchDebounceTimer = setTimeout(() => { searchTerm = value; render(); }, 150);
-});
-document.getElementById('themeBtn').addEventListener('click', toggleTheme);
-document.getElementById('calBtn').addEventListener('click', toggleCalendar);
-document.getElementById('calImpBtn').addEventListener('click', toggleCalImportance);
-
-// ---- 自動更新(5秒ごとに再取得時刻をチェック) ----
-setInterval(() => {
-  if(Date.now() >= nextRefreshAt) fetchAll();
-}, 5000);
-
-// ---- Service Worker登録(PWA: ホーム画面追加・オフライン表示) ----
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(e => {});  // file://等の非対応環境では黙って諦める
-}
-
-// ---- 起動 ----
-loadTheme();
-loadCache();
-loadTranslate();
-updateTrBtn();
-loadTopicPref();
-updateTopicBtn();
-buildChips();
-buildFootLinks();
-tickerTape();
-buildSessions();
-loadCalendarPref();
-buildEconCalendar();
-render();
-fetchAll();
-</script>
+<script src="main.js?v=1"></script>
 </body>
 </html>

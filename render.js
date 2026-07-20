@@ -70,7 +70,12 @@ function buildCard(item, jaTitle, jaDesc){
 
   const metaRight = el('div', 'meta-right');
   const sentiment = getSentiment(item);
-  if(sentiment) metaRight.appendChild(el('span', 'sentiment ' + sentiment, sentiment === 'pos' ? '▲' : '▼'));
+  if(sentiment){
+    // ▲/▼はスクリーンリーダーには意味が伝わらないため、読み上げ用のラベルを別途付ける
+    const sentimentEl = el('span', 'sentiment ' + sentiment, sentiment === 'pos' ? '▲' : '▼');
+    sentimentEl.setAttribute('aria-label', sentiment === 'pos' ? 'ポジティブ判定' : 'ネガティブ判定');
+    metaRight.appendChild(sentimentEl);
+  }
   metaRight.appendChild(el('time', null, relTime(item.pubDate)));
 
   const meta = el('div', 'meta');
@@ -115,7 +120,9 @@ function render(){
       if(!jaDesc && item.desc && enCount < TR_DESC_LIMIT) wantDesc.push(item.desc);
       enCount++;
     }
-    fragment.appendChild(buildCard(item, jaTitle, jaDesc));
+    // 1件のカード生成で例外が起きても残り数百件の描画を止めないよう、ここで局所的に捕捉する
+    try{ fragment.appendChild(buildCard(item, jaTitle, jaDesc)); }
+    catch(e){ console.error('カード描画に失敗:', item && item.link, e); }
   });
   grid.appendChild(fragment);
   restoreScroll();
@@ -137,21 +144,31 @@ function sourceGroups(){
   });
   return order;
 }
+// チップはbutton要素にする(キーボード操作・スクリーンリーダーでの読み上げに対応するため。
+// <div onclick>はタブ移動できずEnter/Spaceでも押せない)。aria-pressedでON/OFF状態も明示する
 function buildChips(){
   const chipsEl = document.getElementById('chips');
   chipsEl.textContent = '';
 
-  const allChip = el('div', 'chip' + (activeFilters.size === SOURCES.length ? ' on' : ''), 'すべて');
+  const allOn = activeFilters.size === SOURCES.length;
+  const allChip = el('button', 'chip' + (allOn ? ' on' : ''), 'すべて');
+  allChip.type = 'button';
+  allChip.setAttribute('aria-pressed', String(allOn));
   allChip.onclick = () => { activeFilters = new Set(SOURCES.map(source => source.id)); buildChips(); render(); };
   chipsEl.appendChild(allChip);
 
-  const noneChip = el('div', 'chip' + (activeFilters.size === 0 ? ' on' : ''), 'すべて解除');
+  const noneOn = activeFilters.size === 0;
+  const noneChip = el('button', 'chip' + (noneOn ? ' on' : ''), 'すべて解除');
+  noneChip.type = 'button';
+  noneChip.setAttribute('aria-pressed', String(noneOn));
   noneChip.onclick = () => { activeFilters = new Set(); buildChips(); render(); };
   chipsEl.appendChild(noneChip);
 
   sourceGroups().forEach(group => {
     const isOn = group.ids.every(id => activeFilters.has(id));
-    const chip = el('div', 'chip' + (isOn ? ' on' : ''), group.label);
+    const chip = el('button', 'chip' + (isOn ? ' on' : ''), group.label);
+    chip.type = 'button';
+    chip.setAttribute('aria-pressed', String(isOn));
     chip.onclick = () => {
       // ONのグループはOFFへ、OFFのグループはONへ(空集合も意味のある状態として扱う)
       if(group.ids.every(id => activeFilters.has(id))) group.ids.forEach(id => activeFilters.delete(id));

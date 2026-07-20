@@ -73,6 +73,16 @@ button:focus-visible, a:focus-visible, input:focus-visible{
   outline:2px solid var(--gold); outline-offset:2px; border-radius:6px;
 }
 
+/* キーボード利用者が長いヘッダー(ティッカー・取引セッション・チップ)を毎回tabで
+   通過せずニュース本文へ直接飛べるようにするリンク。通常は画面外に置き、
+   フォーカス時だけ左上に表示する定番パターン */
+.skip-link{
+  position:absolute; top:-100px; left:12px; z-index:1000;
+  background:var(--gold); color:var(--gold-ink); font-family:var(--mono); font-size:12px;
+  padding:10px 16px; border-radius:0 0 8px 8px; text-decoration:none; transition:top .15s;
+}
+.skip-link:focus{top:0;}
+
 /* ---------- ヘッダー ---------- */
 header{padding:26px clamp(16px,4vw,48px) 0; max-width:1440px; margin:0 auto;}
 .masthead{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;}
@@ -209,7 +219,10 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 /* flex-growで折り返し後の行末の余白をチップ側に配分し、右端まで隙間なく揃える
    (既定のflex-wrapは行を詰めるだけ詰めて余りを空白のまま残すため、行ごとに不揃いな
    余白が生じていた)。max-widthは、1個だけ残った行で異常に間延びしないための上限 */
+/* button要素化に伴い、ブラウザ既定の見た目(ネイティブ枠線・背景・行高)を打ち消す */
 .chip{
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  font:inherit; line-height:normal;
   font-family:var(--mono); font-size:11px; letter-spacing:.06em;
   padding:6px 13px; border-radius:6px; border:1px solid var(--line);
   color:var(--ink-2); cursor:pointer; background:var(--surface); user-select:none;

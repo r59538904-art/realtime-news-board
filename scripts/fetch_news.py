@@ -110,6 +110,29 @@ def load_sources() -> list[dict]:
         return json.load(f)
 
 
+def validate_sources(sources: list[dict]) -> list[dict]:
+    """sources.jsonの各エントリに必須フィールドが揃っているか事前検証する。
+    検証なしだと、1件でも"id"等の必須キーが欠けているとmain()側の辞書内包表記
+    (source["id"]をキーにする箇所)でKeyErrorが発生し、他の全ソースの取得も含めて
+    パイプライン全体がクラッシュしnews.jsonが更新されなくなる。ここで不正なエントリだけを
+    除外しておけば、残りのソースは通常通り取得できる。
+    """
+    valid = []
+    for i, source in enumerate(sources):
+        if not isinstance(source, dict) or not source.get("id"):
+            print(f"::warning::sources.json[{i}]は'id'が無いため除外します")
+            continue
+        if source.get("type") == "x":
+            if not source.get("xHandle"):
+                print(f"::warning::{source['id']}: type=xですが'xHandle'が無いため除外します")
+                continue
+        elif not source.get("rss"):
+            print(f"::warning::{source['id']}: 'rss'が無いため除外します")
+            continue
+        valid.append(source)
+    return valid
+
+
 def generate_sources_js(sources: list[dict]) -> None:
     """sources.json から sources.js(フロントエンドが<script src>で読み込むJS)を再生成する。"""
     body = json.dumps(sources, ensure_ascii=False, indent=2)
@@ -273,7 +296,7 @@ def fetch_source(source: dict) -> tuple[str, list[dict] | None, str | None]:
 
 
 def main() -> None:
-    sources = load_sources()
+    sources = validate_sources(load_sources())
     generate_sources_js(sources)
     source_by_id = {source["id"]: source for source in sources}
 
