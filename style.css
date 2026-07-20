@@ -344,7 +344,9 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
      (flex-wrapの自動折り返しに任せると行ごとに幅がバラつき、隙間が不揃いに見えるため) */
   .statusbar{flex-direction:column; align-items:flex-start; gap:10px; width:100%;}
   .status-actions{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; width:100%;}
-  #refreshBtn,#trBtn,#topicBtn,#themeBtn{padding:7px 10px; font-size:10px; text-align:center;}
+  /* min-width:0が無いと、グリッド項目はデフォルトでボタン内テキストの1行分の幅より
+     縮まなくなり(min-width:autoの既定挙動)、2列目が右にはみ出す原因になる */
+  #refreshBtn,#trBtn,#topicBtn,#themeBtn{padding:7px 10px; font-size:10px; text-align:center; min-width:0;}
   .chips{width:100%;}
   .searchwrap{margin-left:0; width:100%;}
   #search{width:100%;}
