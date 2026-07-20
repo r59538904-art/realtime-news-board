@@ -295,7 +295,10 @@ main{
 }
 .card .lang{font-family:var(--mono); font-size:9px; color:var(--ink-3); letter-spacing:.1em; margin-top:auto;}
 
-.empty, .loading{
+/* #grid配下に限定する。理由: statusbarも更新中に"loading"というクラス名を付与するため、
+   ここを無条件の.loadingセレクタにすると更新中のstatusbarにまでこの破線ボックスが誤って
+   適用されてしまう(実際に起きていた不具合) */
+#grid .empty, #grid .loading{
   grid-column:1/-1; text-align:center; padding:60px 20px;
   color:var(--ink-3); font-family:var(--mono); font-size:12px; letter-spacing:.08em;
   border:1px dashed var(--line); border-radius:12px;
