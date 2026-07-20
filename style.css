@@ -206,10 +206,14 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   display:flex; gap:10px; flex-wrap:wrap; align-items:center;
 }
 .chips{display:flex; gap:8px; flex-wrap:wrap;}
+/* flex-growで折り返し後の行末の余白をチップ側に配分し、右端まで隙間なく揃える
+   (既定のflex-wrapは行を詰めるだけ詰めて余りを空白のまま残すため、行ごとに不揃いな
+   余白が生じていた)。max-widthは、1個だけ残った行で異常に間延びしないための上限 */
 .chip{
   font-family:var(--mono); font-size:11px; letter-spacing:.06em;
   padding:6px 13px; border-radius:6px; border:1px solid var(--line);
   color:var(--ink-2); cursor:pointer; background:var(--surface); user-select:none;
+  text-align:center; flex:1 1 auto; max-width:240px;
   transition:border-color .15s, color .15s, background-color .2s, transform .1s;
 }
 .chip:hover{border-color:var(--gold-dim); color:var(--ink);}
