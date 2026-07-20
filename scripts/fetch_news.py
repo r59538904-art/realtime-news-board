@@ -27,7 +27,7 @@ import requests
 X_SYNDICATION_URL = "https://syndication.twitter.com/srv/timeline-profile/screen-name/{handle}"
 _NEXT_DATA_RE = re.compile(r'__NEXT_DATA__" type="application/json">(.*?)</script>', re.S)
 X_MAX_AGE_MS = 48 * 60 * 60 * 1000  # 蓄積(merge_x_items)の保持上限。単発の取得ではこの時間分を
-                                     # 得ることはできない(下記の注意参照)ため、5分おきの定期実行を
+                                     # 得ることはできない(下記の注意参照)ため、1分おきの定期実行を
                                      # 積み重ねて徐々にこの上限まで埋めていく前提の値
 # 注意: このエンドポイントは期間に関係なく常に「最新約20件+固定ポスト」しか返さない(実測確認済み。
 # レスポンスにカーソル類は一切なく、count等のパラメータも無視され、widgets.js自体にもページング
@@ -255,7 +255,7 @@ def fetch_x_items(source: dict) -> list[dict]:
 def merge_x_items(fresh: list[dict], previous: list[dict], source: dict) -> list[dict]:
     """X系ソースはsyndicationエンドポイントの仕様上、1回の取得では常に最新約20件程度しか
     得られない(ページング手段が存在しないことを実測で確認済み。X_MAX_AGE_MS付近のコメント参照)。
-    そのため成功時も前回分を破棄せず統合し、5分おきの定期実行を重ねることで実質的なカバレッジを
+    そのため成功時も前回分を破棄せず統合し、1分おきの定期実行を重ねることで実質的なカバレッジを
     maxAgeMs(sources.jsonで指定、既定はX_MAX_AGE_MS)いっぱいまで徐々に広げていく。
     リンクで重複排除し(新しい方の内容を優先)、鮮度上限を超えたものは捨てる。
     """

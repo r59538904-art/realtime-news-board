@@ -1,6 +1,6 @@
 'use strict';
 // news.jsonの取得・localStorageキャッシュ・更新ステータス表示。
-// RSSの実取得はGitHub Actions(scripts/fetch_news.py)が5分おきに行うため、
+// RSSの実取得はGitHub Actions(scripts/fetch_news.py)が1分おきに行うため、
 // ブラウザ側は生成済みのnews.jsonを読むだけでよい。
 
 // ---- 設定 ----
