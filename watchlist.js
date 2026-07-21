@@ -21,7 +21,7 @@
 // 発行されたURL(例: https://yahoo-finance-proxy.your-name.workers.dev)をここに設定する。
 // デプロイ手順はREADME「株価現在値カード(Cloudflare Workerプロキシ)のセットアップ」を参照。
 // 未設定のままでも壊れない: カードが「設定が必要です」と案内を出すだけで、他の機能には影響しない。
-const WL_PROXY_BASE_URL = '';  // 例: 'https://yahoo-finance-proxy.your-name.workers.dev'
+const WL_PROXY_BASE_URL = 'https://yahoo-finance-proxy.r59538904.workers.dev';
 const WL_SEARCH_DEBOUNCE_MS = 350;  // 連続入力のたびのAPI呼び出しを間引く
 const WL_SEARCH_MIN_LEN = 2;        // 1文字だけでは結果が多すぎる/意味が薄いため検索しない
 
