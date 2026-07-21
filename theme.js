@@ -40,7 +40,7 @@ function loadTheme(){
 function toggleTheme(){
   applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
   // TradingViewウィジェットは動的に配色を変えられないため、テーマ変更時に作り直す
-  // (株価カード側はCSSカスタムプロパティで自動追従するため、buildWatchlist()の再構築は不要)
   tickerTape();
   buildEconCalendar();
+  buildWatchlist();
 }

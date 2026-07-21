@@ -1,39 +1,57 @@
 'use strict';
-// 銘柄検索・現在値カード。記事一覧の左のサイドバー。
-// データはYahoo Financeを、自前デプロイのCloudflare Worker(cloudflare-worker/
-// yahoo-finance-proxy.js)経由で取得する。TradingViewには一切依存しない。
-//
-// なぜCloudflare Workerを経由するか:
-//   Yahoo Finance(query1.finance.yahoo.com)はAccess-Control-Allow-Originヘッダーを
-//   返さないため、ブラウザから直接fetch()できない(実機確認済み)。このサイトは
-//   ビルド不要の静的サイトでサーバー側コードを持たないため、CORSを解決できる
-//   軽量な中継サーバー(Cloudflare Workers、無料枠で十分)を別途デプロイして間に挟んでいる。
-// なぜFinnhub(旧実装)をやめたか:
-//   Finnhub・Twelve Data(いずれも実機確認済み)は無料プランが米国上場銘柄限定で、
-//   東証等の海外取引所の現在値を返さない仕様だった。Yahoo Financeはこの制限が無く
-//   日本株を含め幅広く取得できるため、CORSさえ解決できればこちらの方が適している。
-// なお過去の値動き(ローソク足チャート)は実装していない(現在値カードのみ)。
-// Yahoo Financeのchart APIは技術的には時系列データを持っているが、まずは
-// 現在値表示のみに絞ってシンプルに構成している。
+// 株式相場チャート・銘柄検索。記事一覧の左のサイドバー。
+// TradingViewウィジェット内蔵の銘柄検索(allow_symbol_change)はアカウント登録/課金を
+// 求めるダイアログが表示されることが確認されたため使わず、Finnhub(finnhub.io)の
+// 無料APIで自前の検索欄を実装し、選んだ銘柄をTradingViewのチャートウィジェットへ
+// 渡して「表示するだけ」にすることで課金要求を回避している。
+// 設計は経済指標カレンダー(calendar.js)と対称・同一パターン
+// (折りたたみ・遅延読み込み・テーマ追従はほぼ同じロジックをそのまま踏襲している)。
 
-// ---- Cloudflare Workerプロキシの設定 ----
-// cloudflare-worker/yahoo-finance-proxy.js をCloudflare Workers(無料)へデプロイし、
-// 発行されたURL(例: https://yahoo-finance-proxy.your-name.workers.dev)をここに設定する。
-// デプロイ手順はREADME「株価現在値カード(Cloudflare Workerプロキシ)のセットアップ」を参照。
-// 未設定のままでも壊れない: カードが「設定が必要です」と案内を出すだけで、他の機能には影響しない。
-const WL_PROXY_BASE_URL = 'https://yahoo-finance-proxy.r59538904.workers.dev';
-const WL_SEARCH_DEBOUNCE_MS = 350;  // 連続入力のたびのAPI呼び出しを間引く
+// ---- Finnhub API設定 ----
+// 無料アカウント(https://finnhub.io/register、クレジットカード不要)登録後、
+// ダッシュボードで発行されるAPIキーをここに設定する。
+// 未設定のままでも壊れない: 検索欄は「設定が必要です」と案内を出すだけで、
+// チャート自体(既定銘柄の表示・折りたたみ・テーマ追従)は影響を受けず動作する。
+// 注意: 静的サイトのJSにそのまま埋め込むため、このキーは誰でも閲覧できる
+// (view-sourceで見える)。Finnhub無料枠のキーはブラウザから直接叩く用途を
+// 前提にした設計のため実害は小さいが、心配な場合はFinnhub側にリファラー制限等の
+// 設定機能がないか確認すること。
+const FINNHUB_API_KEY = 'd9fe9jhr01qu5nhe58igd9fe9jhr01qu5nhe58j0';
+const WL_SEARCH_DEBOUNCE_MS = 350;  // 翻訳キュー等と同様、連続入力のたびのAPI呼び出しを間引く
 const WL_SEARCH_MIN_LEN = 2;        // 1文字だけでは結果が多すぎる/意味が薄いため検索しない
+
+// Finnhubの銘柄コードは「BASE.接尾辞」(Yahoo Financeと同じ命名規則、例: 9432.T)で
+// 複数取引所を横断して返ってくるが、TradingViewは"取引所:銘柄コード"という別形式を要求する上、
+// マイナーな取引所(ドイツの地方取引所・OTC類似市場等)はTradingView側にそもそもデータが
+// 存在しないことが多い。実際に"NTT"を検索すると、本来見たいはずの東証本体(9432.T)より先に
+// ドイツの地方取引所での重複上場(NTT.DU・NTT.F・NTT.HM等、計8件)が返ってきて上位を占め、
+// 存在しないシンボルとしてTradingView側でエラーになる不具合が確認された。
+// そのため、TradingView側での存在をある程度確信できる主要取引所だけをこの対応表に登録し、
+// 表に無い接尾辞の結果は(壊れた検索結果を見せるより)検索結果から除外する方針にしている。
+const WL_EXCHANGE_SUFFIX_MAP = {
+  T: 'TSE',     // 東京証券取引所
+  L: 'LSE',     // ロンドン証券取引所
+  HK: 'HKEX',   // 香港証券取引所
+};
+// FinnhubのシンボルをTradingViewの"取引所:銘柄コード"形式へ変換する。
+// 対応表に無い取引所(接尾辞)の場合はnullを返し、呼び出し側で検索結果から除外する
+function toTradingViewSymbol(finnhubSymbol){
+  const dotIndex = finnhubSymbol.lastIndexOf('.');
+  if(dotIndex === -1) return finnhubSymbol;  // 接尾辞なし=米国株とみなし、そのまま渡す(TradingViewが解決できる)
+  const base = finnhubSymbol.slice(0, dotIndex);
+  const suffix = finnhubSymbol.slice(dotIndex + 1).toUpperCase();
+  const exchange = WL_EXCHANGE_SUFFIX_MAP[suffix];
+  return exchange ? exchange + ':' + base : null;
+}
 
 const WL_PREF_KEY = 'news-board-wl-pref-v1';
 let watchlistOpen = true;
-let wlSymbol = 'AAPL';          // 現在値カードに表示中の銘柄(Yahoo Financeのシンボル表記)
+let wlSymbol = 'NASDAQ:AAPL';   // 現在チャートに表示中の銘柄。検索で選択すると更新される
 let wlSearchTimer = null;
 let wlSearchAbort = null;       // 前回の検索が終わる前に次を打ち始めた場合、古い方を中断する
-let wlQuoteAbort = null;        // 同上。銘柄選択を連続で切り替えた場合の古いリクエストを中断する
 
-// カレンダーと同じ理由(狭い画面では最初は情報量を絞りたい)で、
-// 狭い画面かつ初回訪問時に限り初期状態を折りたたみにする
+// カレンダーと同じ理由(TradingViewのiframe内スクロールがモバイルでページスクロールを
+// 奪ってしまう対策)で、狭い画面かつ初回訪問時に限り初期状態を折りたたみにする
 function loadWatchlistPref(){
   const saved = storageGet(WL_PREF_KEY);
   watchlistOpen = saved ? saved !== 'closed' : window.innerWidth > 1100;
@@ -45,123 +63,62 @@ function updateWlBtn(){
   btn.setAttribute('aria-expanded', String(watchlistOpen));
   btn.setAttribute('aria-controls', 'wlWidget');
 }
+// TradingViewウィジェットは設定を後から変えられないため、テーマ切替・銘柄選択のたびに作り直す
+function buildWatchlist(){
+  const container = document.getElementById('wlWidget');
+  if(!container) return;
+  container.textContent = '';
+  updateWlBtn();
+  if(!watchlistOpen) return;             // 折りたたみ中はウィジェット自体を作らない(通信節約)
+
+  const widgetWrap = el('div', 'tradingview-widget-container');
+  widgetWrap.appendChild(el('div'));
+  const widgetScript = document.createElement('script');
+  widgetScript.async = true;
+  widgetScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  widgetScript.text = JSON.stringify({
+    // colorThemeではなくtheme(このウィジェット固有のキー名。他のTradingViewウィジェットと異なるため注意)
+    theme: currentTheme() === 'light' ? 'light' : 'dark',
+    autosize: true,               // 親要素(.wl-widget)の高さいっぱいに追従させる
+    symbol: wlSymbol,
+    allow_symbol_change: false,   // 自前の検索欄(Finnhub)で切り替えるため、課金誘導のある内蔵検索は使わない
+    interval: 'D',
+    timezone: 'Asia/Tokyo',
+    style: '1',
+    locale: 'ja',
+    hide_top_toolbar: false,
+    hide_legend: false,
+    enable_publishing: false,
+    save_image: false,
+    calendar: false,
+    support_host: 'https://www.tradingview.com',
+  });
+  widgetWrap.appendChild(widgetScript);
+  container.appendChild(widgetWrap);
+}
+// ---- 初回表示の遅延読み込み(初期表示速度・LCP改善。calendar.jsのinitEconCalendarLazyと同じ考え方) ----
+function initWatchlistLazy(){
+  if(!watchlistOpen){ buildWatchlist(); return; }
+  const container = document.querySelector('.watchlist');
+  if(!container || typeof IntersectionObserver !== 'function'){
+    buildWatchlist();                    // 非対応環境向けのフォールバック(即時構築)
+    return;
+  }
+  const observer = new IntersectionObserver(entries => {
+    if(entries.some(entry => entry.isIntersecting)){
+      observer.disconnect();
+      buildWatchlist();
+    }
+  }, {rootMargin: '400px 0px'});
+  observer.observe(container);
+}
 function toggleWatchlist(){
   watchlistOpen = !watchlistOpen;
   storageSet(WL_PREF_KEY, watchlistOpen ? 'open' : 'closed');
   buildWatchlist();
 }
 
-// ---- プロキシ呼び出しの共通ヘルパー ----
-async function fetchViaProxy(path, params, signal){
-  const query = new URLSearchParams(params);
-  const response = await fetch(WL_PROXY_BASE_URL + path + '?' + query.toString(), {signal});
-  if(!response.ok) throw new Error('proxy ' + path + ' http ' + response.status);
-  return response.json();
-}
-
-// ---- 現在値カードの構築 ----
-async function buildWatchlist(){
-  const container = document.getElementById('wlWidget');
-  if(!container) return;
-  container.textContent = '';
-  updateWlBtn();
-  if(!watchlistOpen) return;             // 折りたたみ中は取得自体を行わない(通信節約)
-  if(!WL_PROXY_BASE_URL){
-    container.appendChild(el('div', 'wl-result-note', '株価表示にはCloudflare Workerプロキシの設定が必要です(README参照)'));
-    return;
-  }
-  container.appendChild(el('div', 'wl-result-note', '読み込み中…'));
-
-  if(wlQuoteAbort) wlQuoteAbort.abort();
-  const controller = new AbortController();
-  wlQuoteAbort = controller;
-  try{
-    const data = await fetchViaProxy('/quote', {symbol: wlSymbol}, controller.signal);
-    const meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
-    if(!meta || meta.regularMarketPrice == null) throw new Error('quote meta missing');
-    const openSeries = data.chart.result[0].indicators && data.chart.result[0].indicators.quote
-      && data.chart.result[0].indicators.quote[0] && data.chart.result[0].indicators.quote[0].open;
-    renderWlQuote(meta, lastValidNumber(openSeries));
-  }catch(e){
-    if(e.name === 'AbortError') return;  // より新しい選択に追い越された。古い結果は描画しない
-    console.error('現在値の取得に失敗:', e);
-    container.textContent = '';
-    container.appendChild(el('div', 'wl-result-note', '現在値を取得できませんでした'));
-  }
-}
-
-// 配列の末尾から辿って最初に見つかった有効な数値を返す(当日分がまだnullの場合に備え、
-// 直近の取引日の始値を拾うためのフォールバック)
-function lastValidNumber(series){
-  if(!Array.isArray(series)) return null;
-  for(let i = series.length - 1; i >= 0; i--){
-    if(typeof series[i] === 'number') return series[i];
-  }
-  return null;
-}
-
-function formatPrice(value, currency){
-  if(value == null || Number.isNaN(value)) return '─';
-  return value.toLocaleString('ja-JP', {maximumFractionDigits: 2}) + (currency ? ' ' + currency : '');
-}
-function renderWlQuote(meta, openPrice){
-  const container = document.getElementById('wlWidget');
-  if(!container) return;
-  container.textContent = '';
-  const card = el('div', 'wl-quote');
-
-  const header = el('div', 'wl-quote-header');
-  const nameWrap = el('div', 'wl-quote-namewrap');
-  nameWrap.appendChild(el('div', 'wl-quote-name', meta.longName || meta.shortName || wlSymbol));
-  const symLine = wlSymbol + (meta.fullExchangeName ? ' ・ ' + meta.fullExchangeName : '');
-  nameWrap.appendChild(el('div', 'wl-quote-sym', symLine));
-  header.appendChild(nameWrap);
-  card.appendChild(header);
-
-  card.appendChild(el('div', 'wl-quote-price', formatPrice(meta.regularMarketPrice, meta.currency)));
-
-  const prevClose = meta.chartPreviousClose;
-  if(typeof prevClose === 'number' && prevClose > 0){
-    const diff = meta.regularMarketPrice - prevClose;
-    const diffPct = diff / prevClose * 100;
-    const isUp = diff >= 0;
-    const change = el('div', 'wl-quote-change ' + (isUp ? 'pos' : 'neg'),
-      (isUp ? '▲ +' : '▼ ') + Math.abs(diff).toFixed(2) + ' (' + (isUp ? '+' : '−') + Math.abs(diffPct).toFixed(2) + '%)');
-    card.appendChild(change);
-  }
-
-  // 当日値幅バー: 安値〜高値のレンジの中で現在値がどこに位置するかを視覚化する
-  const high = meta.regularMarketDayHigh, low = meta.regularMarketDayLow;
-  if(typeof high === 'number' && typeof low === 'number' && high > low){
-    const range = el('div', 'wl-quote-range');
-    range.appendChild(el('span', 'wl-quote-range-label', formatPrice(low, meta.currency)));
-    const track = el('div', 'wl-quote-range-track');
-    const pct = Math.min(100, Math.max(0, (meta.regularMarketPrice - low) / (high - low) * 100));
-    const marker = el('div', 'wl-quote-range-marker');
-    marker.style.left = pct + '%';
-    track.appendChild(marker);
-    range.appendChild(track);
-    range.appendChild(el('span', 'wl-quote-range-label', formatPrice(high, meta.currency)));
-    card.appendChild(range);
-  }
-
-  const grid = el('div', 'wl-quote-grid');
-  [['始値', openPrice], ['前日終値', prevClose], ['高値', high], ['安値', low]].forEach(([label, value]) => {
-    const cell = el('div', 'wl-quote-cell');
-    cell.appendChild(el('span', 'wl-quote-cell-label', label));
-    cell.appendChild(el('span', 'wl-quote-cell-value', formatPrice(value, meta.currency)));
-    grid.appendChild(cell);
-  });
-  card.appendChild(grid);
-
-  if(meta.regularMarketTime){
-    const updatedText = '更新: ' + new Date(meta.regularMarketTime * 1000).toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'});
-    card.appendChild(el('div', 'wl-quote-updated', updatedText));
-  }
-  container.appendChild(card);
-}
-
-// ---- 銘柄検索(Yahoo Finance search、プロキシ経由) ----
+// ---- 銘柄検索(Finnhub) ----
 function hideWlResults(){
   const listEl = document.getElementById('wlResults');
   if(!listEl) return;
@@ -173,7 +130,9 @@ function renderWlResults(items){
   if(!listEl) return;
   listEl.textContent = '';
   if(!items.length){
-    listEl.appendChild(el('div', 'wl-result-note', '該当する銘柄が見つかりませんでした'));
+    // 検索結果0件には「そもそも該当なし」と「TradingView非対応の取引所しかヒットしなかった」の
+    // 両方があり得るため、対応取引所を案内して後者のケースでもユーザーが状況を理解できるようにする
+    listEl.appendChild(el('div', 'wl-result-note', '該当する銘柄が見つかりませんでした(対応取引所: 米国株・東京・ロンドン・香港)'));
     listEl.hidden = false;
     return;
   }
@@ -181,11 +140,11 @@ function renderWlResults(items){
     const optionBtn = el('button', 'wl-result');
     optionBtn.type = 'button';
     optionBtn.setAttribute('role', 'option');
-    optionBtn.appendChild(el('span', 'wl-result-name', item.longname || item.shortname || item.symbol));
-    optionBtn.appendChild(el('span', 'wl-result-sym', item.symbol + (item.exchDisp ? ' ・ ' + item.exchDisp : '')));
+    optionBtn.appendChild(el('span', 'wl-result-name', item.description));
+    optionBtn.appendChild(el('span', 'wl-result-sym', item.displaySymbol || item.symbol));
     // mousedownはinputのblurより先に発火するため、blur側のhideWlResultsで
     // クリックが握りつぶされる事故を防げる(clickだと間に合わないことがある)
-    optionBtn.addEventListener('mousedown', e => { e.preventDefault(); selectWlSymbol(item.symbol, item.longname || item.shortname); });
+    optionBtn.addEventListener('mousedown', e => { e.preventDefault(); selectWlSymbol(item.tvSymbol, item.description); });
     listEl.appendChild(optionBtn);
   });
   listEl.hidden = false;
@@ -199,11 +158,11 @@ function selectWlSymbol(symbol, description){
   else buildWatchlist();
 }
 async function searchWlSymbol(query){
-  if(!WL_PROXY_BASE_URL){
+  if(!FINNHUB_API_KEY){
     const listEl = document.getElementById('wlResults');
     if(listEl){
       listEl.textContent = '';
-      listEl.appendChild(el('div', 'wl-result-note', '検索機能を使うにはCloudflare Workerプロキシの設定が必要です(README参照)'));
+      listEl.appendChild(el('div', 'wl-result-note', '検索機能を使うにはFinnhub APIキーの設定が必要です'));
       listEl.hidden = false;
     }
     return;
@@ -212,9 +171,16 @@ async function searchWlSymbol(query){
   const controller = new AbortController();
   wlSearchAbort = controller;
   try{
-    const data = await fetchViaProxy('/search', {q: query}, controller.signal);
-    const items = (data && Array.isArray(data.quotes) ? data.quotes : [])
-      .filter(item => item && item.symbol && (item.longname || item.shortname) && item.quoteType === 'EQUITY');
+    const response = await fetch('https://finnhub.io/api/v1/search?q=' + encodeURIComponent(query) + '&token=' + FINNHUB_API_KEY, {signal: controller.signal});
+    if(!response.ok) throw new Error('finnhub search http ' + response.status);
+    const data = await response.json();
+    // TradingViewで解決できる可能性が高い取引所の銘柄だけに絞り込む(toTradingViewSymbol参照)。
+    // ここでmap+filterしてからslice(0,8)することで、対応外取引所の重複上場が上位を占めて
+    // 本来見たい銘柄が一覧から漏れる事故(実際にNTT検索で発生)を防ぐ
+    const items = (data && Array.isArray(data.result) ? data.result : [])
+      .filter(item => item && item.symbol && item.description)
+      .map(item => ({...item, tvSymbol: toTradingViewSymbol(item.symbol)}))
+      .filter(item => item.tvSymbol);
     renderWlResults(items);
   }catch(e){
     if(e.name !== 'AbortError') console.error('銘柄検索に失敗:', e);

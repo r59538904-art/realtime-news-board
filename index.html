@@ -18,8 +18,7 @@
     ticker.js               TradingView相場ティッカー
     sessions.js             世界の取引セッション表示
     calendar.js             TradingView経済指標カレンダー(折りたたみ可)
-    watchlist.js             Yahoo Finance株価現在値カード・銘柄検索(記事一覧左サイドバー。折りたたみ可。
-                              自前デプロイのCloudflare Worker経由。TradingViewには依存しない)
+    watchlist.js             TradingView株価チャート・銘柄検索(記事一覧左サイドバー。折りたたみ可)
     theme-init.js            <head>内で同期実行するFOUC防止スニペット(外部化: CSP script-src対応)
     main.js                  イベント登録・自動更新・SW登録・起動処理(外部化: CSP script-src対応)
   PWA関連: manifest.webmanifest(ホーム画面追加) / sw.js(オフライン表示) / icons/(アイコン)
@@ -38,10 +37,11 @@
     core.autocrlf(CRLF⇔LF変換)でハッシュがズレる恐れがあるため、あえて1行のJSONにしてある。
     Referrer-PolicyとX-Content-Type-Options/X-Frame-Options/HSTS等については README の
     「セキュリティヘッダーについて」を参照(meta http-equivで設定可能なのはCSPとReferrer-Policyのみ)。
-    connect-srcのhttps://*.workers.devは、watchlist.js(株価現在値カード)がYahoo Financeへ
-    アクセスするために自前デプロイするCloudflare Workerプロキシ用。デプロイ先URLは利用者ごとに
-    異なる(<任意の名前>.<Cloudflareアカウント固有のサブドメイン>.workers.dev)ため、
-    個別のURLではなくworkers.dev全体をワイルドカードで許可している(詳細はREADME参照)。
+    connect-srcのhttps://finnhub.ioは、watchlist.js(株価チャート・銘柄検索)がFinnhubの
+    無料APIで銘柄検索を行うために許可している。TradingViewウィジェット内蔵の検索機能は
+    アカウント登録・課金を求めるダイアログが出るため使わず、Finnhubの検索結果をチャート
+    ウィジェットのsymbolパラメータへ渡すだけ(allow_symbol_change:false)にすることで
+    回避している(詳細はREADME参照)。
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -49,7 +49,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>世界ニュース速報 — リアルタイム経済ニュースボード</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://s3.tradingview.com 'sha256-8genVDfUOQPSwEWy7oXI/v28nCnK4mN74YyzXT+Cx5c='; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self' https://api.mymemory.translated.net https://translate.googleapis.com https://*.workers.dev; frame-src https://*.tradingview.com https://*.tradingview-widget.com; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://s3.tradingview.com 'sha256-8genVDfUOQPSwEWy7oXI/v28nCnK4mN74YyzXT+Cx5c='; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self' https://api.mymemory.translated.net https://translate.googleapis.com https://finnhub.io; frame-src https://*.tradingview.com https://*.tradingview-widget.com; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests;">
 <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 <meta name="robots" content="index, follow">
 <meta name="description" content="NHK・Financial Times・Bloomberg・ITmediaなど約38の投資/金融専門ソースを集約表示するリアルタイム経済ニュースボード。株価・為替・AI・企業関連ニュースを自動翻訳・トピック絞込・簡易センチメント判定つきで表示します。">
@@ -73,7 +73,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=38">
+<link rel="stylesheet" href="style.css?v=39">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -114,8 +114,8 @@
 </div>
 
 <main>
-  <aside class="watchlist" aria-label="株価現在値・銘柄検索">
-    <div class="cap"><h2>STOCK QUOTE ─ 銘柄検索・現在値</h2><button id="wlBtn">折りたたむ ▲</button></div>
+  <aside class="watchlist" aria-label="株価チャート・銘柄検索">
+    <div class="cap"><h2>STOCK CHART ─ 銘柄検索・チャート</h2><button id="wlBtn">折りたたむ ▲</button></div>
     <div class="wl-searchwrap">
       <input id="wlSearch" type="text" placeholder="銘柄名で検索(例: Apple, トヨタ)…" aria-label="銘柄名で検索" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="wlResults">
       <div class="wl-results" id="wlResults" role="listbox" hidden></div>
@@ -145,7 +145,7 @@
 <script src="sentiment-keywords.js?v=3"></script>
 <script src="market-sessions.js?v=3"></script>
 <script src="utils.js?v=6"></script>
-<script src="theme.js?v=7"></script>
+<script src="theme.js?v=8"></script>
 <script src="feed.js?v=8"></script>
 <script src="translate.js?v=9"></script>
 <script src="topic-filter.js?v=6"></script>
@@ -154,7 +154,7 @@
 <script src="ticker.js?v=3"></script>
 <script src="sessions.js?v=3"></script>
 <script src="calendar.js?v=11"></script>
-<script src="watchlist.js?v=11"></script>
-<script src="main.js?v=7"></script>
+<script src="watchlist.js?v=12"></script>
+<script src="main.js?v=8"></script>
 </body>
 </html>

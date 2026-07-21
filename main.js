@@ -64,6 +64,6 @@ buildSessions();
 loadCalendarPref();
 initEconCalendarLazy();
 loadWatchlistPref();
-buildWatchlist();
+initWatchlistLazy();
 render();
 fetchAll();
