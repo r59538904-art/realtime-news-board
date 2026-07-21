@@ -7,6 +7,16 @@
 // 過去の値動き(ローソク足チャート)はFinnhub無料プランでは取得不可
 // (/stock/candleが有料限定。実機で{"error":"You don't have access to this resource."}を確認済み)
 // のため、折れ線チャートではなく「現在値カード」(現在値・前日比・当日値幅)として実装している。
+//
+// 対応市場は米国上場銘柄のみ(検索段階でサフィックス無しの銘柄に絞り込んでいる)。
+// 東証・LSE等の海外取引所は/quoteが{"error":"You don't have access to this resource."}を
+// 返し無料プランでは非対応(Twelve Data無料プランでも同じ制約を実機確認済み・"available
+// starting with the Grow or Venture plan"と明示された)。Yahoo FinanceはCORS非対応
+// (Access-Control-Allow-Originヘッダー無し、プロキシサーバーが必要でこの構成と相容れない)、
+// StooqはAPIエンドポイント自体が404で動作していない。海外取引所のリアルタイム/準リアルタイム
+// データはライセンス費用がかかるため無料プランでは提供されないのが実質的に業界共通の制約であり、
+// 現状これ以上の無料の代替手段は見つかっていない。トヨタの"TM"のように米国ADR/ADSがある
+// 海外企業は検索・取得できる場合がある。
 
 // ---- Finnhub API設定 ----
 // 無料アカウント(https://finnhub.io/register、クレジットカード不要)登録後、
@@ -160,7 +170,7 @@ function renderWlResults(items){
   if(!listEl) return;
   listEl.textContent = '';
   if(!items.length){
-    listEl.appendChild(el('div', 'wl-result-note', '該当する銘柄が見つかりませんでした'));
+    listEl.appendChild(el('div', 'wl-result-note', '該当する銘柄が見つかりませんでした(現在値取得は米国上場銘柄のみ対応。海外企業でも米国ADR/ADSがあれば検索可能な場合があります)'));
     listEl.hidden = false;
     return;
   }
@@ -200,8 +210,13 @@ async function searchWlSymbol(query){
   wlSearchAbort = controller;
   try{
     const data = await fetchFinnhub('/search', {q: query}, controller.signal);
+    // Finnhub無料プランは海外取引所(東証・LSE等)の現在値(/quote)を返さない仕様
+    // (実機確認: Twelve Data無料プランでも同じ制約を確認済み。有料プラン限定の業界共通の制約)。
+    // Finnhubのシンボル表記は「サフィックス無し=米国上場」「.T/.L等のサフィックス有り=海外取引所」
+    // のため、サフィックス無しの銘柄だけに絞り込む(トヨタのADR"TM"のように海外企業でも
+    // 米国上場していれば取得できる場合がある)
     const items = (data && Array.isArray(data.result) ? data.result : [])
-      .filter(item => item && item.symbol && item.description);
+      .filter(item => item && item.symbol && item.description && !item.symbol.includes('.'));
     renderWlResults(items);
   }catch(e){
     if(e.name !== 'AbortError') console.error('銘柄検索に失敗:', e);

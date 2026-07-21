@@ -257,6 +257,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 #calImpBtn:hover{color:var(--gold); border-color:var(--gold-dim);}
 #calImpBtn.on{color:var(--gold); border-color:var(--gold); background:color-mix(in srgb, var(--gold) 14%, transparent);}
 .cal-note{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); letter-spacing:.02em;}
+.wl-scope-note{margin-top:8px; font-size:10px; color:var(--ink-3); line-height:1.5;}
 
 /* overscroll-behavior: TradingViewウィジェット(iframe)内部の独自スクロールが端に達した時、
    ページ側のスクロールを巻き込まないようにする(モバイルでの「スクロールが引っかかる」対策)。
