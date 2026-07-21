@@ -67,7 +67,7 @@
 
 /* ---------- ベース ---------- */
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth; overflow-x:hidden;}
 body{
   background:var(--body-bg);
   color:var(--ink); font-family:var(--sans); min-height:100vh;
@@ -491,63 +491,15 @@ footer a{color:var(--gold-dim); text-decoration:none; transition:color .15s;}
 footer a:hover{color:var(--gold); text-decoration:underline; text-underline-offset:3px;}
 footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;}
 
-/* ---------- レスポンシブ ---------- */
-/* ワイド画面: カレンダーをコンテンツ右外側の余白、ウォッチリストを左外側の余白へ
-   左右対称に固定表示する。以前は閾値1840pxだったが、実際のユーザー環境(OS表示拡大率等)
-   では1840px CSS幅に届かないことが多く、左右固定が発動しない不満が繰り返し出たため、
-   1100px(モバイル積み上げ表示の直上)まで閾値を大きく下げた。
-   サイドバーはleft/right:20pxで画面端に直接固定(main幅の計算から独立させ、
-   常に安定した位置に出す)。main側はサイドバー分の余白(各340px = 300px幅+40px隙間)を
-   確保しつつ100vwから逆算した幅を使い、最大1440pxまで広がる(広い画面ほど記事列数が増える) */
-@media (min-width:1100px){
-  header, .controls, main, footer{max-width:min(1440px, calc(100vw - 680px));}
-  .calendar, .watchlist{
-    position:fixed; top:18px; bottom:18px;
-    width:min(300px, calc(50vw - 340px));
-    display:flex; flex-direction:column;
-  }
-  .calendar{right:20px;}
-  .watchlist{left:20px;}
-  .calendar:has(.cal-widget:empty), .watchlist:has(.wl-widget:empty){bottom:auto;}  /* 折りたたみ中は見出しバーの高さだけにする */
-  .cal-tools{flex-shrink:0;}
-  .cal-widget{flex:1; height:auto; min-height:0;}
-}
-/* サイドバーが入らない幅では、カレンダー・ウォッチリストをニュース一覧の上下の全幅ブロックに切り替える */
-@media (max-width:1100px){
-  main{flex-direction:column;}
-  .calendar, .watchlist{position:static; width:100%;}
-  .cal-widget{height:320px;}
-}
-@media (max-width:640px){
-  header, .controls, main, footer{padding-left:14px; padding-right:14px;}
-  .masthead{flex-direction:column; align-items:flex-start; gap:10px;}
-  /* 状態行(点+文言)を単独の1行にし、4ボタンは2×2の均等グリッドにまとめて整列させる
-     (flex-wrapの自動折り返しに任せると行ごとに幅がバラつき、隙間が不揃いに見えるため) */
-  .statusbar{flex-direction:column; align-items:flex-start; gap:10px; width:100%;}
-  .status-actions{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; width:100%;}
-  /* min-width:0が無いと、グリッド項目はデフォルトでボタン内テキストの1行分の幅より
-     縮まなくなり(min-width:autoの既定挙動)、2列目が右にはみ出す原因になる。
-     white-space:normalは<button>のUA既定(テキストを折り返さない実装が多い)を上書きするために必要。
-     min-height:44pxはiOS/Androidのタップ推奨サイズ(44×44px)に合わせたもの。
-     display:flexで2行に折り返した場合も含めテキストを常に垂直中央に保つ */
-  #refreshBtn,#trBtn,#topicBtn,#themeBtn{
-    padding:8px 10px; font-size:10px; text-align:center; min-width:0; white-space:normal; line-height:1.3;
-    min-height:44px; display:flex; align-items:center; justify-content:center;
-  }
-  /* 列の最小幅をベース(130px)より狭くし、狭い画面でも1行に複数個並ぶようにする。
-     grid自体の仕組み(全行共通のトラック幅)によりPCと同様、どの行のチップも同じ大きさになる */
-  .chips{width:100%; grid-template-columns:repeat(auto-fill, minmax(102px,1fr));}
-  /* チップも同様にタップ領域を拡大(密なフィルター一覧のため44pxまでは広げず、
-     視認性とレイアウト密度のバランスを見て段階的に拡大) */
-  .chip{padding:10px 10px;}
-  .searchwrap{align-self:stretch; width:100%;}
-  #search{width:100%; padding-top:11px; padding-bottom:11px;}
-  #search:focus{width:100%;}
-  #calImpBtn{padding:8px 12px;}
-  .grid{grid-template-columns:1fr;}
-  .cal-widget{height:300px;}
-  .cal-note{display:none;}
-}
+/* ---------- ページ全体の拡大縮小固定表示 ---------- */
+/* 画面幅・OS表示拡大率・ブラウザズームによってレイアウトの見え方が変わってしまう
+   (サイドバーが左右に収まったり上部帯に切り替わったり)不満が繰り返し出たため、
+   ブレークポイントで個別にレイアウトを組み替える方式をやめ、常に同じデザイン
+   (幅1800px基準で設計)をウィンドウ幅に合わせて丸ごと拡大縮小する方式に変更した。
+   scale.jsがwindow.innerWidth/1800pxの比率で#scaleWrapにtransform:scaleを適用する。
+   これによりどんな画面サイズでも「株価パネル左・記事一覧中央・カレンダー右」という
+   見た目の比率が常に同一になる */
+#scaleWrap{width:1800px; transform-origin:top left;}
 
 /* ---------- アクセシビリティ ---------- */
 @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important} }

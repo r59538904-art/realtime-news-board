@@ -13,6 +13,7 @@ const CORE_ASSETS = [
   './',
   './index.html',
   './style.css',
+  './scale.js',
   './theme-init.js',
   './sources.js',
   './topic-keywords.js',
