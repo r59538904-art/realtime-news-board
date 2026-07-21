@@ -160,7 +160,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
    (太字・大きいフォント)を打ち消して.capの見た目(等幅・10px・字間広め)を維持する */
 .cap h2{font:inherit; letter-spacing:inherit; color:inherit;}
 /* セクション見出しの頭に短い金線を付けてマストヘッドと揃える */
-.sessions .cap h2::before, .calendar .cap h2::before{
+.sessions .cap h2::before{
   content:''; display:inline-block; width:14px; height:1px;
   background:var(--gold-dim); margin-right:8px; vertical-align:middle;
 }
@@ -188,43 +188,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .sess-bar.live b{color:#191305; font-weight:600;}
 .now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
 .now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
-
-/* ---------- 経済指標カレンダー(記事一覧の右のサイドバー。スクロールに追従) ---------- */
-.calendar{
-  width:320px; flex-shrink:0; position:sticky; top:14px;
-  border:1px solid var(--line-soft); border-radius:10px;
-  background:var(--card); padding:14px 16px 12px; box-shadow:var(--shadow-1);
-  transition:background-color .2s, border-color .2s;
-}
-.calendar .cap{
-  display:flex; justify-content:space-between; align-items:center;
-  font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3);
-}
-.calendar .cap button{
-  background:none; border:none; color:var(--gold-dim); cursor:pointer;
-  font-family:var(--mono); font-size:10px; letter-spacing:.08em; padding:2px 4px;
-  transition:color .15s;
-}
-.calendar .cap button:hover{color:var(--gold);}
-
-.cal-tools{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; flex-wrap:wrap;}
-#calImpBtn{
-  background:none; border:1px solid var(--line); border-radius:6px;
-  color:var(--ink-2); font-family:var(--mono); font-size:10px; letter-spacing:.04em;
-  padding:4px 10px; cursor:pointer; transition:color .15s, border-color .15s, background-color .15s;
-}
-#calImpBtn:hover{color:var(--gold); border-color:var(--gold-dim);}
-#calImpBtn.on{color:var(--gold); border-color:var(--gold); background:color-mix(in srgb, var(--gold) 14%, transparent);}
-.cal-note{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); letter-spacing:.02em;}
-
-/* overscroll-behavior: TradingViewウィジェット(iframe)内部の独自スクロールが端に達した時、
-   ページ側のスクロールを巻き込まないようにする(モバイルでの「スクロールが引っかかる」対策) */
-.cal-widget{
-  margin-top:10px; height:460px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);
-  overscroll-behavior:contain; touch-action:pan-y;
-}
-.cal-widget:empty{display:none;}
-.cal-widget .tradingview-widget-container{height:100%;}
 
 /* ---------- コントロール(チップ・検索) ---------- */
 /* チップと検索欄を同じ行のflexサイド・バイ・サイドではなく縦積みにしている。
@@ -283,12 +246,11 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
-/* ---------- 記事グリッド+カレンダーサイドバー ---------- */
+/* ---------- 記事グリッド ---------- */
 main{
   max-width:1440px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;
-  display:flex; gap:14px; align-items:flex-start;
 }
-.grid{flex:1; min-width:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:13px;}
+.grid{display:grid; grid-template-columns:repeat(4,1fr); gap:13px;}
 
 /* 記事カード。--srcは配信元カラー(render.jsが検証済みの色だけを設定。未設定時は金色) */
 .card{
@@ -376,25 +338,9 @@ footer a:hover{color:var(--gold); text-decoration:underline; text-underline-offs
 footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;}
 
 /* ---------- レスポンシブ ---------- */
-/* ワイド画面: カレンダーをコンテンツ右外側の余白へ固定表示し、ニュース一覧は全幅に戻す。
-   パネルは画面下端まで伸ばし、ウィジェットが残り高さ全部を使う。
-   パネル幅は余白に合わせて自動調整(最大320px)。ブラウザ拡大率が高めの環境でも発動するよう閾値は1840px */
-@media (min-width:1840px){
-  header, .controls, main, footer{max-width:1320px;}
-  .calendar{
-    position:fixed; left:calc(50% + 672px); top:18px; bottom:18px;
-    width:min(320px, calc(50vw - 692px));
-    display:flex; flex-direction:column;
-  }
-  .calendar:has(.cal-widget:empty){bottom:auto;}  /* 折りたたみ中は見出しバーの高さだけにする */
-  .cal-tools{flex-shrink:0;}
-  .cal-widget{flex:1; height:auto; min-height:0;}
-}
-/* サイドバーが入らない幅では、カレンダーをニュース一覧の下の全幅ブロックに切り替える */
-@media (max-width:1100px){
-  main{flex-direction:column;}
-  .calendar{position:static; width:100%;}
-  .cal-widget{height:320px;}
+/* タブレット幅: 4列だと1枚あたりが狭くなりすぎるため2列に減らす */
+@media (max-width:999px){
+  .grid{grid-template-columns:repeat(2,1fr);}
 }
 @media (max-width:640px){
   header, .controls, main, footer{padding-left:14px; padding-right:14px;}
@@ -421,10 +367,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   .searchwrap{align-self:stretch; width:100%;}
   #search{width:100%; padding-top:11px; padding-bottom:11px;}
   #search:focus{width:100%;}
-  #calImpBtn{padding:8px 12px;}
   .grid{grid-template-columns:1fr;}
-  .cal-widget{height:300px;}
-  .cal-note{display:none;}
 }
 
 /* ---------- アクセシビリティ ---------- */

@@ -27,7 +27,6 @@ const CORE_ASSETS = [
   './render.js',
   './ticker.js',
   './sessions.js',
-  './calendar.js',
   './main.js',
   './news.json',
   './privacy.html',

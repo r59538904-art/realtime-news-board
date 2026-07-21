@@ -41,5 +41,4 @@ function toggleTheme(){
   applyTheme(currentTheme() === 'light' ? 'dark' : 'light');
   // TradingViewウィジェットは動的に配色を変えられないため、テーマ変更時に作り直す
   tickerTape();
-  buildEconCalendar();
 }
