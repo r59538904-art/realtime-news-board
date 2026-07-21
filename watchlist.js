@@ -20,6 +20,30 @@ const FINNHUB_API_KEY = 'd9fe9jhr01qu5nhe58igd9fe9jhr01qu5nhe58j0';
 const WL_SEARCH_DEBOUNCE_MS = 350;  // 翻訳キュー等と同様、連続入力のたびのAPI呼び出しを間引く
 const WL_SEARCH_MIN_LEN = 2;        // 1文字だけでは結果が多すぎる/意味が薄いため検索しない
 
+// Finnhubの銘柄コードは「BASE.接尾辞」(Yahoo Financeと同じ命名規則、例: 9432.T)で
+// 複数取引所を横断して返ってくるが、TradingViewは"取引所:銘柄コード"という別形式を要求する上、
+// マイナーな取引所(ドイツの地方取引所・OTC類似市場等)はTradingView側にそもそもデータが
+// 存在しないことが多い。実際に"NTT"を検索すると、本来見たいはずの東証本体(9432.T)より先に
+// ドイツの地方取引所での重複上場(NTT.DU・NTT.F・NTT.HM等、計8件)が返ってきて上位を占め、
+// 存在しないシンボルとしてTradingView側でエラーになる不具合が確認された。
+// そのため、TradingView側での存在をある程度確信できる主要取引所だけをこの対応表に登録し、
+// 表に無い接尾辞の結果は(壊れた検索結果を見せるより)検索結果から除外する方針にしている。
+const WL_EXCHANGE_SUFFIX_MAP = {
+  T: 'TSE',     // 東京証券取引所
+  L: 'LSE',     // ロンドン証券取引所
+  HK: 'HKEX',   // 香港証券取引所
+};
+// FinnhubのシンボルをTradingViewの"取引所:銘柄コード"形式へ変換する。
+// 対応表に無い取引所(接尾辞)の場合はnullを返し、呼び出し側で検索結果から除外する
+function toTradingViewSymbol(finnhubSymbol){
+  const dotIndex = finnhubSymbol.lastIndexOf('.');
+  if(dotIndex === -1) return finnhubSymbol;  // 接尾辞なし=米国株とみなし、そのまま渡す(TradingViewが解決できる)
+  const base = finnhubSymbol.slice(0, dotIndex);
+  const suffix = finnhubSymbol.slice(dotIndex + 1).toUpperCase();
+  const exchange = WL_EXCHANGE_SUFFIX_MAP[suffix];
+  return exchange ? exchange + ':' + base : null;
+}
+
 const WL_PREF_KEY = 'news-board-wl-pref-v1';
 let watchlistOpen = true;
 let wlSymbol = 'NASDAQ:AAPL';   // 現在チャートに表示中の銘柄。検索で選択すると更新される
@@ -106,7 +130,9 @@ function renderWlResults(items){
   if(!listEl) return;
   listEl.textContent = '';
   if(!items.length){
-    listEl.appendChild(el('div', 'wl-result-note', '該当する銘柄が見つかりませんでした'));
+    // 検索結果0件には「そもそも該当なし」と「TradingView非対応の取引所しかヒットしなかった」の
+    // 両方があり得るため、対応取引所を案内して後者のケースでもユーザーが状況を理解できるようにする
+    listEl.appendChild(el('div', 'wl-result-note', '該当する銘柄が見つかりませんでした(対応取引所: 米国株・東京・ロンドン・香港)'));
     listEl.hidden = false;
     return;
   }
@@ -118,7 +144,7 @@ function renderWlResults(items){
     optionBtn.appendChild(el('span', 'wl-result-sym', item.displaySymbol || item.symbol));
     // mousedownはinputのblurより先に発火するため、blur側のhideWlResultsで
     // クリックが握りつぶされる事故を防げる(clickだと間に合わないことがある)
-    optionBtn.addEventListener('mousedown', e => { e.preventDefault(); selectWlSymbol(item.symbol, item.description); });
+    optionBtn.addEventListener('mousedown', e => { e.preventDefault(); selectWlSymbol(item.tvSymbol, item.description); });
     listEl.appendChild(optionBtn);
   });
   listEl.hidden = false;
@@ -148,8 +174,13 @@ async function searchWlSymbol(query){
     const response = await fetch('https://finnhub.io/api/v1/search?q=' + encodeURIComponent(query) + '&token=' + FINNHUB_API_KEY, {signal: controller.signal});
     if(!response.ok) throw new Error('finnhub search http ' + response.status);
     const data = await response.json();
+    // TradingViewで解決できる可能性が高い取引所の銘柄だけに絞り込む(toTradingViewSymbol参照)。
+    // ここでmap+filterしてからslice(0,8)することで、対応外取引所の重複上場が上位を占めて
+    // 本来見たい銘柄が一覧から漏れる事故(実際にNTT検索で発生)を防ぐ
     const items = (data && Array.isArray(data.result) ? data.result : [])
-      .filter(item => item && item.symbol && item.description);
+      .filter(item => item && item.symbol && item.description)
+      .map(item => ({...item, tvSymbol: toTradingViewSymbol(item.symbol)}))
+      .filter(item => item.tvSymbol);
     renderWlResults(items);
   }catch(e){
     if(e.name !== 'AbortError') console.error('銘柄検索に失敗:', e);
