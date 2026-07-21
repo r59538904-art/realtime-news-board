@@ -493,10 +493,12 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
     grid-template-areas:"watchlist watchlist" "grid calendar";
     align-items:start;
   }
-  /* 検索欄・現在値カードは320px幅前提でデザインしているため、記事一覧と
-     同じ幅まで引き伸ばすと間延びして見える。max-widthで適度な広さに留める
-     (中央寄せはせず左寄せのまま。「左側の機能」という位置づけを保つため) */
-  .watchlist{grid-area:watchlist; width:100%; max-width:420px; position:static;}
+  /* .watchlistはヘッダー(見出し+折りたたむボタン)と中身(検索欄・現在値カード)を
+     まとめて、カレンダーサイドバーと同じ320px幅のまま自分の行の左端に置く。
+     幅を中途半端に広げると、ヘッダーだけ広く中身は狭いまま…のようにちぐはぐに
+     見えたり、右側に余白だけが残って浮いた印象になったりするため、
+     「カレンダーと同じ見慣れた幅のカードが上に来ただけ」という自然な見た目に統一した */
+  .watchlist{grid-area:watchlist; width:320px; position:static;}
   .grid{grid-area:grid; min-width:0;}
   /* position:sticky/topはベースルール(.calendar, .watchlist{...})から継続して効かせる
      (以前から正しく動いていた「スクロールに追従する」挙動なので、ここでは触らない) */
