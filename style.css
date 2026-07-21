@@ -227,9 +227,15 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .cal-widget .tradingview-widget-container{height:100%;}
 
 /* ---------- コントロール(チップ・検索) ---------- */
+/* チップと検索欄を同じ行のflexサイド・バイ・サイドではなく縦積みにしている。
+   以前はchipsとsearchwrapを横並びflex(align-items:center)にしていたが、
+   チップがgrid化して複数行(5行前後)に伸びた際、検索欄がその高さの
+   「縦中央」に配置されてしまい、グリッドの途中に検索欄が挟まったような
+   不自然な見た目になった(検索欄の高さは1行分しかないため)。
+   縦積みにすることでチップの行数に関係なく検索欄は常にチップの下に独立して収まる */
 .controls{
   max-width:1440px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px);
-  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  display:flex; flex-direction:column; gap:10px;
 }
 /* grid+auto-fillにした理由: flexのflex-growは「その行に残った余白」を
    その行のチップ「だけ」に配分するため、行によってチップ数が違うと
@@ -238,7 +244,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
    トラック定義(auto-fill+minmax)で決まるため、どの行のチップも常に同じ幅になる。
    入りきらない分は自動的に次の行へ折り返され、最終行に満たない列はただの
    空きスペースとして残る(チップ自体が伸びて不揃いになることはない) */
-.chips{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:8px; flex:1 1 0%; min-width:0;}
+.chips{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:8px;}
 /* button要素化に伴い、ブラウザ既定の見た目(ネイティブ枠線・背景・行高)を打ち消す */
 .chip{
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
@@ -257,7 +263,10 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   border-color:var(--gold); color:var(--gold); font-weight:500;
   background:color-mix(in srgb, var(--gold) 16%, var(--bg0));
 }
-.searchwrap{margin-left:auto; position:relative;}
+/* align-self:flex-endで縦積みになった.controls内でも右寄せ・内容幅のまま保つ
+   (.controlsがdisplay:flex; flex-direction:columnになったため、既定のstretchのままだと
+   幅いっぱいに広がってしまう) */
+.searchwrap{align-self:flex-end; position:relative;}
 .searchwrap::before{
   content:'⌕'; position:absolute; left:11px; top:50%; transform:translateY(-50%);
   color:var(--ink-3); font-size:14px; pointer-events:none;
@@ -409,7 +418,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   /* チップも同様にタップ領域を拡大(密なフィルター一覧のため44pxまでは広げず、
      視認性とレイアウト密度のバランスを見て段階的に拡大) */
   .chip{padding:10px 10px;}
-  .searchwrap{margin-left:0; width:100%;}
+  .searchwrap{align-self:stretch; width:100%;}
   #search{width:100%; padding-top:11px; padding-bottom:11px;}
   #search:focus{width:100%;}
   #calImpBtn{padding:8px 12px;}
