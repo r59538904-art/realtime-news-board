@@ -259,13 +259,52 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .cal-note{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); letter-spacing:.02em;}
 
 /* overscroll-behavior: TradingViewウィジェット(iframe)内部の独自スクロールが端に達した時、
-   ページ側のスクロールを巻き込まないようにする(モバイルでの「スクロールが引っかかる」対策) */
-.cal-widget, .wl-widget{
+   ページ側のスクロールを巻き込まないようにする(モバイルでの「スクロールが引っかかる」対策)。
+   .wl-widget(株価現在値カード)はiframeを持たないためこの対策は不要で、高さもカード内容に
+   応じた可変(auto)でよい。TradingView依存だった頃の名残で.cal-widgetとクラス名は揃えているが、
+   スタイルは完全に別物になっている */
+.cal-widget{
   margin-top:10px; height:460px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);
   overscroll-behavior:contain; touch-action:pan-y;
 }
-.cal-widget:empty, .wl-widget:empty{display:none;}
-.cal-widget .tradingview-widget-container, .wl-widget .tradingview-widget-container{height:100%;}
+.cal-widget:empty{display:none;}
+.cal-widget .tradingview-widget-container{height:100%;}
+.wl-widget{margin-top:10px;}
+.wl-widget:empty{margin-top:0;}  /* 折りたたみ中はカードが無く、空の余白だけ残るのを防ぐ */
+
+/* ---------- 株価現在値カード ---------- */
+.wl-quote{
+  border:1px solid var(--line-soft); border-radius:8px; background:var(--surface);
+  padding:14px 16px; display:flex; flex-direction:column; gap:10px;
+}
+.wl-quote-header{display:flex; align-items:center; gap:10px;}
+.wl-quote-logo{width:28px; height:28px; border-radius:6px; flex-shrink:0; object-fit:contain; background:var(--card);}
+.wl-quote-namewrap{min-width:0;}
+.wl-quote-name{
+  font-size:13px; color:var(--ink); font-weight:500;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.wl-quote-sym{font-family:var(--mono); font-size:10px; color:var(--ink-3); letter-spacing:.04em;}
+.wl-quote-price{font-family:var(--mono); font-size:26px; font-weight:600; color:var(--ink); line-height:1.1;}
+.wl-quote-change{font-size:12.5px; font-weight:500;}
+.wl-quote-change.pos{color:var(--green);}
+.wl-quote-change.neg{color:var(--red);}
+.wl-quote-range{display:flex; align-items:center; gap:8px;}
+.wl-quote-range-label{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); flex-shrink:0;}
+.wl-quote-range-track{
+  position:relative; flex:1; height:4px; border-radius:99px;
+  background:color-mix(in srgb, var(--ink-3) 25%, transparent);
+}
+.wl-quote-range-marker{
+  position:absolute; top:50%; width:9px; height:9px; border-radius:99px;
+  background:var(--gold); box-shadow:0 0 6px color-mix(in srgb, var(--gold) 50%, transparent);
+  transform:translate(-50%, -50%);
+}
+.wl-quote-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; padding-top:2px; border-top:1px solid var(--line-soft);}
+.wl-quote-cell{display:flex; flex-direction:column; gap:2px; padding-top:8px;}
+.wl-quote-cell-label{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); letter-spacing:.04em;}
+.wl-quote-cell-value{font-family:var(--mono); font-size:12px; color:var(--ink-2);}
+.wl-quote-updated{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); text-align:right;}
 
 /* ---------- コントロール(チップ・検索) ---------- */
 /* チップと検索欄を同じ行のflexサイド・バイ・サイドではなく縦積みにしている。
@@ -437,13 +476,13 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   .watchlist{left:20px;}
   .calendar:has(.cal-widget:empty), .watchlist:has(.wl-widget:empty){bottom:auto;}  /* 折りたたみ中は見出しバーの高さだけにする */
   .cal-tools{flex-shrink:0;}
-  .cal-widget, .wl-widget{flex:1; height:auto; min-height:0;}
+  .cal-widget{flex:1; height:auto; min-height:0;}
 }
 /* サイドバーが入らない幅では、カレンダー・ウォッチリストをニュース一覧の上下の全幅ブロックに切り替える */
 @media (max-width:1100px){
   main{flex-direction:column;}
   .calendar, .watchlist{position:static; width:100%;}
-  .cal-widget, .wl-widget{height:320px;}
+  .cal-widget{height:320px;}
 }
 @media (max-width:640px){
   header, .controls, main, footer{padding-left:14px; padding-right:14px;}
@@ -472,7 +511,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   #search:focus{width:100%;}
   #calImpBtn{padding:8px 12px;}
   .grid{grid-template-columns:1fr;}
-  .cal-widget, .wl-widget{height:300px;}
+  .cal-widget{height:300px;}
   .cal-note{display:none;}
 }
 
