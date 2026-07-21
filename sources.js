@@ -49,16 +49,6 @@ const SOURCES = [
     "color": "#4fa8e0"
   },
   {
-    "id": "economist",
-    "group": "economist",
-    "name": "The Economist(Finance & economics)",
-    "short": "Economist",
-    "home": "https://www.economist.com/",
-    "rss": "https://www.economist.com/finance-and-economics/rss.xml",
-    "lang": "EN",
-    "color": "#d9534f"
-  },
-  {
     "id": "forbes",
     "group": "forbes",
     "name": "Forbes(Business)",
@@ -158,26 +148,6 @@ const SOURCES = [
     "rss": "https://zuuonline.com/feed",
     "lang": "JA",
     "color": "#d17ee0"
-  },
-  {
-    "id": "fed-press",
-    "group": "fed-press",
-    "name": "Federal Reserve(FRB公式発表)",
-    "short": "FRB",
-    "home": "https://www.federalreserve.gov/",
-    "rss": "https://www.federalreserve.gov/feeds/press_all.xml",
-    "lang": "EN",
-    "color": "#4a7fc9"
-  },
-  {
-    "id": "ecb-press",
-    "group": "ecb-press",
-    "name": "European Central Bank(ECB公式発表)",
-    "short": "ECB",
-    "home": "https://www.ecb.europa.eu/",
-    "rss": "https://www.ecb.europa.eu/rss/press.xml",
-    "lang": "EN",
-    "color": "#3d6ba8"
   },
   {
     "id": "investing-fx",
@@ -297,17 +267,6 @@ const SOURCES = [
     "lang": "JA",
     "color": "#6fa8dc",
     "note": "nhkとgroupを共有し、フィルターチップを1つに統合している(戦争・地政学ジャンルの補強)"
-  },
-  {
-    "id": "boj-press",
-    "group": "boj-press",
-    "name": "日本銀行(日銀公式発表)",
-    "short": "日銀",
-    "home": "https://www.boj.or.jp/",
-    "rss": "https://www.boj.or.jp/rss/whatsnew.xml",
-    "lang": "JA",
-    "color": "#7ba7e0",
-    "note": "FRB/ECBと並ぶ中央銀行公式枠。金融政策決定会合・オペ等の一次情報"
   },
   {
     "id": "bbc-world",
