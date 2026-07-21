@@ -160,7 +160,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
    (太字・大きいフォント)を打ち消して.capの見た目(等幅・10px・字間広め)を維持する */
 .cap h2{font:inherit; letter-spacing:inherit; color:inherit;}
 /* セクション見出しの頭に短い金線を付けてマストヘッドと揃える */
-.sessions .cap h2::before, .calendar .cap h2::before, .watchlist .cap h2::before{
+.sessions .cap h2::before, .calendar .cap h2::before{
   content:''; display:inline-block; width:14px; height:1px;
   background:var(--gold-dim); margin-right:8px; vertical-align:middle;
 }
@@ -189,64 +189,23 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
 .now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
 
-/* ---------- 経済指標カレンダー(記事一覧の右)・株式ウォッチリスト(記事一覧の左)の
-   2つのサイドバー。どちらもスクロールに追従する同じ見た目のパネルなので、
-   共通する宣言は.calendarと.watchlistのセレクタをまとめて1箇所に書いている ---------- */
-.calendar, .watchlist{
+/* ---------- 経済指標カレンダー(記事一覧の右のサイドバー。スクロールに追従) ---------- */
+.calendar{
   width:320px; flex-shrink:0; position:sticky; top:14px;
   border:1px solid var(--line-soft); border-radius:10px;
   background:var(--card); padding:14px 16px 12px; box-shadow:var(--shadow-1);
   transition:background-color .2s, border-color .2s;
 }
-.calendar .cap, .watchlist .cap{
+.calendar .cap{
   display:flex; justify-content:space-between; align-items:center;
   font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3);
 }
-.calendar .cap button, .watchlist .cap button{
+.calendar .cap button{
   background:none; border:none; color:var(--gold-dim); cursor:pointer;
   font-family:var(--mono); font-size:10px; letter-spacing:.08em; padding:2px 4px;
   transition:color .15s;
 }
-.calendar .cap button:hover, .watchlist .cap button:hover{color:var(--gold);}
-
-/* 銘柄検索欄。#searchwrap(ヘッダーのキーワード絞込)と見た目を揃えつつ、
-   position:relativeにして直下の.wl-resultsをこの欄のすぐ下に絶対配置する基準にする */
-.wl-searchwrap{margin-top:10px; position:relative;}
-.wl-searchwrap::before{
-  content:'⌕'; position:absolute; left:11px; top:50%; transform:translateY(-50%);
-  color:var(--ink-3); font-size:14px; pointer-events:none;
-}
-#wlSearch{
-  width:100%; background:var(--surface); border:1px solid var(--line); border-radius:8px;
-  color:var(--ink); font-family:var(--sans); font-size:12.5px;
-  padding:8px 12px 8px 32px;
-  transition:background-color .2s, border-color .15s, box-shadow .15s;
-}
-#wlSearch::placeholder{color:var(--ink-3);}
-#wlSearch:focus{
-  outline:none; border-color:var(--gold-dim);
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
-}
-/* 検索結果ドロップダウン。.watchlistがposition:sticky/fixedのカード内なので、
-   z-indexを明示しないと後続の記事カード(.card)のbox-shadow等の下に隠れることがある */
-.wl-results{
-  position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:5;
-  max-height:280px; overflow-y:auto;
-  background:var(--card); border:1px solid var(--line-soft); border-radius:8px;
-  box-shadow:var(--shadow-2);
-}
-.wl-result{
-  appearance:none; -webkit-appearance:none; width:100%;
-  display:flex; align-items:center; justify-content:space-between; gap:8px;
-  background:none; border:none; border-bottom:1px solid var(--line-soft);
-  padding:9px 12px; cursor:pointer; text-align:left; font:inherit;
-  color:var(--ink-2); transition:background-color .15s, color .15s;
-}
-.wl-result:last-child{border-bottom:none;}
-.wl-result:hover{background:color-mix(in srgb, var(--gold) 8%, transparent); color:var(--ink);}
-.wl-result-name{font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.wl-result-sym{font-family:var(--mono); font-size:10px; color:var(--ink-3); flex-shrink:0;}
-.wl-result-note{padding:10px 12px; font-size:11.5px; color:var(--ink-3);}
+.calendar .cap button:hover{color:var(--gold);}
 
 .cal-tools{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; flex-wrap:wrap;}
 #calImpBtn{
@@ -260,12 +219,12 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 
 /* overscroll-behavior: TradingViewウィジェット(iframe)内部の独自スクロールが端に達した時、
    ページ側のスクロールを巻き込まないようにする(モバイルでの「スクロールが引っかかる」対策) */
-.cal-widget, .wl-widget{
+.cal-widget{
   margin-top:10px; height:460px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);
   overscroll-behavior:contain; touch-action:pan-y;
 }
-.cal-widget:empty, .wl-widget:empty{display:none;}
-.cal-widget .tradingview-widget-container, .wl-widget .tradingview-widget-container{height:100%;}
+.cal-widget:empty{display:none;}
+.cal-widget .tradingview-widget-container{height:100%;}
 
 /* ---------- コントロール(チップ・検索) ---------- */
 /* チップと検索欄を同じ行のflexサイド・バイ・サイドではなく縦積みにしている。
@@ -324,9 +283,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
-/* ---------- ウォッチリストサイドバー+記事グリッド+カレンダーサイドバー ---------- */
-/* HTML記述順(watchlist→grid→calendar)がそのまま左→中央→右の並びになる。
-   3つともflexアイテムなのでgapが両方の隙間に効く */
+/* ---------- 記事グリッド+カレンダーサイドバー ---------- */
 main{
   max-width:1440px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;
   display:flex; gap:14px; align-items:flex-start;
@@ -419,55 +376,25 @@ footer a:hover{color:var(--gold); text-decoration:underline; text-underline-offs
 footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;}
 
 /* ---------- レスポンシブ ---------- */
-/* ワイド画面: カレンダーをコンテンツ右外側の余白、ウォッチリストを左外側の余白へ
-   左右対称に固定表示し(rightとleftの値が中央50%を軸に鏡写しになっている)、
-   ニュース一覧は全幅に戻す。パネルは画面下端まで伸ばし、ウィジェットが残り高さ全部を使う。
+/* ワイド画面: カレンダーをコンテンツ右外側の余白へ固定表示し、ニュース一覧は全幅に戻す。
+   パネルは画面下端まで伸ばし、ウィジェットが残り高さ全部を使う。
    パネル幅は余白に合わせて自動調整(最大320px)。ブラウザ拡大率が高めの環境でも発動するよう閾値は1840px */
 @media (min-width:1840px){
   header, .controls, main, footer{max-width:1320px;}
-  .calendar, .watchlist{
-    position:fixed; top:18px; bottom:18px;
+  .calendar{
+    position:fixed; left:calc(50% + 672px); top:18px; bottom:18px;
     width:min(320px, calc(50vw - 692px));
     display:flex; flex-direction:column;
   }
-  .calendar{left:calc(50% + 672px);}
-  .watchlist{right:calc(50% + 672px);}
-  .calendar:has(.cal-widget:empty), .watchlist:has(.wl-widget:empty){bottom:auto;}  /* 折りたたみ中は見出しバーの高さだけにする */
+  .calendar:has(.cal-widget:empty){bottom:auto;}  /* 折りたたみ中は見出しバーの高さだけにする */
   .cal-tools{flex-shrink:0;}
-  .cal-widget, .wl-widget{flex:1; height:auto; min-height:0;}
+  .cal-widget{flex:1; height:auto; min-height:0;}
 }
-/* 1100〜1839pxの中間幅: 両方のサイドバー(ウォッチリスト320px+経済指標カレンダー320px)を
-   記事一覧と横並びのままにすると、記事グリッドの残り幅が狭くなりすぎて3列表示できず2列に
-   減ってしまう不具合があった(実際に発生・報告を受けて修正)。
-   当初はmain{flex-wrap:wrap}+.watchlist{width:100%}でウォッチリストだけを上の行に折り返す
-   方式を試したが、.gridはflex:1(=flex-basis:0%)を持つため折り返し判定時の仮サイズが常に0と
-   みなされ、残り幅が0でも「収まる」と判定されてwatchlistと同じ行に居座ってしまい機能しなかった
-   (flexの折り返しはflex-grow/shrink適用前の仮サイズで行われるため)。
-   flexの折り返しに頼らず、mainをこの幅域だけ明示的な2行グリッド(1行目=ウォッチリスト全幅、
-   2行目=記事一覧+カレンダー)に切り替えることで確実に配置する */
-@media (min-width:1100px) and (max-width:1839.98px){
-  main{
-    display:grid;
-    grid-template-columns:1fr 320px;
-    grid-template-areas:"watchlist watchlist" "grid calendar";
-    align-items:start;
-  }
-  /* .watchlistはヘッダー(見出し+折りたたむボタン)と中身(検索欄・チャート)を
-     まとめて、カレンダーサイドバーと同じ320px幅のまま自分の行の左端に置く。
-     幅を中途半端に広げると、ヘッダーだけ広く中身は狭いまま…のようにちぐはぐに
-     見えたり、右側に余白だけが残って浮いた印象になったりするため、
-     「カレンダーと同じ見慣れた幅のパネルが上に来ただけ」という自然な見た目に統一した */
-  .watchlist{grid-area:watchlist; width:320px; position:static;}
-  .grid{grid-area:grid; min-width:0;}
-  /* position:sticky/topはベースルール(.calendar, .watchlist{...})から継続して効かせる
-     (以前から正しく動いていた「スクロールに追従する」挙動なので、ここでは触らない) */
-  .calendar{grid-area:calendar; width:100%;}
-}
-/* サイドバーが入らない幅では、カレンダー・ウォッチリストをニュース一覧の上下の全幅ブロックに切り替える */
+/* サイドバーが入らない幅では、カレンダーをニュース一覧の下の全幅ブロックに切り替える */
 @media (max-width:1100px){
   main{flex-direction:column;}
-  .calendar, .watchlist{position:static; width:100%;}
-  .cal-widget, .wl-widget{height:320px;}
+  .calendar{position:static; width:100%;}
+  .cal-widget{height:320px;}
 }
 @media (max-width:640px){
   header, .controls, main, footer{padding-left:14px; padding-right:14px;}
@@ -496,7 +423,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   #search:focus{width:100%;}
   #calImpBtn{padding:8px 12px;}
   .grid{grid-template-columns:1fr;}
-  .cal-widget, .wl-widget{height:300px;}
+  .cal-widget{height:300px;}
   .cal-note{display:none;}
 }
 
