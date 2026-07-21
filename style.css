@@ -125,8 +125,8 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 
 #refreshBtn,#trBtn,#topicBtn,#themeBtn{
   background:none; border:1px solid var(--line); border-radius:6px;
-  color:var(--ink-2); font-family:var(--mono); font-size:11px;
-  padding:5px 12px; cursor:pointer; letter-spacing:.08em;
+  color:var(--ink-2); font-family:var(--mono); font-size:11.5px;
+  padding:8px 17px; cursor:pointer; letter-spacing:.08em;
   transition:color .15s, border-color .15s, background-color .15s, transform .1s;
 }
 #refreshBtn:hover,#trBtn:hover,#topicBtn:hover,#themeBtn:hover{
@@ -274,12 +274,12 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 #search{
   background:var(--surface); border:1px solid var(--line); border-radius:8px;
   color:var(--ink); font-family:var(--sans); font-size:13px;
-  padding:8px 12px 8px 32px; width:220px;
+  padding:8px 12px 8px 32px; width:280px;
   transition:background-color .2s, border-color .15s, width .25s ease, box-shadow .15s;
 }
 #search::placeholder{color:var(--ink-3);}
 #search:focus{
-  outline:none; border-color:var(--gold-dim); width:260px;
+  outline:none; border-color:var(--gold-dim); width:320px;
   box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
