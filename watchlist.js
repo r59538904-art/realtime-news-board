@@ -15,6 +15,11 @@
 // なお過去の値動き(ローソク足チャート)は実装していない(現在値カードのみ)。
 // Yahoo Financeのchart APIは技術的には時系列データを持っているが、まずは
 // 現在値表示のみに絞ってシンプルに構成している。
+// 日本語での検索: Yahoo Financeの検索APIは非ASCII文字を含むクエリを一律拒否するため
+// (実機確認済み)、日本語入力はtranslate.jsの翻訳基盤(MyMemory→Google翻訳)で
+// 英語に変換してから検索する(searchWlSymbol内で実施)。
+// 自動更新: 30秒ごとに現在値を再取得する(末尾のsetInterval参照)。バックグラウンドタブ・
+// 折りたたみ中はスキップし、自動更新時は表示中のカードをチラつかせず静かに差し替える。
 
 // ---- Cloudflare Workerプロキシの設定 ----
 // cloudflare-worker/yahoo-finance-proxy.js をCloudflare Workers(無料)へデプロイし、
@@ -24,6 +29,9 @@
 const WL_PROXY_BASE_URL = 'https://yahoo-finance-proxy.r59538904.workers.dev';
 const WL_SEARCH_DEBOUNCE_MS = 350;  // 連続入力のたびのAPI呼び出しを間引く
 const WL_SEARCH_MIN_LEN = 2;        // 1文字だけでは結果が多すぎる/意味が薄いため検索しない
+const WL_REFRESH_MS = 30 * 1000;    // 現在値の自動更新間隔。Workerプロキシ側のCache-Control
+                                     // (yahoo-finance-proxy.jsのCACHE_SECONDS)と同じ30秒にして、
+                                     // 更新のたびに古いキャッシュを引いてしまう無駄を避けている
 
 const WL_PREF_KEY = 'news-board-wl-pref-v1';
 let watchlistOpen = true;
@@ -60,17 +68,23 @@ async function fetchViaProxy(path, params, signal){
 }
 
 // ---- 現在値カードの構築 ----
-async function buildWatchlist(){
+// silent=trueの場合(30秒ごとの自動更新)は「読み込み中…」を挟まず、取得できるまで
+// 今表示中のカードをそのまま残す(自動更新のたびにチラつくのを防ぐ)。
+// 銘柄を切り替えた時・手動で開いた時はsilent=false(既定)で、すぐに読み込み中を表示する
+async function buildWatchlist(silent){
   const container = document.getElementById('wlWidget');
   if(!container) return;
-  container.textContent = '';
   updateWlBtn();
-  if(!watchlistOpen) return;             // 折りたたみ中は取得自体を行わない(通信節約)
+  if(!watchlistOpen){ container.textContent = ''; return; }  // 折りたたみ中は取得自体を行わない(通信節約)
   if(!WL_PROXY_BASE_URL){
+    container.textContent = '';
     container.appendChild(el('div', 'wl-result-note', '株価表示にはCloudflare Workerプロキシの設定が必要です(README参照)'));
     return;
   }
-  container.appendChild(el('div', 'wl-result-note', '読み込み中…'));
+  if(!silent){
+    container.textContent = '';
+    container.appendChild(el('div', 'wl-result-note', '読み込み中…'));
+  }
 
   if(wlQuoteAbort) wlQuoteAbort.abort();
   const controller = new AbortController();
@@ -85,8 +99,13 @@ async function buildWatchlist(){
   }catch(e){
     if(e.name === 'AbortError') return;  // より新しい選択に追い越された。古い結果は描画しない
     console.error('現在値の取得に失敗:', e);
-    container.textContent = '';
-    container.appendChild(el('div', 'wl-result-note', '現在値を取得できませんでした'));
+    // 自動更新(silent)の一時的な失敗では、今表示中のカード(直前の正常な値)を
+    // 消さずに残す(数秒後の次回更新で回復することが多いため)。手動操作(silent=false)の
+    // 失敗時だけエラー表示に置き換える
+    if(!silent){
+      container.textContent = '';
+      container.appendChild(el('div', 'wl-result-note', '現在値を取得できませんでした'));
+    }
   }
 }
 
@@ -162,11 +181,18 @@ function renderWlQuote(meta, openPrice){
 }
 
 // ---- 銘柄検索(Yahoo Finance search、プロキシ経由) ----
+// #wlSearchはrole=comboboxのため、候補一覧(#wlResults)の表示状態と
+// aria-expandedを必ず連動させる(スクリーンリーダーが開閉を認識できるようにするため)
+function setWlResultsVisible(visible){
+  const listEl = document.getElementById('wlResults');
+  const input = document.getElementById('wlSearch');
+  if(listEl) listEl.hidden = !visible;
+  if(input) input.setAttribute('aria-expanded', String(visible));
+}
 function hideWlResults(){
   const listEl = document.getElementById('wlResults');
-  if(!listEl) return;
-  listEl.textContent = '';
-  listEl.hidden = true;
+  if(listEl) listEl.textContent = '';
+  setWlResultsVisible(false);
 }
 function renderWlResults(items){
   const listEl = document.getElementById('wlResults');
@@ -174,7 +200,7 @@ function renderWlResults(items){
   listEl.textContent = '';
   if(!items.length){
     listEl.appendChild(el('div', 'wl-result-note', '該当する銘柄が見つかりませんでした'));
-    listEl.hidden = false;
+    setWlResultsVisible(true);
     return;
   }
   items.slice(0, 8).forEach(item => {
@@ -188,7 +214,7 @@ function renderWlResults(items){
     optionBtn.addEventListener('mousedown', e => { e.preventDefault(); selectWlSymbol(item.symbol, item.longname || item.shortname); });
     listEl.appendChild(optionBtn);
   });
-  listEl.hidden = false;
+  setWlResultsVisible(true);
 }
 function selectWlSymbol(symbol, description){
   wlSymbol = symbol;
@@ -204,15 +230,34 @@ async function searchWlSymbol(query){
     if(listEl){
       listEl.textContent = '';
       listEl.appendChild(el('div', 'wl-result-note', '検索機能を使うにはCloudflare Workerプロキシの設定が必要です(README参照)'));
-      listEl.hidden = false;
     }
+    setWlResultsVisible(true);
     return;
   }
   if(wlSearchAbort) wlSearchAbort.abort();
   const controller = new AbortController();
   wlSearchAbort = controller;
   try{
-    const data = await fetchViaProxy('/search', {q: query}, controller.signal);
+    // Yahoo Financeの検索APIは非ASCII文字を含むクエリを一律拒否する
+    // ({"error":{"code":"Bad Request","description":"Invalid Search Query"}}、実機確認済み)。
+    // 日本語(非ASCII)が含まれる場合は、translate.jsの翻訳基盤(MyMemory→Google翻訳の
+    // フォールバック)を再利用して英語に変換してから検索する
+    let englishQuery = query;
+    if(/[^\x00-\x7F]/.test(query)){
+      const translated = await translateQueryToEnglish(query);
+      if(controller.signal.aborted) return;
+      if(!translated){
+        const listEl = document.getElementById('wlResults');
+        if(listEl){
+          listEl.textContent = '';
+          listEl.appendChild(el('div', 'wl-result-note', '検索語の翻訳に失敗しました。英語名でもお試しください'));
+        }
+        setWlResultsVisible(true);
+        return;
+      }
+      englishQuery = translated;
+    }
+    const data = await fetchViaProxy('/search', {q: englishQuery}, controller.signal);
     const items = (data && Array.isArray(data.quotes) ? data.quotes : [])
       .filter(item => item && item.symbol && (item.longname || item.shortname) && item.quoteType === 'EQUITY');
     renderWlResults(items);
@@ -226,3 +271,12 @@ function handleWlSearchInput(value){
   if(query.length < WL_SEARCH_MIN_LEN){ hideWlResults(); return; }
   wlSearchTimer = setTimeout(() => searchWlSymbol(query), WL_SEARCH_DEBOUNCE_MS);
 }
+
+// ---- 現在値の自動更新 ----
+// 折りたたみ中・バックグラウンドタブでは取得しない(main.jsの自動更新と同じ節約方針)。
+// 検索候補を選んでいる最中(#wlResultsが開いている)に更新でカードが作り直されても
+// 検索欄・候補一覧はwlWidgetの外にあるため操作を妨げない
+setInterval(() => {
+  if(document.hidden || !watchlistOpen) return;
+  buildWatchlist(true);
+}, WL_REFRESH_MS);
