@@ -28,7 +28,7 @@ let trRenderTimer = null;
 //   1. 起動時(loadTranslate) … 保存から30日を過ぎた翻訳を失効させる
 //   2. 保存時(saveTrCache)   … 600件超過なら新しい順に400件へ整理する
 function loadTranslate(){
-  try{ translateOn = localStorage.getItem(TR_PREF_KEY) !== 'off'; }catch(e){}
+  translateOn = storageGet(TR_PREF_KEY) !== 'off';
   try{
     const cachedJson = localStorage.getItem(TR_CACHE_KEY);
     if(!cachedJson) return;
@@ -152,4 +152,5 @@ function updateTrBtn(){
   const btn = document.getElementById('trBtn');
   btn.textContent = translateOn ? '翻訳 ON' : '翻訳 OFF';
   btn.classList.toggle('off', !translateOn);
+  btn.setAttribute('aria-pressed', String(translateOn));
 }

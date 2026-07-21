@@ -19,19 +19,23 @@ try{ CAL_WIDE_MQ.addEventListener('change', () => buildEconCalendar()); }catch(e
 // 「スクロールが引っかかる」体感になりやすいため、狭い画面(幅1100px以下)では
 // 明示的な設定が保存されていない初回訪問時に限り、初期状態を折りたたみにする
 function loadCalendarPref(){
-  try{
-    const saved = localStorage.getItem(CAL_PREF_KEY);
-    calendarOpen = saved ? saved !== 'closed' : window.innerWidth > 1100;
-    calHighOnly = localStorage.getItem(CAL_IMP_KEY) === 'high';
-  }catch(e){}
+  const saved = storageGet(CAL_PREF_KEY);
+  calendarOpen = saved ? saved !== 'closed' : window.innerWidth > 1100;
+  calHighOnly = storageGet(CAL_IMP_KEY) === 'high';
 }
 function updateCalBtn(){
   const btn = document.getElementById('calBtn');
-  if(btn) btn.textContent = calendarOpen ? '折りたたむ ▲' : '表示する ▼';
+  if(btn){
+    btn.textContent = calendarOpen ? '折りたたむ ▲' : '表示する ▼';
+    // aria-expanded/aria-controlsで「calWidgetの開閉を制御するボタン」であることを明示する
+    btn.setAttribute('aria-expanded', String(calendarOpen));
+    btn.setAttribute('aria-controls', 'calWidget');
+  }
   const impBtn = document.getElementById('calImpBtn');
   if(impBtn){
     impBtn.textContent = calHighOnly ? '重要度: ★★★のみ' : '重要度: ★★以上';
     impBtn.classList.toggle('on', calHighOnly);
+    impBtn.setAttribute('aria-pressed', String(calHighOnly));
   }
 }
 // TradingViewウィジェットは設定を後から変えられないため、テーマ切替や設定変更のたびに作り直す
@@ -83,11 +87,11 @@ function initEconCalendarLazy(){
 
 function toggleCalendar(){
   calendarOpen = !calendarOpen;
-  try{ localStorage.setItem(CAL_PREF_KEY, calendarOpen ? 'open' : 'closed'); }catch(e){}
+  storageSet(CAL_PREF_KEY, calendarOpen ? 'open' : 'closed');
   buildEconCalendar();
 }
 function toggleCalImportance(){
   calHighOnly = !calHighOnly;
-  try{ localStorage.setItem(CAL_IMP_KEY, calHighOnly ? 'high' : 'medium'); }catch(e){}
+  storageSet(CAL_IMP_KEY, calHighOnly ? 'high' : 'medium');
   buildEconCalendar();
 }

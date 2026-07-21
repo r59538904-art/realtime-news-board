@@ -7,13 +7,13 @@
 document.getElementById('refreshBtn').addEventListener('click', () => fetchAll());
 document.getElementById('trBtn').addEventListener('click', () => {
   translateOn = !translateOn;
-  try{ localStorage.setItem(TR_PREF_KEY, translateOn ? 'on' : 'off'); }catch(e){}
+  storageSet(TR_PREF_KEY, translateOn ? 'on' : 'off');
   updateTrBtn();
   render();
 });
 document.getElementById('topicBtn').addEventListener('click', () => {
   topicFilterOn = !topicFilterOn;
-  try{ localStorage.setItem(TOPIC_PREF_KEY, topicFilterOn ? 'on' : 'off'); }catch(e){}
+  storageSet(TOPIC_PREF_KEY, topicFilterOn ? 'on' : 'off');
   updateTopicBtn();
   render();
 });
@@ -27,6 +27,11 @@ document.getElementById('search').addEventListener('input', e => {
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 document.getElementById('calBtn').addEventListener('click', toggleCalendar);
 document.getElementById('calImpBtn').addEventListener('click', toggleCalImportance);
+document.getElementById('wlBtn').addEventListener('click', toggleWatchlist);
+document.getElementById('wlSearch').addEventListener('input', e => handleWlSearchInput(e.target.value));
+// blurは結果ボタンのmousedown(preventDefault)より後に発火するよう設計しているが、
+// 念のため短い遅延を挟んで確実にクリックを拾ってから閉じる
+document.getElementById('wlSearch').addEventListener('blur', () => setTimeout(hideWlResults, 150));
 
 // ---- 自動更新(5秒ごとに再取得時刻をチェック) ----
 // バックグラウンドタブ(他タブ表示中・最小化中など)では取得を止め、通信量とバッテリーを節約する。
@@ -58,5 +63,7 @@ tickerTape();
 buildSessions();
 loadCalendarPref();
 initEconCalendarLazy();
+loadWatchlistPref();
+initWatchlistLazy();
 render();
 fetchAll();
