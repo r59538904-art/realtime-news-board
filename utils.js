@@ -51,3 +51,22 @@ function buildKeywordRe(cjkWords, latinWords, flags){
 function keywordSearchText(item){
   return item.title + ' ' + item.desc + ' ' + (trGet(item.title) || '') + ' ' + (trGet(item.desc) || '');
 }
+
+// ---- localStorageの安全なラッパー ----
+// プライベートブラウジング・容量超過・Cookie無効化設定などでlocalStorageが例外を
+// 投げる環境があるため、単純な1キーの読み書きはこの3関数を経由し、失敗時は
+// 静かにfallback値を返す/書き込みを諦める(各所に同じtry/catchを繰り返し書かない)。
+// 複数キーの読み込みを1トランザクションとして扱いたい場合(失敗時に全体を初期化したい等)は
+// このラッパーではなく従来どおり呼び出し側で直接try/catchすること(feed.js・translate.jsのキャッシュ処理等)。
+function storageGet(key, fallback = null){
+  try{ const value = localStorage.getItem(key); return value === null ? fallback : value; }
+  catch(e){ return fallback; }
+}
+function storageSet(key, value){
+  try{ localStorage.setItem(key, value); return true; }
+  catch(e){ return false; }
+}
+function storageRemove(key){
+  try{ localStorage.removeItem(key); return true; }
+  catch(e){ return false; }
+}

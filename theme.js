@@ -28,16 +28,13 @@ function applyTheme(theme, persist){
   if(theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme);
   else document.documentElement.removeAttribute('data-theme');
   if(persist !== false){
-    try{
-      if(theme === 'light' || theme === 'dark') localStorage.setItem(THEME_KEY, theme);
-      else localStorage.removeItem(THEME_KEY);
-    }catch(e){}
+    if(theme === 'light' || theme === 'dark') storageSet(THEME_KEY, theme);
+    else storageRemove(THEME_KEY);
   }
   updateThemeBtn();
 }
 function loadTheme(){
-  let saved = null;
-  try{ saved = localStorage.getItem(THEME_KEY); }catch(e){}
+  const saved = storageGet(THEME_KEY);
   applyTheme(saved === 'light' || saved === 'dark' ? saved : null, false);
 }
 function toggleTheme(){

@@ -7,12 +7,13 @@ const TOPIC_RE = buildKeywordRe(TOPIC_KEYWORDS_CJK, TOPIC_KEYWORDS_LATIN, 'i');
 let topicFilterOn = true;
 
 function loadTopicPref(){
-  try{ topicFilterOn = localStorage.getItem(TOPIC_PREF_KEY) !== 'off'; }catch(e){}
+  topicFilterOn = storageGet(TOPIC_PREF_KEY) !== 'off';
 }
 function updateTopicBtn(){
   const btn = document.getElementById('topicBtn');
   btn.textContent = topicFilterOn ? 'トピック絞込 ON' : 'トピック絞込 OFF';
   btn.classList.toggle('off', !topicFilterOn);
+  btn.setAttribute('aria-pressed', String(topicFilterOn));  // ラベル自体が現在状態(ON/OFF)を表す典型的なトグルボタンのため
 }
 // タイトル+要約(原文・翻訳文の両方)のどこかにキーワードがあれば通す
 function matchesTopic(item){

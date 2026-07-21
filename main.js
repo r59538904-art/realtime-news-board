@@ -7,13 +7,13 @@
 document.getElementById('refreshBtn').addEventListener('click', () => fetchAll());
 document.getElementById('trBtn').addEventListener('click', () => {
   translateOn = !translateOn;
-  try{ localStorage.setItem(TR_PREF_KEY, translateOn ? 'on' : 'off'); }catch(e){}
+  storageSet(TR_PREF_KEY, translateOn ? 'on' : 'off');
   updateTrBtn();
   render();
 });
 document.getElementById('topicBtn').addEventListener('click', () => {
   topicFilterOn = !topicFilterOn;
-  try{ localStorage.setItem(TOPIC_PREF_KEY, topicFilterOn ? 'on' : 'off'); }catch(e){}
+  storageSet(TOPIC_PREF_KEY, topicFilterOn ? 'on' : 'off');
   updateTopicBtn();
   render();
 });
