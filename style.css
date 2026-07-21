@@ -401,8 +401,11 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   }
   .chips{width:100%;}
   /* チップも同様にタップ領域を拡大(密なフィルター一覧のため44pxまでは広げず、
-     視認性とレイアウト密度のバランスを見て段階的に拡大) */
-  .chip{padding:10px 14px; font-size:11.5px;}
+     視認性とレイアウト密度のバランスを見て段階的に拡大)。
+     flex:1 1 autoで各行の右端まで幅を配分して隙間なく揃える(PC版はflex:noneのまま
+     content幅固定にしているが、狭い画面では1行あたりのチップ数が少なく行ごとの
+     ばらつきも目立たないため、隙間ができるより埋めた方が見た目が綺麗になる) */
+  .chip{padding:10px 14px; font-size:11.5px; flex:1 1 auto; max-width:200px;}
   .searchwrap{margin-left:0; width:100%;}
   #search{width:100%; padding-top:11px; padding-bottom:11px;}
   #search:focus{width:100%;}
