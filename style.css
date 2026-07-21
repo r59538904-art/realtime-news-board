@@ -236,15 +236,14 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .chip{
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
   font:inherit; line-height:normal;
-  font-family:var(--mono); font-size:11px; letter-spacing:.06em;
-  padding:6px 13px; border-radius:6px; border:1px solid var(--line);
+  font-family:var(--mono); font-size:11.5px; letter-spacing:.06em;
+  padding:8px 16px; border-radius:6px; border:1px solid var(--line);
   color:var(--ink-2); cursor:pointer; background:var(--surface); user-select:none;
-  /* flex:noneで常に文字数どおりの幅にする。以前はflex:1 1 autoで行末の余白を
-     チップに配分していたが、最終行に少数だけ残った時にそのチップだけ極端に
-     間延びして見える副作用があった(例: 5個しか残らない行でmax-width:240pxまで拡大)。
-     行ごとにチップの大きさが不揃いになる方が余白よりも目立つ問題のため、
-     素直に内容幅へ固定し、余った分は行末の余白として残す方針に変更した */
-  text-align:center; flex:none;
+  /* flex:1 1 autoで各行の右端まで余白を配分して隙間なく揃える。
+     以前は上限がmax-width:240pxと緩く、チップ数の少ない行(例:最終行5個)だけ
+     極端に大きく伸びて他の行と不揃いに見えたため、上限を180pxまで絞って
+     行ごとの伸び幅の差を抑えつつ、行末まで隙間なく埋まる見た目を両立させている */
+  text-align:center; flex:1 1 auto; max-width:180px;
   transition:border-color .15s, color .15s, background-color .2s, transform .1s;
 }
 .chip:hover{border-color:var(--gold-dim); color:var(--ink);}
@@ -401,11 +400,10 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   }
   .chips{width:100%;}
   /* チップも同様にタップ領域を拡大(密なフィルター一覧のため44pxまでは広げず、
-     視認性とレイアウト密度のバランスを見て段階的に拡大)。
-     flex:1 1 autoで各行の右端まで幅を配分して隙間なく揃える(PC版はflex:noneのまま
-     content幅固定にしているが、狭い画面では1行あたりのチップ数が少なく行ごとの
-     ばらつきも目立たないため、隙間ができるより埋めた方が見た目が綺麗になる) */
-  .chip{padding:10px 14px; font-size:11.5px; flex:1 1 auto; max-width:200px;}
+     視認性とレイアウト密度のバランスを見て段階的に拡大)。flex:1 1 auto自体は
+     ベースルールと共通、モバイルは縦方向の余白を厚めに・上限をやや広めにしている
+     (狭い画面では1行あたりのチップ数が少なく最大幅まで伸びても不揃いが目立たないため) */
+  .chip{padding:10px 14px; max-width:200px;}
   .searchwrap{margin-left:0; width:100%;}
   #search{width:100%; padding-top:11px; padding-bottom:11px;}
   #search:focus{width:100%;}
