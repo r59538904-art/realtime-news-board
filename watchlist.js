@@ -16,7 +16,7 @@
 // (view-sourceで見える)。Finnhub無料枠のキーはブラウザから直接叩く用途を
 // 前提にした設計のため実害は小さいが、心配な場合はFinnhub側にリファラー制限等の
 // 設定機能がないか確認すること。
-const FINNHUB_API_KEY = '';  // 例: 'cabcde1234567890abcdefg' をここに入力する
+const FINNHUB_API_KEY = 'd9fe9jhr01qu5nhe58igd9fe9jhr01qu5nhe58j0';
 const WL_SEARCH_DEBOUNCE_MS = 350;  // 翻訳キュー等と同様、連続入力のたびのAPI呼び出しを間引く
 const WL_SEARCH_MIN_LEN = 2;        // 1文字だけでは結果が多すぎる/意味が薄いため検索しない
 
