@@ -496,10 +496,11 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
    (サイドバーが左右に収まったり上部帯に切り替わったり)不満が繰り返し出たため、
    ブレークポイントで個別にレイアウトを組み替える方式をやめ、常に同じデザイン
    (幅1800px基準で設計)をウィンドウ幅に合わせて丸ごと拡大縮小する方式に変更した。
-   scale.jsがwindow.innerWidth/1800pxの比率で#scaleWrapにtransform:scaleを適用する。
+   scale.jsがwindow.innerWidth/1800pxの比率で#scaleWrapにzoomを適用する(transformだと
+   position:sticky/fixedな左右パネルのスクロール追従が壊れるため、zoomを採用)。
    これによりどんな画面サイズでも「株価パネル左・記事一覧中央・カレンダー右」という
    見た目の比率が常に同一になる */
-#scaleWrap{width:1800px; transform-origin:top left;}
+#scaleWrap{width:1800px;}
 
 /* ---------- アクセシビリティ ---------- */
 @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important} }
