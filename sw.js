@@ -28,6 +28,7 @@ const CORE_ASSETS = [
   './ticker.js',
   './sessions.js',
   './calendar.js',
+  './watchlist.js',
   './main.js',
   './news.json',
   './privacy.html',

@@ -27,6 +27,7 @@ document.getElementById('search').addEventListener('input', e => {
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 document.getElementById('calBtn').addEventListener('click', toggleCalendar);
 document.getElementById('calImpBtn').addEventListener('click', toggleCalImportance);
+document.getElementById('wlBtn').addEventListener('click', toggleWatchlist);
 
 // ---- 自動更新(5秒ごとに再取得時刻をチェック) ----
 // バックグラウンドタブ(他タブ表示中・最小化中など)では取得を止め、通信量とバッテリーを節約する。
@@ -58,5 +59,7 @@ tickerTape();
 buildSessions();
 loadCalendarPref();
 initEconCalendarLazy();
+loadWatchlistPref();
+initWatchlistLazy();
 render();
 fetchAll();
