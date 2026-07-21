@@ -95,6 +95,15 @@ button:focus-visible, a:focus-visible, input:focus-visible{
 }
 .skip-link:focus{top:0;}
 
+/* 視覚的には非表示だがスクリーンリーダーには読ませる定番パターン。display:noneや
+   visibility:hiddenだと読み上げ自体がスキップされてしまうため、1pxの範囲に切り詰めて
+   隠す(記事一覧セクションにも見出し階層上のh2が必要だが、隣接するWORLD TRADING SESSIONS等
+   と違い視覚的な見出しは不要なためこの形にした) */
+.sr-only{
+  position:absolute; width:1px; height:1px; overflow:hidden;
+  clip:rect(0,0,0,0); white-space:nowrap; border:0; padding:0; margin:-1px;
+}
+
 /* ---------- ヘッダー ---------- */
 header{padding:26px clamp(16px,4vw,48px) 0; max-width:1800px; margin:0 auto;}
 .masthead{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;}
@@ -185,7 +194,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   font-family:var(--mono); font-weight:500; font-size:9px; letter-spacing:.15em;
   color:var(--ink-2); white-space:nowrap;
 }
-.sess-bar.live b{color:#191305; font-weight:600;}
+.sess-bar.live b{color:var(--gold-ink); font-weight:600;}
 .now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
 .now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
 
@@ -283,7 +292,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   padding:14px 16px; display:flex; flex-direction:column; gap:10px;
 }
 .wl-quote-header{display:flex; align-items:center; gap:10px;}
-.wl-quote-logo{width:28px; height:28px; border-radius:6px; flex-shrink:0; object-fit:contain; background:var(--card);}
 .wl-quote-namewrap{min-width:0; flex:1;}
 .wl-quote-name{
   font-size:13px; color:var(--ink); font-weight:500;
