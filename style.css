@@ -209,6 +209,45 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 }
 .calendar .cap button:hover, .watchlist .cap button:hover{color:var(--gold);}
 
+/* 銘柄検索欄。#searchwrap(ヘッダーのキーワード絞込)と見た目を揃えつつ、
+   position:relativeにして直下の.wl-resultsをこの欄のすぐ下に絶対配置する基準にする */
+.wl-searchwrap{margin-top:10px; position:relative;}
+.wl-searchwrap::before{
+  content:'⌕'; position:absolute; left:11px; top:50%; transform:translateY(-50%);
+  color:var(--ink-3); font-size:14px; pointer-events:none;
+}
+#wlSearch{
+  width:100%; background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  color:var(--ink); font-family:var(--sans); font-size:12.5px;
+  padding:8px 12px 8px 32px;
+  transition:background-color .2s, border-color .15s, box-shadow .15s;
+}
+#wlSearch::placeholder{color:var(--ink-3);}
+#wlSearch:focus{
+  outline:none; border-color:var(--gold-dim);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
+}
+/* 検索結果ドロップダウン。.watchlistがposition:sticky/fixedのカード内なので、
+   z-indexを明示しないと後続の記事カード(.card)のbox-shadow等の下に隠れることがある */
+.wl-results{
+  position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:5;
+  max-height:280px; overflow-y:auto;
+  background:var(--card); border:1px solid var(--line-soft); border-radius:8px;
+  box-shadow:var(--shadow-2);
+}
+.wl-result{
+  appearance:none; -webkit-appearance:none; width:100%;
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:none; border:none; border-bottom:1px solid var(--line-soft);
+  padding:9px 12px; cursor:pointer; text-align:left; font:inherit;
+  color:var(--ink-2); transition:background-color .15s, color .15s;
+}
+.wl-result:last-child{border-bottom:none;}
+.wl-result:hover{background:color-mix(in srgb, var(--gold) 8%, transparent); color:var(--ink);}
+.wl-result-name{font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.wl-result-sym{font-family:var(--mono); font-size:10px; color:var(--ink-3); flex-shrink:0;}
+.wl-result-note{padding:10px 12px; font-size:11.5px; color:var(--ink-3);}
+
 .cal-tools{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; flex-wrap:wrap;}
 #calImpBtn{
   background:none; border:1px solid var(--line); border-radius:6px;
