@@ -279,23 +279,12 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 }
 .wl-quote-header{display:flex; align-items:center; gap:10px;}
 .wl-quote-logo{width:28px; height:28px; border-radius:6px; flex-shrink:0; object-fit:contain; background:var(--card);}
-.wl-quote-namewrap{min-width:0; flex:1;}
+.wl-quote-namewrap{min-width:0;}
 .wl-quote-name{
   font-size:13px; color:var(--ink); font-weight:500;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .wl-quote-sym{font-family:var(--mono); font-size:10px; color:var(--ink-3); letter-spacing:.04em;}
-/* ピン留めボタン(☆/★)。他のヘッダーボタン群とは離れた場所にある単独のトグルなので
-   独自スタイルにしているが、ホバー色・押下時の沈み込みは既存ボタン群と揃えている */
-.wl-pin-btn{
-  appearance:none; -webkit-appearance:none; flex-shrink:0;
-  background:none; border:1px solid var(--line); border-radius:6px;
-  width:30px; height:30px; font-size:14px; line-height:1; cursor:pointer;
-  color:var(--ink-3); transition:color .15s, border-color .15s, transform .1s;
-}
-.wl-pin-btn:hover{color:var(--gold); border-color:var(--gold-dim);}
-.wl-pin-btn:active{transform:translateY(1px);}
-.wl-pin-btn.on{color:var(--gold); border-color:var(--gold-dim);}
 .wl-quote-price{font-family:var(--mono); font-size:26px; font-weight:600; color:var(--ink); line-height:1.1;}
 .wl-quote-change{font-size:12.5px; font-weight:500;}
 .wl-quote-change.pos{color:var(--green);}
@@ -316,29 +305,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .wl-quote-cell-label{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); letter-spacing:.04em;}
 .wl-quote-cell-value{font-family:var(--mono); font-size:12px; color:var(--ink-2);}
 .wl-quote-updated{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); text-align:right;}
-
-/* ---------- ピン留め銘柄(ミニウォッチリスト) ---------- */
-/* 中身が無い時はmargin等の余白も含めて完全に消す(空のスペースだけ残る見た目を防ぐ。
-   .wl-widget:emptyと同じ考え方) */
-.wl-pinned{display:flex; flex-direction:column; gap:6px; margin-top:10px;}
-.wl-pinned:empty{display:none;}
-.wl-pinned-row{
-  appearance:none; -webkit-appearance:none; width:100%;
-  display:flex; align-items:center; gap:8px;
-  background:var(--surface); border:1px solid var(--line-soft); border-radius:8px;
-  padding:8px 10px; cursor:pointer; text-align:left; font:inherit;
-  color:var(--ink-2); transition:border-color .15s, background-color .15s;
-}
-.wl-pinned-row:hover{border-color:var(--gold-dim);}
-.wl-pinned-row.active{border-color:var(--gold); background:color-mix(in srgb, var(--gold) 8%, var(--surface));}
-.wl-pinned-name{
-  flex:1; min-width:0; font-size:11.5px; color:var(--ink);
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-}
-.wl-pinned-price{font-family:var(--mono); font-size:11px; color:var(--ink-2); flex-shrink:0;}
-.wl-pinned-change{font-family:var(--mono); font-size:10px; flex-shrink:0; min-width:52px; text-align:right;}
-.wl-pinned-change.pos{color:var(--green);}
-.wl-pinned-change.neg{color:var(--red);}
 
 /* ---------- コントロール(チップ・検索) ---------- */
 /* チップと検索欄を同じ行のflexサイド・バイ・サイドではなく縦積みにしている。
@@ -527,7 +493,7 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
     grid-template-areas:"watchlist watchlist" "grid calendar";
     align-items:start;
   }
-  /* 検索欄・現在値カード・ピン留め行は320px幅前提でデザインしているため、記事一覧と
+  /* 検索欄・現在値カードは320px幅前提でデザインしているため、記事一覧と
      同じ幅まで引き伸ばすと間延びして見える。max-widthで適度な広さに留める
      (中央寄せはせず左寄せのまま。「左側の機能」という位置づけを保つため) */
   .watchlist{grid-area:watchlist; width:100%; max-width:420px; position:static;}

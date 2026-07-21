@@ -18,9 +18,8 @@
     ticker.js               TradingView相場ティッカー
     sessions.js             世界の取引セッション表示
     calendar.js             TradingView経済指標カレンダー(折りたたみ可)
-    watchlist.js             Yahoo Finance株価現在値カード・銘柄検索・ピン留めミニウォッチリスト
-                              (記事一覧左サイドバー。折りたたみ可。自前デプロイのCloudflare Worker
-                              経由。日本語検索対応・30秒自動更新。TradingViewには依存しない)
+    watchlist.js             Yahoo Finance株価現在値カード・銘柄検索(記事一覧左サイドバー。折りたたみ可。
+                              自前デプロイのCloudflare Worker経由。TradingViewには依存しない)
     theme-init.js            <head>内で同期実行するFOUC防止スニペット(外部化: CSP script-src対応)
     main.js                  イベント登録・自動更新・SW登録・起動処理(外部化: CSP script-src対応)
   PWA関連: manifest.webmanifest(ホーム画面追加) / sw.js(オフライン表示) / icons/(アイコン)
@@ -74,7 +73,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=36">
+<link rel="stylesheet" href="style.css?v=37">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -122,7 +121,6 @@
       <div class="wl-results" id="wlResults" role="listbox" hidden></div>
     </div>
     <div class="wl-widget" id="wlWidget"></div>
-    <div class="wl-pinned" id="wlPinned" aria-label="ピン留め銘柄"></div>
   </aside>
   <div class="grid" id="grid"><div class="loading">ニュースを取得しています…</div></div>
   <aside class="calendar" aria-label="経済指標カレンダー">
@@ -149,14 +147,14 @@
 <script src="utils.js?v=6"></script>
 <script src="theme.js?v=7"></script>
 <script src="feed.js?v=8"></script>
-<script src="translate.js?v=8"></script>
+<script src="translate.js?v=9"></script>
 <script src="topic-filter.js?v=6"></script>
 <script src="sentiment.js?v=5"></script>
 <script src="render.js?v=8"></script>
 <script src="ticker.js?v=3"></script>
 <script src="sessions.js?v=3"></script>
 <script src="calendar.js?v=11"></script>
-<script src="watchlist.js?v=10"></script>
-<script src="main.js?v=6"></script>
+<script src="watchlist.js?v=11"></script>
+<script src="main.js?v=7"></script>
 </body>
 </html>
