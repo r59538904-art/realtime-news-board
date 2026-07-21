@@ -59,6 +59,28 @@ function buildEconCalendar(){
   widgetWrap.appendChild(widgetScript);
   container.appendChild(widgetWrap);
 }
+// ---- 初回表示の遅延読み込み(初期表示速度・LCP改善) ----
+// TradingViewウィジェットは外部scriptの読み込み+iframe生成を伴う比較的重い処理。
+// カレンダーが画面外(狭い画面では記事一覧の下に全幅表示されるため初回は必ず画面外)にある間は
+// 生成を遅らせ、初回描画に割く帯域・CPUを記事一覧側へ優先させる。
+// 手動トグル・重要度切替・テーマ切替・幅変化時の再構築(buildEconCalendarの直接呼び出し)は
+// ユーザー操作/状態変化への即時反応が必要なため対象外とし、起動時の初回構築だけを遅延する。
+function initEconCalendarLazy(){
+  if(!calendarOpen){ buildEconCalendar(); return; }  // 折りたたみ中は元々ウィジェットを作らない軽い処理なので即時でよい
+  const container = document.querySelector('.calendar');
+  if(!container || typeof IntersectionObserver !== 'function'){
+    buildEconCalendar();               // 非対応環境向けのフォールバック(即時構築)
+    return;
+  }
+  const observer = new IntersectionObserver(entries => {
+    if(entries.some(entry => entry.isIntersecting)){
+      observer.disconnect();
+      buildEconCalendar();
+    }
+  }, {rootMargin: '400px 0px'});        // 画面に近づいた時点で先読みし、実際に到達する頃には表示済みにする
+  observer.observe(container);
+}
+
 function toggleCalendar(){
   calendarOpen = !calendarOpen;
   try{ localStorage.setItem(CAL_PREF_KEY, calendarOpen ? 'open' : 'closed'); }catch(e){}

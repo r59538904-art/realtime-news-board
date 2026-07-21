@@ -55,7 +55,8 @@ function visibleItems(){
 
 // ---- 記事カード ----
 function buildCard(item, jaTitle, jaDesc){
-  const card = el('a', 'card');
+  const isNew = isNewItem(item);
+  const card = el('a', 'card' + (isNew ? ' is-new' : ''));  // is-new: style.css側の入場アニメーション対象
   card.href = item.link || '#';               // linkはfeed.jsのsanitizeItemsで検証済み(不正なら空)
   card.target = '_blank';
   card.rel = 'noopener noreferrer';
@@ -66,7 +67,7 @@ function buildCard(item, jaTitle, jaDesc){
   const badge = el('span', 'src-badge', item.source.short);
   if(item.source.sub) badge.appendChild(el('span', 'genre', item.source.sub));
   metaLeft.appendChild(badge);
-  if(isNewItem(item)) metaLeft.appendChild(el('span', 'new-badge', 'NEW'));
+  if(isNew) metaLeft.appendChild(el('span', 'new-badge', 'NEW'));
 
   const metaRight = el('div', 'meta-right');
   const sentiment = getSentiment(item);

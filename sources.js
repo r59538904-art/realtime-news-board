@@ -230,8 +230,8 @@ const SOURCES = [
     "home": "https://www.wsj.com/news/markets",
     "rss": "https://feeds.content.dowjones.io/public/rss/RSSMarketsMain",
     "lang": "EN",
-    "color": "#2c2c2c",
-    "note": "廃止済みのWSJ公式RSSとは別ルート。既存MarketWatchと同じfeeds.content.dowjones.io配信基盤経由で取得"
+    "color": "#9aa4b8",
+    "note": "廃止済みのWSJ公式RSSとは別ルート。既存MarketWatchと同じfeeds.content.dowjones.io配信基盤経由で取得。色は#2c2c2cから変更(ダークモードのカード背景でほぼ判読不能だったため。#9aa4b8はカード背景に対し6.9:1でWCAG AAを満たす)"
   },
   {
     "id": "toyokeizai",

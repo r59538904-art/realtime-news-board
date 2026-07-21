@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://r59538904-art.github.io/realtime-news-board/sitemap.xml

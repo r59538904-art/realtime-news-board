@@ -29,9 +29,16 @@ document.getElementById('calBtn').addEventListener('click', toggleCalendar);
 document.getElementById('calImpBtn').addEventListener('click', toggleCalImportance);
 
 // ---- 自動更新(5秒ごとに再取得時刻をチェック) ----
+// バックグラウンドタブ(他タブ表示中・最小化中など)では取得を止め、通信量とバッテリーを節約する。
+// フォアグラウンドに戻った瞬間は再取得時刻を過ぎていれば即座に取得し直し、
+// 古い表示のままユーザーが気づかず放置される事態を防ぐ
 setInterval(() => {
+  if(document.hidden) return;
   if(Date.now() >= nextRefreshAt) fetchAll();
 }, 5000);
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden && Date.now() >= nextRefreshAt) fetchAll();
+});
 
 // ---- Service Worker登録(PWA: ホーム画面追加・オフライン表示) ----
 if('serviceWorker' in navigator){
@@ -50,6 +57,6 @@ buildFootLinks();
 tickerTape();
 buildSessions();
 loadCalendarPref();
-buildEconCalendar();
+initEconCalendarLazy();
 render();
 fetchAll();
