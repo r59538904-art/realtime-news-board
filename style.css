@@ -399,14 +399,10 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 
 /* ---------- ウォッチリストサイドバー+記事グリッド+カレンダーサイドバー ---------- */
 /* HTML記述順(watchlist→grid→calendar)がそのまま左→中央→右の並びになる。
-   3つともflexアイテムなのでgapが両方の隙間に効く。
-   flex-wrap:wrapは1100〜1839px向け(下の専用メディアクエリでwatchlistをwidth:100%にして
-   単独の行へ折り返させ、記事グリッドがカレンダー1つ分の幅だけを気にすればよい状態に戻すため)。
-   1099px以下(flex-direction:columnで別途縦積み)・1840px以上(両サイドバーがposition:fixedで
-   flexフローから外れる)ではこのwrapは実質影響しない */
+   3つともflexアイテムなのでgapが両方の隙間に効く */
 main{
   max-width:1440px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;
-  display:flex; flex-wrap:wrap; gap:14px; align-items:flex-start;
+  display:flex; gap:14px; align-items:flex-start;
 }
 .grid{flex:1; min-width:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:13px;}
 
@@ -517,15 +513,28 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
 }
 /* 1100〜1839pxの中間幅: 両方のサイドバー(株価現在値カード320px+経済指標カレンダー320px)を
    記事一覧と横並びのままにすると、記事グリッドの残り幅が狭くなりすぎて3列表示できず2列に
-   減ってしまう不具合があった(実際に発生・報告を受けて修正)。株価現在値カードだけを
-   記事一覧の上の全幅ブロックに折り返し、カレンダーだけをこれまでどおり横並びサイドバーに
-   残すことで、記事一覧側の幅を1840px未満の全レンジでカレンダー1つ分の圧迫だけに戻し、
-   3列表示を維持する */
+   減ってしまう不具合があった(実際に発生・報告を受けて修正)。
+   当初はmain{flex-wrap:wrap}+.watchlist{width:100%}で株価カードだけを上の行に折り返す
+   方式を試したが、.gridはflex:1(=flex-basis:0%)を持つため折り返し判定時の仮サイズが常に0と
+   みなされ、残り幅が0でも「収まる」と判定されてwatchlistと同じ行に居座ってしまい機能しなかった
+   (flexの折り返しはflex-grow/shrink適用前の仮サイズで行われるため)。
+   flexの折り返しに頼らず、mainをこの幅域だけ明示的な2行グリッド(1行目=株価カード全幅、
+   2行目=記事一覧+カレンダー)に切り替えることで確実に配置する */
 @media (min-width:1100px) and (max-width:1839.98px){
+  main{
+    display:grid;
+    grid-template-columns:1fr 320px;
+    grid-template-areas:"watchlist watchlist" "grid calendar";
+    align-items:start;
+  }
   /* 検索欄・現在値カード・ピン留め行は320px幅前提でデザインしているため、記事一覧と
      同じ幅まで引き伸ばすと間延びして見える。max-widthで適度な広さに留める
      (中央寄せはせず左寄せのまま。「左側の機能」という位置づけを保つため) */
-  .watchlist{width:100%; max-width:420px; position:static;}
+  .watchlist{grid-area:watchlist; width:100%; max-width:420px; position:static;}
+  .grid{grid-area:grid; min-width:0;}
+  /* position:sticky/topはベースルール(.calendar, .watchlist{...})から継続して効かせる
+     (以前から正しく動いていた「スクロールに追従する」挙動なので、ここでは触らない) */
+  .calendar{grid-area:calendar; width:100%;}
 }
 /* サイドバーが入らない幅では、カレンダー・株価現在値カードをニュース一覧の上下の全幅ブロックに切り替える */
 @media (max-width:1100px){
