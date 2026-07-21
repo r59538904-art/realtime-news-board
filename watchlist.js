@@ -1,36 +1,33 @@
 'use strict';
 // 銘柄検索・現在値カード。記事一覧の左のサイドバー。
-// Finnhub(finnhub.io)の無料APIのみで完結させている(TradingViewには一切依存しない)。
-//   検索          … GET /search
-//   現在値・値幅  … GET /quote
-//   企業名・ロゴ  … GET /stock/profile2(取得できなくても現在値表示は続行する。あくまで補助情報)
-// 過去の値動き(ローソク足チャート)はFinnhub無料プランでは取得不可
-// (/stock/candleが有料限定。実機で{"error":"You don't have access to this resource."}を確認済み)
-// のため、折れ線チャートではなく「現在値カード」(現在値・前日比・当日値幅)として実装している。
+// データはYahoo Financeを、自前デプロイのCloudflare Worker(cloudflare-worker/
+// yahoo-finance-proxy.js)経由で取得する。TradingViewには一切依存しない。
 //
-// 対応市場は米国上場銘柄のみ(検索段階でサフィックス無しの銘柄に絞り込んでいる)。
-// 東証・LSE等の海外取引所は/quoteが{"error":"You don't have access to this resource."}を
-// 返し無料プランでは非対応(Twelve Data無料プランでも同じ制約を実機確認済み・"available
-// starting with the Grow or Venture plan"と明示された)。Yahoo FinanceはCORS非対応
-// (Access-Control-Allow-Originヘッダー無し、プロキシサーバーが必要でこの構成と相容れない)、
-// StooqはAPIエンドポイント自体が404で動作していない。海外取引所のリアルタイム/準リアルタイム
-// データはライセンス費用がかかるため無料プランでは提供されないのが実質的に業界共通の制約であり、
-// 現状これ以上の無料の代替手段は見つかっていない。トヨタの"TM"のように米国ADR/ADSがある
-// 海外企業は検索・取得できる場合がある。
+// なぜCloudflare Workerを経由するか:
+//   Yahoo Finance(query1.finance.yahoo.com)はAccess-Control-Allow-Originヘッダーを
+//   返さないため、ブラウザから直接fetch()できない(実機確認済み)。このサイトは
+//   ビルド不要の静的サイトでサーバー側コードを持たないため、CORSを解決できる
+//   軽量な中継サーバー(Cloudflare Workers、無料枠で十分)を別途デプロイして間に挟んでいる。
+// なぜFinnhub(旧実装)をやめたか:
+//   Finnhub・Twelve Data(いずれも実機確認済み)は無料プランが米国上場銘柄限定で、
+//   東証等の海外取引所の現在値を返さない仕様だった。Yahoo Financeはこの制限が無く
+//   日本株を含め幅広く取得できるため、CORSさえ解決できればこちらの方が適している。
+// なお過去の値動き(ローソク足チャート)は実装していない(現在値カードのみ)。
+// Yahoo Financeのchart APIは技術的には時系列データを持っているが、まずは
+// 現在値表示のみに絞ってシンプルに構成している。
 
-// ---- Finnhub API設定 ----
-// 無料アカウント(https://finnhub.io/register、クレジットカード不要)登録後、
-// ダッシュボードで発行されるAPIキーをここに設定する。
+// ---- Cloudflare Workerプロキシの設定 ----
+// cloudflare-worker/yahoo-finance-proxy.js をCloudflare Workers(無料)へデプロイし、
+// 発行されたURL(例: https://yahoo-finance-proxy.your-name.workers.dev)をここに設定する。
+// デプロイ手順はREADME「株価現在値カード(Cloudflare Workerプロキシ)のセットアップ」を参照。
 // 未設定のままでも壊れない: カードが「設定が必要です」と案内を出すだけで、他の機能には影響しない。
-// 注意: 静的サイトのJSにそのまま埋め込むため、このキーは誰でも閲覧できる(view-sourceで見える)。
-// Finnhub無料枠のキーはブラウザから直接叩く用途を前提にした設計のため実害は小さい。
-const FINNHUB_API_KEY = 'd9fe9jhr01qu5nhe58igd9fe9jhr01qu5nhe58j0';
+const WL_PROXY_BASE_URL = '';  // 例: 'https://yahoo-finance-proxy.your-name.workers.dev'
 const WL_SEARCH_DEBOUNCE_MS = 350;  // 連続入力のたびのAPI呼び出しを間引く
 const WL_SEARCH_MIN_LEN = 2;        // 1文字だけでは結果が多すぎる/意味が薄いため検索しない
 
 const WL_PREF_KEY = 'news-board-wl-pref-v1';
 let watchlistOpen = true;
-let wlSymbol = 'AAPL';          // 現在値カードに表示中の銘柄(Finnhubのシンボル表記そのまま)
+let wlSymbol = 'AAPL';          // 現在値カードに表示中の銘柄(Yahoo Financeのシンボル表記)
 let wlSearchTimer = null;
 let wlSearchAbort = null;       // 前回の検索が終わる前に次を打ち始めた場合、古い方を中断する
 let wlQuoteAbort = null;        // 同上。銘柄選択を連続で切り替えた場合の古いリクエストを中断する
@@ -54,11 +51,11 @@ function toggleWatchlist(){
   buildWatchlist();
 }
 
-// ---- Finnhub呼び出しの共通ヘルパー ----
-async function fetchFinnhub(path, params, signal){
-  const query = new URLSearchParams({...params, token: FINNHUB_API_KEY});
-  const response = await fetch('https://finnhub.io/api/v1' + path + '?' + query.toString(), {signal});
-  if(!response.ok) throw new Error('finnhub ' + path + ' http ' + response.status);
+// ---- プロキシ呼び出しの共通ヘルパー ----
+async function fetchViaProxy(path, params, signal){
+  const query = new URLSearchParams(params);
+  const response = await fetch(WL_PROXY_BASE_URL + path + '?' + query.toString(), {signal});
+  if(!response.ok) throw new Error('proxy ' + path + ' http ' + response.status);
   return response.json();
 }
 
@@ -69,8 +66,8 @@ async function buildWatchlist(){
   container.textContent = '';
   updateWlBtn();
   if(!watchlistOpen) return;             // 折りたたみ中は取得自体を行わない(通信節約)
-  if(!FINNHUB_API_KEY){
-    container.appendChild(el('div', 'wl-result-note', '株価表示にはFinnhub APIキーの設定が必要です'));
+  if(!WL_PROXY_BASE_URL){
+    container.appendChild(el('div', 'wl-result-note', '株価表示にはCloudflare Workerプロキシの設定が必要です(README参照)'));
     return;
   }
   container.appendChild(el('div', 'wl-result-note', '読み込み中…'));
@@ -78,87 +75,93 @@ async function buildWatchlist(){
   if(wlQuoteAbort) wlQuoteAbort.abort();
   const controller = new AbortController();
   wlQuoteAbort = controller;
-  const [quoteResult, profileResult] = await Promise.allSettled([
-    fetchFinnhub('/quote', {symbol: wlSymbol}, controller.signal),
-    fetchFinnhub('/stock/profile2', {symbol: wlSymbol}, controller.signal),
-  ]);
-  if(controller.signal.aborted) return;  // より新しい選択に追い越された場合、古い結果は描画しない
-
-  if(quoteResult.status !== 'fulfilled' || !quoteResult.value || quoteResult.value.c == null){
-    console.error('現在値の取得に失敗:', quoteResult.reason || quoteResult.value);
+  try{
+    const data = await fetchViaProxy('/quote', {symbol: wlSymbol}, controller.signal);
+    const meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
+    if(!meta || meta.regularMarketPrice == null) throw new Error('quote meta missing');
+    const openSeries = data.chart.result[0].indicators && data.chart.result[0].indicators.quote
+      && data.chart.result[0].indicators.quote[0] && data.chart.result[0].indicators.quote[0].open;
+    renderWlQuote(meta, lastValidNumber(openSeries));
+  }catch(e){
+    if(e.name === 'AbortError') return;  // より新しい選択に追い越された。古い結果は描画しない
+    console.error('現在値の取得に失敗:', e);
     container.textContent = '';
     container.appendChild(el('div', 'wl-result-note', '現在値を取得できませんでした'));
-    return;
   }
-  // 企業名・ロゴ(/stock/profile2)はあくまで補助情報のため、失敗しても現在値表示は続行する
-  const profile = profileResult.status === 'fulfilled' ? profileResult.value : null;
-  renderWlQuote(quoteResult.value, profile);
 }
 
-function formatPrice(value, profile){
+// 配列の末尾から辿って最初に見つかった有効な数値を返す(当日分がまだnullの場合に備え、
+// 直近の取引日の始値を拾うためのフォールバック)
+function lastValidNumber(series){
+  if(!Array.isArray(series)) return null;
+  for(let i = series.length - 1; i >= 0; i--){
+    if(typeof series[i] === 'number') return series[i];
+  }
+  return null;
+}
+
+function formatPrice(value, currency){
   if(value == null || Number.isNaN(value)) return '─';
-  const currency = (profile && profile.currency) || '';
   return value.toLocaleString('ja-JP', {maximumFractionDigits: 2}) + (currency ? ' ' + currency : '');
 }
-function renderWlQuote(quote, profile){
+function renderWlQuote(meta, openPrice){
   const container = document.getElementById('wlWidget');
   if(!container) return;
   container.textContent = '';
   const card = el('div', 'wl-quote');
 
   const header = el('div', 'wl-quote-header');
-  if(profile && isSafeUrl(profile.logo)){
-    const logo = document.createElement('img');
-    logo.src = profile.logo;
-    logo.alt = '';                       // 隣に企業名テキストがあるため装飾画像として扱う
-    logo.loading = 'lazy';
-    logo.className = 'wl-quote-logo';
-    header.appendChild(logo);
-  }
   const nameWrap = el('div', 'wl-quote-namewrap');
-  nameWrap.appendChild(el('div', 'wl-quote-name', (profile && profile.name) || wlSymbol));
-  nameWrap.appendChild(el('div', 'wl-quote-sym', wlSymbol));
+  nameWrap.appendChild(el('div', 'wl-quote-name', meta.longName || meta.shortName || wlSymbol));
+  const symLine = wlSymbol + (meta.fullExchangeName ? ' ・ ' + meta.fullExchangeName : '');
+  nameWrap.appendChild(el('div', 'wl-quote-sym', symLine));
   header.appendChild(nameWrap);
   card.appendChild(header);
 
-  card.appendChild(el('div', 'wl-quote-price', formatPrice(quote.c, profile)));
+  card.appendChild(el('div', 'wl-quote-price', formatPrice(meta.regularMarketPrice, meta.currency)));
 
-  const isUp = quote.d >= 0;
-  const change = el('div', 'wl-quote-change ' + (isUp ? 'pos' : 'neg'),
-    (isUp ? '▲ +' : '▼ ') + Math.abs(quote.d).toFixed(2) + ' (' + (isUp ? '+' : '−') + Math.abs(quote.dp).toFixed(2) + '%)');
-  card.appendChild(change);
+  const prevClose = meta.chartPreviousClose;
+  if(typeof prevClose === 'number' && prevClose > 0){
+    const diff = meta.regularMarketPrice - prevClose;
+    const diffPct = diff / prevClose * 100;
+    const isUp = diff >= 0;
+    const change = el('div', 'wl-quote-change ' + (isUp ? 'pos' : 'neg'),
+      (isUp ? '▲ +' : '▼ ') + Math.abs(diff).toFixed(2) + ' (' + (isUp ? '+' : '−') + Math.abs(diffPct).toFixed(2) + '%)');
+    card.appendChild(change);
+  }
 
   // 当日値幅バー: 安値〜高値のレンジの中で現在値がどこに位置するかを視覚化する
-  if(typeof quote.h === 'number' && typeof quote.l === 'number' && quote.h > quote.l){
+  const high = meta.regularMarketDayHigh, low = meta.regularMarketDayLow;
+  if(typeof high === 'number' && typeof low === 'number' && high > low){
     const range = el('div', 'wl-quote-range');
-    range.appendChild(el('span', 'wl-quote-range-label', formatPrice(quote.l, profile)));
+    range.appendChild(el('span', 'wl-quote-range-label', formatPrice(low, meta.currency)));
     const track = el('div', 'wl-quote-range-track');
-    const pct = Math.min(100, Math.max(0, (quote.c - quote.l) / (quote.h - quote.l) * 100));
+    const pct = Math.min(100, Math.max(0, (meta.regularMarketPrice - low) / (high - low) * 100));
     const marker = el('div', 'wl-quote-range-marker');
     marker.style.left = pct + '%';
     track.appendChild(marker);
     range.appendChild(track);
-    range.appendChild(el('span', 'wl-quote-range-label', formatPrice(quote.h, profile)));
+    range.appendChild(el('span', 'wl-quote-range-label', formatPrice(high, meta.currency)));
     card.appendChild(range);
   }
 
   const grid = el('div', 'wl-quote-grid');
-  [['始値', quote.o], ['前日終値', quote.pc], ['高値', quote.h], ['安値', quote.l]].forEach(([label, value]) => {
+  [['始値', openPrice], ['前日終値', prevClose], ['高値', high], ['安値', low]].forEach(([label, value]) => {
     const cell = el('div', 'wl-quote-cell');
     cell.appendChild(el('span', 'wl-quote-cell-label', label));
-    cell.appendChild(el('span', 'wl-quote-cell-value', formatPrice(value, profile)));
+    cell.appendChild(el('span', 'wl-quote-cell-value', formatPrice(value, meta.currency)));
     grid.appendChild(cell);
   });
   card.appendChild(grid);
 
-  if(quote.t){
-    const updatedText = '更新: ' + new Date(quote.t * 1000).toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'});
+  if(meta.regularMarketTime){
+    const updatedText = '更新: ' + new Date(meta.regularMarketTime * 1000).toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'});
     card.appendChild(el('div', 'wl-quote-updated', updatedText));
   }
   container.appendChild(card);
 }
 
-// ---- 銘柄検索(Finnhub /search) ----
+// ---- 銘柄検索(Yahoo Finance search、プロキシ経由) ----
 function hideWlResults(){
   const listEl = document.getElementById('wlResults');
   if(!listEl) return;
@@ -170,7 +173,7 @@ function renderWlResults(items){
   if(!listEl) return;
   listEl.textContent = '';
   if(!items.length){
-    listEl.appendChild(el('div', 'wl-result-note', '該当する銘柄が見つかりませんでした(現在値取得は米国上場銘柄のみ対応。海外企業でも米国ADR/ADSがあれば検索可能な場合があります)'));
+    listEl.appendChild(el('div', 'wl-result-note', '該当する銘柄が見つかりませんでした'));
     listEl.hidden = false;
     return;
   }
@@ -178,11 +181,11 @@ function renderWlResults(items){
     const optionBtn = el('button', 'wl-result');
     optionBtn.type = 'button';
     optionBtn.setAttribute('role', 'option');
-    optionBtn.appendChild(el('span', 'wl-result-name', item.description));
-    optionBtn.appendChild(el('span', 'wl-result-sym', item.displaySymbol || item.symbol));
+    optionBtn.appendChild(el('span', 'wl-result-name', item.longname || item.shortname || item.symbol));
+    optionBtn.appendChild(el('span', 'wl-result-sym', item.symbol + (item.exchDisp ? ' ・ ' + item.exchDisp : '')));
     // mousedownはinputのblurより先に発火するため、blur側のhideWlResultsで
     // クリックが握りつぶされる事故を防げる(clickだと間に合わないことがある)
-    optionBtn.addEventListener('mousedown', e => { e.preventDefault(); selectWlSymbol(item.symbol, item.description); });
+    optionBtn.addEventListener('mousedown', e => { e.preventDefault(); selectWlSymbol(item.symbol, item.longname || item.shortname); });
     listEl.appendChild(optionBtn);
   });
   listEl.hidden = false;
@@ -196,11 +199,11 @@ function selectWlSymbol(symbol, description){
   else buildWatchlist();
 }
 async function searchWlSymbol(query){
-  if(!FINNHUB_API_KEY){
+  if(!WL_PROXY_BASE_URL){
     const listEl = document.getElementById('wlResults');
     if(listEl){
       listEl.textContent = '';
-      listEl.appendChild(el('div', 'wl-result-note', '検索機能を使うにはFinnhub APIキーの設定が必要です'));
+      listEl.appendChild(el('div', 'wl-result-note', '検索機能を使うにはCloudflare Workerプロキシの設定が必要です(README参照)'));
       listEl.hidden = false;
     }
     return;
@@ -209,14 +212,9 @@ async function searchWlSymbol(query){
   const controller = new AbortController();
   wlSearchAbort = controller;
   try{
-    const data = await fetchFinnhub('/search', {q: query}, controller.signal);
-    // Finnhub無料プランは海外取引所(東証・LSE等)の現在値(/quote)を返さない仕様
-    // (実機確認: Twelve Data無料プランでも同じ制約を確認済み。有料プラン限定の業界共通の制約)。
-    // Finnhubのシンボル表記は「サフィックス無し=米国上場」「.T/.L等のサフィックス有り=海外取引所」
-    // のため、サフィックス無しの銘柄だけに絞り込む(トヨタのADR"TM"のように海外企業でも
-    // 米国上場していれば取得できる場合がある)
-    const items = (data && Array.isArray(data.result) ? data.result : [])
-      .filter(item => item && item.symbol && item.description && !item.symbol.includes('.'));
+    const data = await fetchViaProxy('/search', {q: query}, controller.signal);
+    const items = (data && Array.isArray(data.quotes) ? data.quotes : [])
+      .filter(item => item && item.symbol && (item.longname || item.shortname) && item.quoteType === 'EQUITY');
     renderWlResults(items);
   }catch(e){
     if(e.name !== 'AbortError') console.error('銘柄検索に失敗:', e);
