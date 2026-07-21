@@ -18,7 +18,7 @@
     ticker.js               TradingView相場ティッカー
     sessions.js             世界の取引セッション表示
     calendar.js             TradingView経済指標カレンダー(折りたたみ可)
-    watchlist.js             TradingView株式ウォッチリスト(記事一覧左サイドバー。折りたたみ可)
+    watchlist.js             TradingView株価チャート・銘柄検索(記事一覧左サイドバー。折りたたみ可)
     theme-init.js            <head>内で同期実行するFOUC防止スニペット(外部化: CSP script-src対応)
     main.js                  イベント登録・自動更新・SW登録・起動処理(外部化: CSP script-src対応)
   PWA関連: manifest.webmanifest(ホーム画面追加) / sw.js(オフライン表示) / icons/(アイコン)
@@ -108,8 +108,8 @@
 </div>
 
 <main>
-  <aside class="watchlist" aria-label="株式相場ウォッチリスト">
-    <div class="cap"><h2>MARKET WATCHLIST ─ 主要指数・株式</h2><button id="wlBtn">折りたたむ ▲</button></div>
+  <aside class="watchlist" aria-label="株価チャート・銘柄検索">
+    <div class="cap"><h2>STOCK CHART ─ 銘柄検索・チャート</h2><button id="wlBtn">折りたたむ ▲</button></div>
     <div class="wl-widget" id="wlWidget"></div>
   </aside>
   <div class="grid" id="grid"><div class="loading">ニュースを取得しています…</div></div>
@@ -144,7 +144,7 @@
 <script src="ticker.js?v=3"></script>
 <script src="sessions.js?v=3"></script>
 <script src="calendar.js?v=11"></script>
-<script src="watchlist.js?v=1"></script>
+<script src="watchlist.js?v=2"></script>
 <script src="main.js?v=4"></script>
 </body>
 </html>

@@ -1,16 +1,13 @@
 'use strict';
 // 株式相場ウォッチリスト(TradingViewウィジェット)。記事一覧の左のサイドバー。
-// 主要指数(S&P500・Nasdaq・NYダウ・日経平均等)と主要株式(Apple・NVIDIA・トヨタ等)を
-// タブ切り替えで表示する。設計はcalendar.js(経済指標カレンダー)と対称・同一パターン
+// Advanced Real-Time Chartウィジェット(allow_symbol_change:true)を使い、
+// チャート左上の銘柄名をクリック(またはクリックして開く検索欄)すると、
+// 任意の株式・指数・為替をシンボル検索してそのままチャートを差し替えられる。
+// 設計はcalendar.js(経済指標カレンダー)と対称・同一パターン
 // (折りたたみ・遅延読み込み・テーマ追従はほぼ同じロジックをそのまま踏襲している)。
 
 const WL_PREF_KEY = 'news-board-wl-pref-v1';
 let watchlistOpen = true;
-
-// ワイド画面(1840px以上)ではコンテンツ左外の余白に固定表示するため縦長にする(style.css側と対応)。
-// calendar.jsのCAL_WIDE_MQと同じブレークポイントだが、依存関係を増やさないためあえて別インスタンスにしている
-const WL_WIDE_MQ = window.matchMedia('(min-width: 1840px)');
-try{ WL_WIDE_MQ.addEventListener('change', () => buildWatchlist()); }catch(e){}
 
 // カレンダーと同じ理由(TradingViewのiframe内スクロールがモバイルでページスクロールを
 // 奪ってしまう対策)で、狭い画面かつ初回訪問時に限り初期状態を折りたたみにする
@@ -37,45 +34,23 @@ function buildWatchlist(){
   widgetWrap.appendChild(el('div'));
   const widgetScript = document.createElement('script');
   widgetScript.async = true;
-  widgetScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
+  widgetScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
   widgetScript.text = JSON.stringify({
-    colorTheme: currentTheme() === 'light' ? 'light' : 'dark',
-    dateRange: '12M',
-    showChart: true,
+    // colorThemeではなくtheme(このウィジェット固有のキー名。他のTradingViewウィジェットと異なるため注意)
+    theme: currentTheme() === 'light' ? 'light' : 'dark',
+    autosize: true,               // 親要素(.wl-widget)の高さいっぱいに追従させる
+    symbol: 'NASDAQ:AAPL',        // 初期表示銘柄。左上の銘柄名をクリックすると検索欄が開き差し替えられる
+    allow_symbol_change: true,    // これがtrueでないとウィジェット内から銘柄検索・変更ができない
+    interval: 'D',
+    timezone: 'Asia/Tokyo',
+    style: '1',
     locale: 'ja',
-    width: '100%',
-    height: WL_WIDE_MQ.matches ? '100%' : 460,  // 右余白固定時はパネルの高さ(画面下端まで)に追従させる
-    isTransparent: false,
-    showSymbolLogo: true,
-    showFloatingTooltip: false,
-    plotLineColorGrowing: 'rgba(216, 180, 110, 1)',
-    plotLineColorFalling: 'rgba(216, 180, 110, 1)',
-    belowLineFillColorGrowing: 'rgba(216, 180, 110, 0.12)',
-    belowLineFillColorFalling: 'rgba(216, 180, 110, 0.12)',
-    tabs: [
-      {
-        title: '主要指数',
-        symbols: [
-          {s: 'FOREXCOM:SPXUSD', d: 'S&P 500'},
-          {s: 'FOREXCOM:NSXUSD', d: 'Nasdaq 100'},
-          {s: 'FOREXCOM:DJI', d: 'NYダウ'},
-          {s: 'INDEX:NKY', d: '日経平均'},
-          {s: 'INDEX:DEU40', d: 'DAX'},
-          {s: 'FOREXCOM:UKXGBP', d: 'FTSE 100'},
-        ],
-      },
-      {
-        title: '主要株式',
-        symbols: [
-          {s: 'NASDAQ:AAPL', d: 'Apple'},
-          {s: 'NASDAQ:MSFT', d: 'Microsoft'},
-          {s: 'NASDAQ:NVDA', d: 'NVIDIA'},
-          {s: 'NASDAQ:GOOGL', d: 'Alphabet'},
-          {s: 'NASDAQ:AMZN', d: 'Amazon'},
-          {s: 'TSE:7203', d: 'トヨタ自動車'},
-        ],
-      },
-    ],
+    hide_top_toolbar: false,      // 検索の入口になる銘柄名表示を消さないため必須
+    hide_legend: false,
+    enable_publishing: false,
+    save_image: false,
+    calendar: false,
+    support_host: 'https://www.tradingview.com',
   });
   widgetWrap.appendChild(widgetScript);
   container.appendChild(widgetWrap);
