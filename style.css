@@ -125,8 +125,8 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 
 #refreshBtn,#trBtn,#topicBtn,#themeBtn{
   background:none; border:1px solid var(--line); border-radius:6px;
-  color:var(--ink-2); font-family:var(--mono); font-size:11.5px;
-  padding:8px 17px; cursor:pointer; letter-spacing:.08em;
+  color:var(--ink-2); font-family:var(--mono); font-size:11px;
+  padding:5px 12px; cursor:pointer; letter-spacing:.08em;
   transition:color .15s, border-color .15s, background-color .15s, transform .1s;
 }
 #refreshBtn:hover,#trBtn:hover,#topicBtn:hover,#themeBtn:hover{
@@ -160,7 +160,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
    (太字・大きいフォント)を打ち消して.capの見た目(等幅・10px・字間広め)を維持する */
 .cap h2{font:inherit; letter-spacing:inherit; color:inherit;}
 /* セクション見出しの頭に短い金線を付けてマストヘッドと揃える */
-.sessions .cap h2::before{
+.sessions .cap h2::before, .calendar .cap h2::before{
   content:''; display:inline-block; width:14px; height:1px;
   background:var(--gold-dim); margin-right:8px; vertical-align:middle;
 }
@@ -189,25 +189,49 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
 .now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
 
+/* ---------- 経済指標カレンダー(記事一覧の右のサイドバー。スクロールに追従) ---------- */
+.calendar{
+  width:320px; flex-shrink:0; position:sticky; top:14px;
+  border:1px solid var(--line-soft); border-radius:10px;
+  background:var(--card); padding:14px 16px 12px; box-shadow:var(--shadow-1);
+  transition:background-color .2s, border-color .2s;
+}
+.calendar .cap{
+  display:flex; justify-content:space-between; align-items:center;
+  font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3);
+}
+.calendar .cap button{
+  background:none; border:none; color:var(--gold-dim); cursor:pointer;
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; padding:2px 4px;
+  transition:color .15s;
+}
+.calendar .cap button:hover{color:var(--gold);}
+
+.cal-tools{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:10px; flex-wrap:wrap;}
+#calImpBtn{
+  background:none; border:1px solid var(--line); border-radius:6px;
+  color:var(--ink-2); font-family:var(--mono); font-size:10px; letter-spacing:.04em;
+  padding:4px 10px; cursor:pointer; transition:color .15s, border-color .15s, background-color .15s;
+}
+#calImpBtn:hover{color:var(--gold); border-color:var(--gold-dim);}
+#calImpBtn.on{color:var(--gold); border-color:var(--gold); background:color-mix(in srgb, var(--gold) 14%, transparent);}
+.cal-note{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); letter-spacing:.02em;}
+
+/* overscroll-behavior: TradingViewウィジェット(iframe)内部の独自スクロールが端に達した時、
+   ページ側のスクロールを巻き込まないようにする(モバイルでの「スクロールが引っかかる」対策) */
+.cal-widget{
+  margin-top:10px; height:460px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);
+  overscroll-behavior:contain; touch-action:pan-y;
+}
+.cal-widget:empty{display:none;}
+.cal-widget .tradingview-widget-container{height:100%;}
+
 /* ---------- コントロール(チップ・検索) ---------- */
-/* チップと検索欄を同じ行のflexサイド・バイ・サイドではなく縦積みにしている。
-   以前はchipsとsearchwrapを横並びflex(align-items:center)にしていたが、
-   チップがgrid化して複数行(5行前後)に伸びた際、検索欄がその高さの
-   「縦中央」に配置されてしまい、グリッドの途中に検索欄が挟まったような
-   不自然な見た目になった(検索欄の高さは1行分しかないため)。
-   縦積みにすることでチップの行数に関係なく検索欄は常にチップの下に独立して収まる */
 .controls{
   max-width:1440px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px);
-  display:flex; flex-direction:column; gap:10px;
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
 }
-/* grid+auto-fillにした理由: flexのflex-growは「その行に残った余白」を
-   その行のチップ「だけ」に配分するため、行によってチップ数が違うと
-   (例: 12個並ぶ行 vs 最終行に5個だけ)伸び幅がバラつき、チップの大きさが
-   行ごとに不揃いに見える問題があった。gridなら列幅は全行で共通の1本の
-   トラック定義(auto-fill+minmax)で決まるため、どの行のチップも常に同じ幅になる。
-   入りきらない分は自動的に次の行へ折り返され、最終行に満たない列はただの
-   空きスペースとして残る(チップ自体が伸びて不揃いになることはない) */
-.chips{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:8px;}
+.chips{display:flex; gap:8px; flex-wrap:wrap;}
 /* button要素化に伴い、ブラウザ既定の見た目(ネイティブ枠線・背景・行高)を打ち消す */
 .chip{
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
@@ -215,9 +239,11 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   font-family:var(--mono); font-size:11.5px; letter-spacing:.06em;
   padding:8px 16px; border-radius:6px; border:1px solid var(--line);
   color:var(--ink-2); cursor:pointer; background:var(--surface); user-select:none;
-  /* white-space:normalは、列幅(130px)より長いラベル("Foreign Policy"等ごく一部)が
-     はみ出さず2行に折り返すための保険(大半のラベルは1行に収まる幅にしてある) */
-  text-align:center; white-space:normal;
+  /* flex:1 1 autoで各行の右端まで余白を配分して隙間なく揃える。
+     以前は上限がmax-width:240pxと緩く、チップ数の少ない行(例:最終行5個)だけ
+     極端に大きく伸びて他の行と不揃いに見えたため、上限を180pxまで絞って
+     行ごとの伸び幅の差を抑えつつ、行末まで隙間なく埋まる見た目を両立させている */
+  text-align:center; flex:1 1 auto; max-width:180px;
   transition:border-color .15s, color .15s, background-color .2s, transform .1s;
 }
 .chip:hover{border-color:var(--gold-dim); color:var(--ink);}
@@ -226,10 +252,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   border-color:var(--gold); color:var(--gold); font-weight:500;
   background:color-mix(in srgb, var(--gold) 16%, var(--bg0));
 }
-/* align-self:flex-endで縦積みになった.controls内でも右寄せ・内容幅のまま保つ
-   (.controlsがdisplay:flex; flex-direction:columnになったため、既定のstretchのままだと
-   幅いっぱいに広がってしまう) */
-.searchwrap{align-self:flex-end; position:relative;}
+.searchwrap{margin-left:auto; position:relative;}
 .searchwrap::before{
   content:'⌕'; position:absolute; left:11px; top:50%; transform:translateY(-50%);
   color:var(--ink-3); font-size:14px; pointer-events:none;
@@ -237,20 +260,21 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 #search{
   background:var(--surface); border:1px solid var(--line); border-radius:8px;
   color:var(--ink); font-family:var(--sans); font-size:13px;
-  padding:8px 12px 8px 32px; width:280px;
+  padding:8px 12px 8px 32px; width:220px;
   transition:background-color .2s, border-color .15s, width .25s ease, box-shadow .15s;
 }
 #search::placeholder{color:var(--ink-3);}
 #search:focus{
-  outline:none; border-color:var(--gold-dim); width:320px;
+  outline:none; border-color:var(--gold-dim); width:260px;
   box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
-/* ---------- 記事グリッド ---------- */
+/* ---------- 記事グリッド+カレンダーサイドバー ---------- */
 main{
   max-width:1440px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;
+  display:flex; gap:14px; align-items:flex-start;
 }
-.grid{display:grid; grid-template-columns:repeat(4,1fr); gap:13px;}
+.grid{flex:1; min-width:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:13px;}
 
 /* 記事カード。--srcは配信元カラー(render.jsが検証済みの色だけを設定。未設定時は金色) */
 .card{
@@ -338,9 +362,25 @@ footer a:hover{color:var(--gold); text-decoration:underline; text-underline-offs
 footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;}
 
 /* ---------- レスポンシブ ---------- */
-/* タブレット幅: 4列だと1枚あたりが狭くなりすぎるため2列に減らす */
-@media (max-width:999px){
-  .grid{grid-template-columns:repeat(2,1fr);}
+/* ワイド画面: カレンダーをコンテンツ右外側の余白へ固定表示し、ニュース一覧は全幅に戻す。
+   パネルは画面下端まで伸ばし、ウィジェットが残り高さ全部を使う。
+   パネル幅は余白に合わせて自動調整(最大320px)。ブラウザ拡大率が高めの環境でも発動するよう閾値は1840px */
+@media (min-width:1840px){
+  header, .controls, main, footer{max-width:1320px;}
+  .calendar{
+    position:fixed; left:calc(50% + 672px); top:18px; bottom:18px;
+    width:min(320px, calc(50vw - 692px));
+    display:flex; flex-direction:column;
+  }
+  .calendar:has(.cal-widget:empty){bottom:auto;}  /* 折りたたみ中は見出しバーの高さだけにする */
+  .cal-tools{flex-shrink:0;}
+  .cal-widget{flex:1; height:auto; min-height:0;}
+}
+/* サイドバーが入らない幅では、カレンダーをニュース一覧の下の全幅ブロックに切り替える */
+@media (max-width:1100px){
+  main{flex-direction:column;}
+  .calendar{position:static; width:100%;}
+  .cal-widget{height:320px;}
 }
 @media (max-width:640px){
   header, .controls, main, footer{padding-left:14px; padding-right:14px;}
@@ -358,16 +398,19 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
     padding:8px 10px; font-size:10px; text-align:center; min-width:0; white-space:normal; line-height:1.3;
     min-height:44px; display:flex; align-items:center; justify-content:center;
   }
-  /* 列の最小幅をベース(130px)より狭くし、狭い画面でも1行に複数個並ぶようにする。
-     grid自体の仕組み(全行共通のトラック幅)によりPCと同様、どの行のチップも同じ大きさになる */
-  .chips{width:100%; grid-template-columns:repeat(auto-fill, minmax(102px,1fr));}
+  .chips{width:100%;}
   /* チップも同様にタップ領域を拡大(密なフィルター一覧のため44pxまでは広げず、
-     視認性とレイアウト密度のバランスを見て段階的に拡大) */
-  .chip{padding:10px 10px;}
-  .searchwrap{align-self:stretch; width:100%;}
+     視認性とレイアウト密度のバランスを見て段階的に拡大)。flex:1 1 auto自体は
+     ベースルールと共通、モバイルは縦方向の余白を厚めに・上限をやや広めにしている
+     (狭い画面では1行あたりのチップ数が少なく最大幅まで伸びても不揃いが目立たないため) */
+  .chip{padding:10px 14px; max-width:200px;}
+  .searchwrap{margin-left:0; width:100%;}
   #search{width:100%; padding-top:11px; padding-bottom:11px;}
   #search:focus{width:100%;}
+  #calImpBtn{padding:8px 12px;}
   .grid{grid-template-columns:1fr;}
+  .cal-widget{height:300px;}
+  .cal-note{display:none;}
 }
 
 /* ---------- アクセシビリティ ---------- */

@@ -7,13 +7,13 @@
 document.getElementById('refreshBtn').addEventListener('click', () => fetchAll());
 document.getElementById('trBtn').addEventListener('click', () => {
   translateOn = !translateOn;
-  storageSet(TR_PREF_KEY, translateOn ? 'on' : 'off');
+  try{ localStorage.setItem(TR_PREF_KEY, translateOn ? 'on' : 'off'); }catch(e){}
   updateTrBtn();
   render();
 });
 document.getElementById('topicBtn').addEventListener('click', () => {
   topicFilterOn = !topicFilterOn;
-  storageSet(TOPIC_PREF_KEY, topicFilterOn ? 'on' : 'off');
+  try{ localStorage.setItem(TOPIC_PREF_KEY, topicFilterOn ? 'on' : 'off'); }catch(e){}
   updateTopicBtn();
   render();
 });
@@ -25,6 +25,8 @@ document.getElementById('search').addEventListener('input', e => {
   searchDebounceTimer = setTimeout(() => { searchTerm = value; render(); }, 150);
 });
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+document.getElementById('calBtn').addEventListener('click', toggleCalendar);
+document.getElementById('calImpBtn').addEventListener('click', toggleCalImportance);
 
 // ---- 自動更新(5秒ごとに再取得時刻をチェック) ----
 // バックグラウンドタブ(他タブ表示中・最小化中など)では取得を止め、通信量とバッテリーを節約する。
@@ -54,5 +56,7 @@ buildChips();
 buildFootLinks();
 tickerTape();
 buildSessions();
+loadCalendarPref();
+initEconCalendarLazy();
 render();
 fetchAll();
