@@ -70,42 +70,65 @@ function makeTimeoutSignal(ms){
   const timer = setTimeout(() => controller.abort(), ms);
   return {signal: controller.signal, done: () => clearTimeout(timer)};
 }
-// 第1段: MyMemory。無料枠切れ(WARNING/403/429)を検知したら翌日UTC0時までスキップする
-async function trViaMyMemory(text){
+// 第1段: MyMemory。無料枠切れ(WARNING/403/429)を検知したら翌日UTC0時までスキップする。
+// langpairは呼び出し側が指定する(記事翻訳はen|ja固定、watchlist.jsの銘柄検索はja|enで使う)
+async function trViaMyMemory(text, langpair){
   const timeout = makeTimeoutSignal(TR_TIMEOUT_MS);
   try{
-    const response = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=en|ja', {signal: timeout.signal});
+    const response = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=' + langpair, {signal: timeout.signal});
     const json = await response.json();
     const status = Number(json && json.responseStatus);
-    const ja = stripHtml(json && json.responseData && json.responseData.translatedText || '');
-    if(/MYMEMORY WARNING/i.test(ja) || status === 403 || status === 429){
+    const translated = stripHtml(json && json.responseData && json.responseData.translatedText || '');
+    if(/MYMEMORY WARNING/i.test(translated) || status === 403 || status === 429){
       const tomorrow = new Date();
       tomorrow.setUTCHours(24, 0, 0, 0);
       trQuotaHitUntil = tomorrow.getTime();
       throw new Error('mymemory quota');
     }
-    if(status !== 200 || !ja) throw new Error('mymemory failed');
-    return ja;
+    if(status !== 200 || !translated) throw new Error('mymemory failed');
+    return translated;
   } finally { timeout.done(); }
 }
 // 第2段: Google翻訳の非公式エンドポイント(MyMemoryが使えない時だけの最終手段)
-async function trViaGoogle(text){
+async function trViaGoogle(text, sourceLang, targetLang){
   const timeout = makeTimeoutSignal(TR_TIMEOUT_MS);
   try{
-    const response = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=' + encodeURIComponent(text), {signal: timeout.signal});
+    const response = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=' + sourceLang + '&tl=' + targetLang + '&dt=t&q=' + encodeURIComponent(text), {signal: timeout.signal});
     if(!response.ok) throw new Error('google http ' + response.status);
     const data = await response.json();
-    const ja = Array.isArray(data) && Array.isArray(data[0])
+    const translated = Array.isArray(data) && Array.isArray(data[0])
       ? data[0].map(seg => seg && seg[0] || '').join('')
       : '';
-    if(!ja) throw new Error('google empty');
-    return stripHtml(ja);
+    if(!translated) throw new Error('google empty');
+    return stripHtml(translated);
   } finally { timeout.done(); }
 }
 const TR_PROVIDERS = [
-  {name: 'mymemory', skip: () => Date.now() < trQuotaHitUntil, run: trViaMyMemory},
-  {name: 'google',   skip: () => false,                        run: trViaGoogle},
+  {name: 'mymemory', skip: () => Date.now() < trQuotaHitUntil, run: text => trViaMyMemory(text, 'en|ja')},
+  {name: 'google',   skip: () => false,                        run: text => trViaGoogle(text, 'en', 'ja')},
 ];
+
+// ---- 検索クエリの日本語→英語翻訳(watchlist.jsの銘柄検索から利用) ----
+// Yahoo Financeの検索APIは非ASCII文字を含むクエリを一律拒否する
+// ({"finance":{"result":null,"error":{"code":"Bad Request","description":"Invalid Search Query"}}}、
+// 実機確認済み)ため、日本語の検索語は英語に変換してから渡す。上のtrViaMyMemory/trViaGoogleを
+// langpairだけ逆向き(ja|en)にして再利用する(プロバイダ選定・タイムアウト処理を重複させない)。
+// 記事翻訳のキュー(trQueue)は「後で結果が届けばよい」バッチ処理だが、検索は都度1件を
+// その場で待つ必要があるため、キューを経由せずここで直接プロバイダを呼ぶ。
+// MyMemoryのクォータ(trQuotaHitUntil)は翻訳方向によらず同一アカウント/IPの日次上限のため、
+// 記事翻訳(en|ja)と検索(ja|en)で状態を共有してよい
+async function translateQueryToEnglish(text){
+  const providers = [
+    {skip: () => Date.now() < trQuotaHitUntil, run: () => trViaMyMemory(text, 'ja|en')},
+    {skip: () => false,                        run: () => trViaGoogle(text, 'ja', 'en')},
+  ];
+  for(const provider of providers){
+    if(provider.skip()) continue;
+    try{ const translated = await provider.run(); if(translated) return translated; }
+    catch(e){ /* 次のプロバイダへ */ }
+  }
+  return null;  // 両方失敗した場合はnull(呼び出し側でエラー表示する)
+}
 
 // ---- 翻訳キュー ----
 // 翻訳が届くたびの再描画を1200msにまとめる(1件ごとの全再描画を防ぎ、スマホでの
