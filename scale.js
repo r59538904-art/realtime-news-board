@@ -16,10 +16,21 @@
 const SCALE_DESIGN_WIDTH = 1900;
 const MOBILE_BREAKPOINT = 640;  // style.cssの@media (max-width:640px)と揃えること
 
+// 左右パネル(株価パネル・経済指標カレンダー)の高さを画面いっぱいまで伸ばす際、
+// CSSのvh単位はzoomの影響を受けない(zoomされた要素の中でも「真の」ビューポート高さの
+// ままになる)ため、style.css側でheight:calc(100vh - 28px)と書いても、zoom分だけ
+// 画面上では縮んで表示されてしまう(実際に発生・確認済み: zoom0.84の環境で
+// 期待776pxではなく実測776px=922px×0.84と、意図した922pxの見た目に届かなかった)。
+// zoom倍率を打ち消した値をCSSカスタムプロパティとして渡すことで解決する
+// (--panel-height × zoom = 常に「画面の高さ - 28px」の見た目になる)
 function applyPageScale(){
   const wrap = document.getElementById('scaleWrap');
   if(!wrap) return;
-  wrap.style.zoom = window.innerWidth <= MOBILE_BREAKPOINT ? 1 : window.innerWidth / SCALE_DESIGN_WIDTH;
+  const isMobile = window.innerWidth <= MOBILE_BREAKPOINT;
+  const zoom = isMobile ? 1 : window.innerWidth / SCALE_DESIGN_WIDTH;
+  wrap.style.zoom = zoom;
+  const panelHeightPx = isMobile ? 0 : (window.innerHeight - 28) / zoom;
+  document.documentElement.style.setProperty('--panel-height', panelHeightPx + 'px');
 }
 
 window.addEventListener('resize', applyPageScale);

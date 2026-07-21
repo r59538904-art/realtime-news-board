@@ -197,7 +197,12 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   border:1px solid var(--line-soft); border-radius:10px;
   background:var(--card); padding:14px 16px 12px; box-shadow:var(--shadow-1);
   transition:background-color .2s, border-color .2s;
+  /* パネルの縦幅を画面の高さいっぱいまで伸ばす(以前は中身の高さぶんしかなく、
+     ニュース一覧の方がずっと長いため隣に不揃いな余白ができて見えた) */
+  display:flex; flex-direction:column; height:var(--panel-height, calc(100vh - 28px));
 }
+/* 折りたたみ中は中身が空になるため、伸ばさず見出しバーの高さだけにする */
+.calendar:has(.cal-widget:empty), .watchlist:has(.wl-widget:empty){height:auto;}
 .calendar .cap, .watchlist .cap{
   display:flex; justify-content:space-between; align-items:center;
   font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3);
@@ -264,7 +269,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
    応じた可変(auto)でよい。TradingView依存だった頃の名残で.cal-widgetとクラス名は揃えているが、
    スタイルは完全に別物になっている */
 .cal-widget{
-  margin-top:10px; height:460px; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);
+  margin-top:10px; flex:1; height:auto; min-height:0; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);
   overscroll-behavior:contain; touch-action:pan-y;
 }
 .cal-widget:empty{display:none;}
@@ -535,8 +540,8 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   #calImpBtn{padding:8px 12px;}
   /* サイドバーはニュース一覧の上下に全幅ブロックとして積む(左右固定は幅が足りない) */
   main{flex-direction:column;}
-  .calendar, .watchlist{position:static; width:100%;}
-  .cal-widget{height:300px;}
+  .calendar, .watchlist{position:static; width:100%; height:auto;}
+  .cal-widget{flex:none; height:300px;}
   .cal-note{display:none;}
   .grid{grid-template-columns:1fr;}
 }
