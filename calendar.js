@@ -9,11 +9,6 @@ const CAL_IMP_KEY = 'news-board-cal-imp-v1';
 let calendarOpen = true;
 let calHighOnly = false;
 
-// ワイド画面(1840px以上)ではコンテンツ右外の余白に固定表示するため縦長にする(style.css側と対応)。
-// ウィンドウ幅が閾値をまたいだら高さを合わせるために作り直す
-const CAL_WIDE_MQ = window.matchMedia('(min-width: 1840px)');
-try{ CAL_WIDE_MQ.addEventListener('change', () => buildEconCalendar()); }catch(e){}
-
 // カレンダーはTradingViewのiframeで、内部に独自スクロール領域を持つ。
 // スマホでは指がその上に乗った瞬間にページ全体のスクロールでなく内部スクロールを奪ってしまい
 // 「スクロールが引っかかる」体感になりやすいため、狭い画面(幅1100px以下)では
@@ -55,7 +50,7 @@ function buildEconCalendar(){
     colorTheme: currentTheme() === 'light' ? 'light' : 'dark',
     isTransparent: false,                // ウィジェット自身のテーマ背景を使う(透過だと文字が沈んで見えるため)
     width: '100%',
-    height: CAL_WIDE_MQ.matches ? '100%' : 460,  // 右余白固定時はパネルの高さ(画面下端まで)に追従させる
+    height: '100%',  // .cal-widget(flex:1)がパネルの残り高さいっぱいに広がるため、常にそれに追従させる
     locale: 'ja',
     importanceFilter: calHighOnly ? '1' : '0,1', // 高のみ / 中+高
     countryFilter: 'us,jp,eu,cn,gb,de',  // 主要市場: 米・日・欧・中・英・独
