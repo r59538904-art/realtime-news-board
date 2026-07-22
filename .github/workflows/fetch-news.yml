@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: fetch-news
@@ -32,6 +33,12 @@ jobs:
       - name: Fetch RSS feeds and generate news.json / sources.js
         run: python scripts/fetch_news.py
 
+      - name: Check external API health (stock proxy / translation)
+        continue-on-error: true  # 死活監視の不具合でニュース取得・コミットが止まらないようにする
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/health_check.py
+
       - name: Commit and push if changed
         run: |
           # 外部cronサービス経由の高頻度(1分おき)実行と手動実行が近接すると、コミット直前は
@@ -43,7 +50,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4 5; do
-            git add news.json sources.js
+            git add news.json sources.js status.json
             if git diff --staged --quiet; then
               echo "No changes to commit."
               exit 0

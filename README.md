@@ -14,6 +14,12 @@ Financial Times、CNBC、NHK、Investing.com、FXStreet など約33の投資/金
 
 `fetch-news.yml`はGitHub内蔵の`schedule`(cron)トリガーを持ちません。このリポジトリでは`schedule`予約実行がGitHub側でほぼ発火しない実績(観測期間中1回のみ、しかもキャンセル)だったため撤去済みです。代わりに、外部の無料cronサービス(例: cron-job.org)からGitHub REST APIの`workflow_dispatch`エンドポイントを1分おきに叩く運用にしています(このリポジトリのActions実行権限のみを持つトークンを発行して利用)。外部cronサービスが停止すると更新も止まるため、更新が滞った場合はまずそちらの稼働状況を確認してください。なお、フロントエンド側にもサーバー更新停止を検知する仕組みがあり、`news.json`の生成時刻が15分以上更新されていない場合はステータス表示が金色に変わり「サーバー側の更新が止まっている」ことを画面上で確認できます。
 
+### 外部API死活監視について
+
+`fetch-news.yml`の中で`scripts/health_check.py`も毎回(実質1分おき)実行されますが、株価プロキシ(Cloudflare Worker)・翻訳API(MyMemory/Google翻訳)への実際のリクエストは20分に1回しか行いません(`status.json`の`checkedAt`を見て間引く)。無料枠のAPIを不必要に叩かないための間引きで、GitHub組み込みの`schedule`が信頼できない対策として既に確実に毎分動いている`fetch-news.yml`のトリガーに相乗りする形にしています。
+
+異常を検知すると`status.json`を更新してフロントエンド(`health.js`)がヘッダー下に警告バナーを出すほか、GitHubリポジトリに`health-check`ラベル付きのIssueを自動作成します(既に開いていれば連投しない)。復旧を検知すると自動でコメントを付けてIssueをクローズします。翻訳はMyMemory→Google翻訳の2段フォールバックがあるため、両方失敗した時だけ異常扱いにします(MyMemory単体のクォータ超過は正常フォールバックの範囲内のため対象外)。
+
 ## ファイル構成
 
 デザイン(`style.css`)・データ・機能ロジックをそれぞれ役割ごとに分離しています。各ファイルの先頭に「このファイルは何を担当するか」を1行コメントで明記しているので、修正したい機能に対応するファイルだけを開けば済みます。
@@ -47,9 +53,12 @@ Financial Times、CNBC、NHK、Investing.com、FXStreet など約33の投資/金
 | `robots.txt` | 検索エンジンクローラー向け設定(Sitemap行あり) |
 | `sitemap.xml` | 検索エンジン向けサイトマップ(index.html・privacy.htmlの2件) |
 | `scripts/fetch_news.py` | RSS取得本体(Python)。`sources.json`→`sources.js`の再生成、全ソースの並列fetch、`news.json`の書き出しを行う |
+| `scripts/health_check.py` | 株価プロキシ・翻訳APIの死活監視(Python)。`status.json`の書き出しと、異常検知時のGitHub Issue自動作成/復旧時クローズを行う |
 | `scripts/requirements.txt` | 上記スクリプトの依存パッケージ(`requests`, `feedparser`) |
-| `.github/workflows/fetch-news.yml` | 上記スクリプトを実行するGitHub Actions定義(トリガーは外部cronからの`workflow_dispatch`のみ) |
+| `.github/workflows/fetch-news.yml` | 上記2スクリプトを実行するGitHub Actions定義(トリガーは外部cronからの`workflow_dispatch`のみ) |
 | `news.json` | 取得済み記事データ(自動生成・自動コミットされる静的JSON) |
+| `status.json` | 外部API死活監視の結果(自動生成・自動コミットされる静的JSON。`health.js`が読む) |
+| `health.js` | `status.json`を読み、異常時にヘッダー下へ警告バナーを表示する |
 
 ## 対応ニュースソース(約33)
 

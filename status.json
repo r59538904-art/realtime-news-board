@@ -1,0 +1,8 @@
+{
+  "checkedAt": null,
+  "ok": true,
+  "services": {
+    "stockQuote": {"ok": true, "error": null},
+    "translate": {"ok": true, "error": null}
+  }
+}

@@ -24,6 +24,8 @@
     watchlist.js             Yahoo Finance株価現在値カード・銘柄検索・ピン留めミニウォッチリスト
                               (記事一覧左サイドバー。折りたたみ可。自前デプロイのCloudflare Worker
                               経由。日本語検索対応・30秒自動更新。TradingViewには依存しない)
+    health.js                status.json(scripts/health_check.pyがGitHub Actions側で生成)を
+                              読み、株価プロキシ・翻訳APIに異常があればヘッダー下に警告バナーを表示
     theme-init.js            <head>内で同期実行するFOUC防止スニペット(外部化: CSP script-src対応)
     main.js                  イベント登録・自動更新・SW登録・起動処理(外部化: CSP script-src対応)
   PWA関連: manifest.webmanifest(ホーム画面追加) / sw.js(オフライン表示) / icons/(アイコン)
@@ -77,7 +79,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=52">
+<link rel="stylesheet" href="style.css?v=53">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -164,6 +166,7 @@
 <script src="sessions.js?v=3"></script>
 <script src="calendar.js?v=12"></script>
 <script src="watchlist.js?v=17"></script>
+<script src="health.js?v=1"></script>
 <script src="main.js?v=12"></script>
 </body>
 </html>
