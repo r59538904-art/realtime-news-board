@@ -1,13 +1,7 @@
-/* 世界ニュース速報 — 画面デザイン
-   構成(上から順): デザイントークン → ベース → ヘッダー → ティッカー → 取引セッション
-   → コントロール → 記事グリッド → フッター → レスポンシブ → アクセシビリティ */
 
-/* ---------- デザイントークン(ダークが既定) ---------- */
 :root{
   --bg0:#0a0d18; --bg1:#0e1322; --card:#131a2d; --surface:#10162a;
   --line:#222b4a; --line-soft:#1a2138;
-  /* ink-3・gold-dimはWCAG AA(4.5:1)をvar(--bg0)・var(--card)の両方に対して満たす値に調整済み
-     (検証: ink-3 vs card = 4.71:1 / gold-dim vs card = 4.65:1) */
   --ink:#e9ecf6; --ink-2:#9aa3c0; --ink-3:#7d859d;
   --gold:#d8b46e; --gold-dim:#96825a; --gold-ink:#191305;
   --red:#e0665f; --green:#5fbf8f;
@@ -22,7 +16,6 @@
   --serif:'Shippori Mincho',serif;
   color-scheme: dark;
 }
-/* ライトモード: OS設定に追従(data-theme未指定時) */
 @media (prefers-color-scheme:light){
   :root:not([data-theme="dark"]){
     --bg0:#f6f3ec; --bg1:#fdfcf9; --card:#ffffff; --surface:#efe9da;
@@ -39,7 +32,6 @@
     color-scheme: light;
   }
 }
-/* ライトモード: ボタンでの明示切替(data-theme="light"。OS設定より優先) */
 :root[data-theme="light"]{
   --bg0:#f6f3ec; --bg1:#fdfcf9; --card:#ffffff; --surface:#efe9da;
   --line:#ddd6c4; --line-soft:#e9e3d3;
@@ -54,10 +46,6 @@
     linear-gradient(180deg,var(--bg0),var(--bg1) 40%,var(--bg0));
   color-scheme: light;
 }
-/* ライトモードのgold(#a97a2e)はgold-ink(ほぼ白)を乗せた背景として使うには明るさが不足し、
-   NEWバッジとskip-linkの文字コントラストが3.7:1程度までしか出ない(WCAG AA 4.5:1未達)。
-   --gold自体はボーダー・文字色など他の用途にも広く使われているため全体を暗くはせず、
-   この2箇所の背景色だけを暗め(80%)に補正して4.5:1以上を確保する */
 @media (prefers-color-scheme:light){
   :root:not([data-theme="dark"]) .new-badge,
   :root:not([data-theme="dark"]) .skip-link{ background:color-mix(in srgb, var(--gold) 80%, black); }
@@ -65,7 +53,6 @@
 :root[data-theme="light"] .new-badge,
 :root[data-theme="light"] .skip-link{ background:color-mix(in srgb, var(--gold) 80%, black); }
 
-/* ---------- ベース ---------- */
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth; overflow-x:hidden;}
 body{
@@ -85,9 +72,6 @@ button:focus-visible, a:focus-visible, input:focus-visible{
   outline:2px solid var(--gold); outline-offset:2px; border-radius:6px;
 }
 
-/* キーボード利用者が長いヘッダー(ティッカー・取引セッション・チップ)を毎回tabで
-   通過せずニュース本文へ直接飛べるようにするリンク。通常は画面外に置き、
-   フォーカス時だけ左上に表示する定番パターン */
 .skip-link{
   position:absolute; top:-100px; left:12px; z-index:1000;
   background:var(--gold); color:var(--gold-ink); font-family:var(--mono); font-size:12px;
@@ -95,16 +79,11 @@ button:focus-visible, a:focus-visible, input:focus-visible{
 }
 .skip-link:focus{top:0;}
 
-/* 視覚的には非表示だがスクリーンリーダーには読ませる定番パターン。display:noneや
-   visibility:hiddenだと読み上げ自体がスキップされてしまうため、1pxの範囲に切り詰めて
-   隠す(記事一覧セクションにも見出し階層上のh2が必要だが、隣接するWORLD TRADING SESSIONS等
-   と違い視覚的な見出しは不要なためこの形にした) */
 .sr-only{
   position:absolute; width:1px; height:1px; overflow:hidden;
   clip:rect(0,0,0,0); white-space:nowrap; border:0; padding:0; margin:-1px;
 }
 
-/* ---------- ヘッダー ---------- */
 header{padding:26px clamp(16px,4vw,48px) 0; max-width:1800px; margin:0 auto;}
 .masthead{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;}
 h1{font-family:var(--serif); font-weight:700; font-size:clamp(24px,3.2vw,36px); letter-spacing:.06em; line-height:1.1;}
@@ -115,11 +94,6 @@ h1 .sub{
 }
 h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex-shrink:0;}
 
-/* ステータスバー: loading=取得中(赤) / live=最新(緑) / err=前回分を表示中(金)
-   / stale=サーバー側の更新停止を検知(金・点滅) */
-/* status-info(点+文言)とstatus-actions(4ボタン)の2グループ構成。
-   デスクトップは両方とも横並びflexにして従来通り1行に見せ、モバイルだけ後述のmedia queryで
-   「状態1行+ボタン2×2グリッド」に組み替える */
 .statusbar{display:flex; align-items:center; gap:14px; font-family:var(--mono); font-size:11px; color:var(--ink-3);}
 .status-info{display:flex; align-items:center; gap:8px;}
 .status-actions{display:flex; align-items:center; gap:14px;}
@@ -132,8 +106,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .statusbar.offline .dot{background:var(--ink-3);}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
-/* 外部API死活監視バナー(health.js)。stale状態(statusbar.stale)と同じgoldを使い、
-   「致命的ではないが把握しておくべき状態」という視覚言語を統一している */
 .health-banner{
   max-width:1800px; margin:10px auto 0; padding:10px clamp(16px,4vw,48px);
   font-family:var(--mono); font-size:11px; color:var(--gold);
@@ -157,7 +129,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 #trBtn,#topicBtn{color:var(--gold); border-color:var(--gold-dim);}
 #trBtn.off,#topicBtn.off{color:var(--ink-3); border-color:var(--line);}
 
-/* ---------- 相場ティッカー ---------- */
 .tape{
   margin:18px 0 0; border:1px solid var(--line-soft); border-radius:10px;
   overflow:hidden; background:var(--card); box-shadow:var(--shadow-1);
@@ -166,7 +137,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .tape.tape-loading{opacity:.35;}
 .tape .tradingview-widget-container{height:46px;}
 
-/* ---------- 取引セッション(日本時間24H軸) ---------- */
 .sessions{
   margin:14px 0 0; border:1px solid var(--line-soft); border-radius:10px;
   background:var(--card); padding:14px 16px 12px; position:relative; overflow:hidden;
@@ -174,11 +144,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   transition:background-color .2s, border-color .2s;
 }
 .sessions .cap{display:flex; justify-content:space-between; font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--ink-3); margin-bottom:10px;}
-/* キャプションはスクリーンリーダーの見出しジャンプで拾えるようh2にしている
-   (以前はただのspanで文書構造上どこにも現れなかった)。h2のUA既定スタイル
-   (太字・大きいフォント)を打ち消して.capの見た目(等幅・10px・字間広め)を維持する */
 .cap h2{font:inherit; letter-spacing:inherit; color:inherit;}
-/* セクション見出しの頭に短い金線を付けてマストヘッドと揃える */
 .sessions .cap h2::before, .calendar .cap h2::before, .watchlist .cap h2::before{
   content:''; display:inline-block; width:14px; height:1px;
   background:var(--gold-dim); margin-right:8px; vertical-align:middle;
@@ -187,8 +153,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .hourgrid span{position:absolute; top:0; bottom:0; width:1px; background:var(--line-soft);}
 .hourgrid label{position:absolute; bottom:-2px; transform:translateX(-50%); font-family:var(--mono); font-size:9px; color:var(--ink-3);}
 .sess-row{position:absolute; left:0; right:0; height:13px;}
-/* 休場中の市場は控えめなグレー、開場中は金色グラデーション(どちらもテーマ変数から算出し、
-   ダーク/ライト両方で沈まない・飛ばない配色にする) */
 .sess-bar{
   position:absolute; height:100%; border-radius:99px;
   background:color-mix(in srgb, var(--ink-3) 18%, transparent);
@@ -208,19 +172,13 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .now-cursor{position:absolute; top:-4px; bottom:8px; width:1px; background:var(--gold); box-shadow:0 0 10px var(--gold);}
 .now-cursor::after{content:'現在'; position:absolute; top:-4px; left:5px; font-family:var(--mono); font-size:9px; letter-spacing:.15em; color:var(--gold);}
 
-/* ---------- 経済指標カレンダー(記事一覧の右)・株式ウォッチリスト(記事一覧の左)の
-   2つのサイドバー。どちらもスクロールに追従する同じ見た目のパネルなので、
-   共通する宣言は.calendarと.watchlistのセレクタをまとめて1箇所に書いている ---------- */
 .calendar, .watchlist{
   width:320px; flex-shrink:0; position:sticky; top:14px;
   border:1px solid var(--line-soft); border-radius:10px;
   background:var(--card); padding:14px 16px 12px; box-shadow:var(--shadow-1);
   transition:background-color .2s, border-color .2s;
-  /* パネルの縦幅を画面の高さいっぱいまで伸ばす(以前は中身の高さぶんしかなく、
-     ニュース一覧の方がずっと長いため隣に不揃いな余白ができて見えた) */
   display:flex; flex-direction:column; height:var(--panel-height, calc(100vh - 28px));
 }
-/* 折りたたみ中は中身が空になるため、伸ばさず見出しバーの高さだけにする */
 .calendar:has(.cal-widget:empty), .watchlist:has(.wl-widget:empty){height:auto;}
 .calendar .cap, .watchlist .cap{
   display:flex; justify-content:space-between; align-items:center;
@@ -233,8 +191,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 }
 .calendar .cap button:hover, .watchlist .cap button:hover{color:var(--gold);}
 
-/* 銘柄検索欄。#searchwrap(ヘッダーのキーワード絞込)と見た目を揃えつつ、
-   position:relativeにして直下の.wl-resultsをこの欄のすぐ下に絶対配置する基準にする */
 .wl-searchwrap{margin-top:10px; position:relative;}
 .wl-searchwrap::before{
   content:'⌕'; position:absolute; left:11px; top:50%; transform:translateY(-50%);
@@ -251,8 +207,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   outline:none; border-color:var(--gold-dim);
   box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
 }
-/* 検索結果ドロップダウン。.watchlistがposition:sticky/fixedのカード内なので、
-   z-indexを明示しないと後続の記事カード(.card)のbox-shadow等の下に隠れることがある */
 .wl-results{
   position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:5;
   max-height:280px; overflow-y:auto;
@@ -282,11 +236,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 #calImpBtn.on{color:var(--gold); border-color:var(--gold); background:color-mix(in srgb, var(--gold) 14%, transparent);}
 .cal-note{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); letter-spacing:.02em;}
 
-/* overscroll-behavior: TradingViewウィジェット(iframe)内部の独自スクロールが端に達した時、
-   ページ側のスクロールを巻き込まないようにする(モバイルでの「スクロールが引っかかる」対策)。
-   .wl-widget(株価現在値カード)はiframeを持たないためこの対策は不要で、高さもカード内容に
-   応じた可変(auto)でよい。TradingView依存だった頃の名残で.cal-widgetとクラス名は揃えているが、
-   スタイルは完全に別物になっている */
 .cal-widget{
   margin-top:10px; flex:1; height:auto; min-height:0; overflow:hidden; border-radius:8px; border:1px solid var(--line-soft);
   overscroll-behavior:contain; touch-action:pan-y;
@@ -294,9 +243,8 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .cal-widget:empty{display:none;}
 .cal-widget .tradingview-widget-container{height:100%;}
 .wl-widget{margin-top:10px;}
-.wl-widget:empty{margin-top:0;}  /* 折りたたみ中はカードが無く、空の余白だけ残るのを防ぐ */
+.wl-widget:empty{margin-top:0;}
 
-/* ---------- 株価現在値カード ---------- */
 .wl-quote{
   border:1px solid var(--line-soft); border-radius:8px; background:var(--surface);
   padding:14px 16px; display:flex; flex-direction:column; gap:10px;
@@ -308,8 +256,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .wl-quote-sym{font-family:var(--mono); font-size:10px; color:var(--ink-3); letter-spacing:.04em;}
-/* ピン留めボタン(☆/★)。他のヘッダーボタン群とは離れた場所にある単独のトグルなので
-   独自スタイルにしているが、ホバー色・押下時の沈み込みは既存ボタン群と揃えている */
 .wl-pin-btn{
   appearance:none; -webkit-appearance:none; flex-shrink:0;
   background:none; border:1px solid var(--line); border-radius:6px;
@@ -340,9 +286,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .wl-quote-cell-value{font-family:var(--mono); font-size:12px; color:var(--ink-2);}
 .wl-quote-updated{font-family:var(--mono); font-size:9.5px; color:var(--ink-3); text-align:right;}
 
-/* ---------- ピン留め銘柄(ミニウォッチリスト) ---------- */
-/* 中身が無い時はmargin等の余白も含めて完全に消す(空のスペースだけ残る見た目を防ぐ。
-   .wl-widget:emptyと同じ考え方) */
 .wl-pinned{display:flex; flex-direction:column; gap:6px; margin-top:10px;}
 .wl-pinned:empty{display:none;}
 .wl-pinned-row{
@@ -363,35 +306,17 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 .wl-pinned-change.pos{color:var(--green);}
 .wl-pinned-change.neg{color:var(--red);}
 
-/* ---------- コントロール(チップ・検索) ---------- */
-/* チップと検索欄を同じ行のflexサイド・バイ・サイドではなく縦積みにしている。
-   以前はchipsとsearchwrapを横並びflex(align-items:center)にしていたが、
-   チップがgrid化して複数行(5行前後)に伸びた際、検索欄がその高さの
-   「縦中央」に配置されてしまい、グリッドの途中に検索欄が挟まったような
-   不自然な見た目になった(検索欄の高さは1行分しかないため)。
-   縦積みにすることでチップの行数に関係なく検索欄は常にチップの下に独立して収まる */
 .controls{
   max-width:1800px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px);
   display:flex; flex-direction:column; gap:28px;
 }
-/* grid化した理由: flexのflex-growは「その行に残った余白」をその行のチップ「だけ」に
-   配分するため、行によってチップ数が違うと(例: 12個並ぶ行 vs 最終行に2個だけ)伸び幅が
-   バラつき、チップの大きさが行ごとに不揃いに見える問題があった。
-   列数は12を直接指定している(以前はrepeat(auto-fill, minmax(130px,1fr))だったが、
-   最終行など列が余る行だけ幅がわずかに揃わないという報告が繰り返しあり、原因を
-   ブラウザ側の丸め誤差と判断して、計算に依存しない確定的な列数指定に変更した。
-   このサイトは#scaleWrap(幅1900px固定)をzoomで拡大縮小する設計のため、
-   .controls(max-width:1800px)の実効幅は常に一定で、12列固定で運用上問題ない) */
 .chips{display:grid; grid-template-columns:repeat(12, 1fr); gap:8px;}
-/* button要素化に伴い、ブラウザ既定の見た目(ネイティブ枠線・背景・行高)を打ち消す */
 .chip{
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
   font:inherit; line-height:normal;
   font-family:var(--mono); font-size:11.5px; letter-spacing:.06em;
   padding:8px 16px; border-radius:6px; border:1px solid var(--line);
   color:var(--ink-2); cursor:pointer; background:var(--surface); user-select:none;
-  /* white-space:normalは、列幅(130px)より長いラベル("Foreign Policy"等ごく一部)が
-     はみ出さず2行に折り返すための保険(大半のラベルは1行に収まる幅にしてある) */
   text-align:center; white-space:normal;
   transition:border-color .15s, color .15s, background-color .2s, transform .1s;
 }
@@ -401,9 +326,6 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   border-color:var(--gold); color:var(--gold); font-weight:500;
   background:color-mix(in srgb, var(--gold) 16%, var(--bg0));
 }
-/* align-self:flex-endで縦積みになった.controls内でも右寄せ・内容幅のまま保つ
-   (.controlsがdisplay:flex; flex-direction:columnになったため、既定のstretchのままだと
-   幅いっぱいに広がってしまう)。検索欄とジャンル絞込プルダウンをこの行にまとめて横並びにする */
 .search-row{align-self:flex-end; display:flex; align-items:center; gap:10px;}
 .searchwrap{position:relative;}
 .searchwrap::before{
@@ -433,16 +355,12 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
-/* ---------- ウォッチリストサイドバー+記事グリッド+カレンダーサイドバー ---------- */
-/* HTML記述順(watchlist→grid→calendar)がそのまま左→中央→右の並びになる。
-   3つともflexアイテムなのでgapが両方の隙間に効く */
 main{
   max-width:1800px; margin:0 auto; padding:18px clamp(16px,4vw,48px) 60px;
   display:flex; gap:14px; align-items:flex-start;
 }
 .grid{flex:1; min-width:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:13px;}
 
-/* 記事カード。--srcは配信元カラー(render.jsが検証済みの色だけを設定。未設定時は金色) */
 .card{
   --src:var(--gold);
   position:relative; overflow:hidden;
@@ -459,11 +377,6 @@ main{
 .card:hover{transform:translateY(-2px); border-color:var(--gold-dim); box-shadow:var(--shadow-2);}
 .card:hover::before{opacity:.9;}
 
-/* 公開60分以内(NEWバッジ対象)のカードだけに入場アニメーションを付ける。
-   全カードに付けると60秒ごとの自動更新のたびに一覧全体が点滅して見えるため、
-   本当に「新しく増えた」ものだけに絞ることで上品さと情報の分かりやすさを両立する。
-   transform/opacityのみを使うためGPU合成レイヤーで処理され軽量(レイアウト再計算なし)。
-   prefers-reduced-motionは末尾の共通ルール(*{animation:none!important})で無効化される */
 .card.is-new{animation:card-enter .5s cubic-bezier(.22,.7,.35,1) both;}
 @keyframes card-enter{
   from{opacity:0; transform:translateY(8px) scale(.985);}
@@ -474,7 +387,6 @@ main{
 .meta-left{display:flex; align-items:center; gap:6px; min-width:0;}
 .meta-right{display:flex; align-items:center; gap:7px; flex-shrink:0;}
 
-/* 配信元バッジ。--src-inkは実際の文字色(ライト背景では読めるよう暗めに補正) */
 .src-badge{
   --src-ink:var(--src);
   font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
@@ -511,59 +423,31 @@ main{
 }
 .card .lang{font-family:var(--mono); font-size:9px; color:var(--ink-3); letter-spacing:.1em; margin-top:auto;}
 
-/* #grid配下に限定する。理由: statusbarも更新中に"loading"というクラス名を付与するため、
-   ここを無条件の.loadingセレクタにすると更新中のstatusbarにまでこの破線ボックスが誤って
-   適用されてしまう(実際に起きていた不具合) */
 #grid .empty, #grid .loading{
   grid-column:1/-1; text-align:center; padding:60px 20px;
   color:var(--ink-3); font-family:var(--mono); font-size:12px; letter-spacing:.08em;
   border:1px dashed var(--line); border-radius:12px;
 }
 
-/* ---------- フッター ---------- */
 footer{max-width:1800px; margin:0 auto; padding:10px clamp(16px,4vw,48px) 40px; font-size:11px; color:var(--ink-3); line-height:1.9;}
 footer .rule{border-top:1px solid var(--line-soft); padding-top:16px;}
 footer a{color:var(--gold-dim); text-decoration:none; transition:color .15s;}
 footer a:hover{color:var(--gold); text-decoration:underline; text-underline-offset:3px;}
 footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-family:var(--mono); font-size:10.5px; letter-spacing:.04em;}
 
-/* ---------- ページ全体の拡大縮小固定表示(640px以上) ---------- */
-/* 画面幅・OS表示拡大率・ブラウザズームによってレイアウトの見え方が変わってしまう
-   (サイドバーが左右に収まったり上部帯に切り替わったり)不満が繰り返し出たため、
-   ブレークポイントで個別にレイアウトを組み替える方式をやめ、常に同じデザイン
-   (幅1900px基準で設計)をウィンドウ幅に合わせて丸ごと拡大縮小する方式にした。
-   scale.jsがwindow.innerWidth/1900pxの比率で#scaleWrapにzoomを適用する(transformだと
-   position:sticky/fixedな左右パネルのスクロール追従が壊れるため、zoomを採用)。
-   header/.controls/main/footerの実コンテンツ幅は1800pxで、1900px幅の#scaleWrapの
-   中央に置くことで左右50pxずつの余白ができる(記事3列+両サイドバーがぴったり収まる
-   最小幅の1800pxそのままだと余白が無く安っぽく見えたための調整) */
 #scaleWrap{width:1900px;}
 
-/* 640px以下(スマホ)は縮小デザインの縮図ではなく、専用のモバイルレイアウトに切り替える。
-   縮小表示だと文字・ボタンが実寸で数mmまで小さくなり操作できないため(実際に発生・
-   報告を受けて修正)。scale.js側もこの閾値以下ではzoomを適用しない(1のまま) */
 @media (max-width:640px){
   #scaleWrap{width:100%;}
   header, .controls, main, footer{max-width:100%; padding-left:14px; padding-right:14px;}
   .masthead{flex-direction:column; align-items:flex-start; gap:10px;}
-  /* 状態行(点+文言)を単独の1行にし、4ボタンは2×2の均等グリッドにまとめて整列させる
-     (flex-wrapの自動折り返しに任せると行ごとに幅がバラつき、隙間が不揃いに見えるため) */
   .statusbar{flex-direction:column; align-items:flex-start; gap:10px; width:100%;}
   .status-actions{display:grid; grid-template-columns:repeat(2,1fr); gap:8px; width:100%;}
-  /* min-width:0が無いと、グリッド項目はデフォルトでボタン内テキストの1行分の幅より
-     縮まなくなり(min-width:autoの既定挙動)、2列目が右にはみ出す原因になる。
-     white-space:normalは<button>のUA既定(テキストを折り返さない実装が多い)を上書きするために必要。
-     min-height:44pxはiOS/Androidのタップ推奨サイズ(44×44px)に合わせたもの。
-     display:flexで2行に折り返した場合も含めテキストを常に垂直中央に保つ */
   #refreshBtn,#trBtn,#topicBtn,#themeBtn{
     padding:8px 10px; font-size:10px; text-align:center; min-width:0; white-space:normal; line-height:1.3;
     min-height:44px; display:flex; align-items:center; justify-content:center;
   }
-  /* 列の最小幅をベース(130px)より狭くし、狭い画面でも1行に複数個並ぶようにする。
-     grid自体の仕組み(全行共通のトラック幅)によりPCと同様、どの行のチップも同じ大きさになる */
   .chips{width:100%; grid-template-columns:repeat(auto-fill, minmax(102px,1fr));}
-  /* チップも同様にタップ領域を拡大(密なフィルター一覧のため44pxまでは広げず、
-     視認性とレイアウト密度のバランスを見て段階的に拡大) */
   .chip{padding:10px 10px;}
   .search-row{align-self:stretch; width:100%; flex-direction:column; gap:8px;}
   .searchwrap{width:100%;}
@@ -571,7 +455,6 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   #search:focus{width:100%;}
   .genre-select{width:100%; max-width:100%; min-height:44px;}
   #calImpBtn{padding:8px 12px;}
-  /* サイドバーはニュース一覧の上下に全幅ブロックとして積む(左右固定は幅が足りない) */
   main{flex-direction:column;}
   .calendar, .watchlist{position:static; width:100%; height:auto;}
   .cal-widget{flex:none; height:300px;}
@@ -579,5 +462,4 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   .grid{grid-template-columns:1fr;}
 }
 
-/* ---------- アクセシビリティ ---------- */
 @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important} }

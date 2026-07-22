@@ -1,54 +1,3 @@
-<!--
-  世界ニュース速報 — リアルタイム経済ニュースボード(ビルド不要の単一ページアプリ)
-  RSSの実取得はGitHub Actions(scripts/fetch_news.py)が1分おきに行い、news.jsonを静的コミットする。
-  ブラウザ側はそのnews.jsonをfetchして表示するだけ。
-  <script src>の読み込み順は「データ → ユーティリティ → 各機能 → 描画」の依存順。変更しないこと。
-    style.css               画面デザイン(ダーク/ライト対応)
-    scale.js                 #scaleWrap(全コンテンツ)をウィンドウ幅に合わせて拡大縮小し、
-                              画面サイズに関わらず同じ見た目(比率)にする。他のどのスクリプトより
-                              先に読み込み、ページ描画とほぼ同時に縮小を適用してチラつきを抑える
-    sources.js              データ: 配信元一覧(自動生成。編集はsources.jsonへ)
-    topic-keywords.js       データ: トピック絞り込み用の単語リスト
-    sentiment-keywords.js   データ: センチメント判定用の単語リスト
-    market-sessions.js      データ: 世界の株式市場の開場時間
-    utils.js                共通ヘルパー(stripHtml・isSafeUrl・el等)
-    theme.js                ダーク/ライト切り替え
-    feed.js                 news.jsonの取得・キャッシュ・ステータス表示
-    translate.js            英語記事の自動日本語翻訳
-    topic-filter.js         トピック絞り込み
-    sentiment.js            簡易センチメント判定
-    render.js               記事一覧・チップ・フッターリンクの描画
-    ticker.js               TradingView相場ティッカー
-    sessions.js             世界の取引セッション表示
-    calendar.js             TradingView経済指標カレンダー(折りたたみ可)
-    watchlist.js             Yahoo Finance株価現在値カード・銘柄検索・ピン留めミニウォッチリスト
-                              (記事一覧左サイドバー。折りたたみ可。自前デプロイのCloudflare Worker
-                              経由。日本語検索対応・30秒自動更新。TradingViewには依存しない)
-    health.js                status.json(scripts/health_check.pyがGitHub Actions側で生成)を
-                              読み、株価プロキシ・翻訳APIに異常があればヘッダー下に警告バナーを表示
-    theme-init.js            <head>内で同期実行するFOUC防止スニペット(外部化: CSP script-src対応)
-    main.js                  イベント登録・自動更新・SW登録・起動処理(外部化: CSP script-src対応)
-  PWA関連: manifest.webmanifest(ホーム画面追加) / sw.js(オフライン表示) / icons/(アイコン)
-
-  CSP(下記meta)の要点:
-    script-src 'self'に外部インラインscriptを一切許可していない(main.js/theme-init.jsの
-    外部化はこのため)。style-src だけ 'unsafe-inline' を許可しているのは、TradingView
-    ウィジェットが自身のスクリプトから<style>を動的注入する仕様のため回避不可
-    (script-srcには'unsafe-inline'を含めていないので、XSS対策上の実効性は保たれる)。
-    frame-srcにtradingview.com/tradingview-widget.comの2ドメインを許可しているのは、
-    ウィジェットのiframeがこの2つを使い分けているため(実際にCSP違反ゼロになるまで検証済み)。
-    script-src末尾の'sha256-...'は、head内のJSON-LD構造化データ(<script type="application/ld+json">)
-    1個だけをsha256ハッシュで個別許可するもの('unsafe-inline'は使わない)。JSON-LDの中身を
-    1文字でも変更したらこのハッシュは再計算が必要(ズレるとCSP違反でJSON-LDがブロックされ、
-    構造化データが読めなくなるだけでページ動作自体は壊れない)。改行を含めるとgit側の
-    core.autocrlf(CRLF⇔LF変換)でハッシュがズレる恐れがあるため、あえて1行のJSONにしてある。
-    Referrer-PolicyとX-Content-Type-Options/X-Frame-Options/HSTS等については README の
-    「セキュリティヘッダーについて」を参照(meta http-equivで設定可能なのはCSPとReferrer-Policyのみ)。
-    connect-srcのhttps://*.workers.devは、watchlist.js(株価現在値カード)がYahoo Financeへ
-    アクセスするために自前デプロイするCloudflare Workerプロキシ用。デプロイ先URLは利用者ごとに
-    異なる(<任意の名前>.<Cloudflareアカウント固有のサブドメイン>.workers.dev)ため、
-    個別のURLではなくworkers.dev全体をワイルドカードで許可している(詳細はREADME参照)。
--->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -79,7 +28,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=53">
+<link rel="stylesheet" href="style.css?v=54">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
