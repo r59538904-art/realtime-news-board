@@ -6,6 +6,12 @@
 // ---- 状態 ----
 let activeFilters = new Set(SOURCES.map(source => source.id));  // 初期状態は全ソースON
 let searchTerm = '';
+// render()は毎回グリッド全体を作り直すため、is-new対象(公開60分以内)の記事は
+// 同じ記事でも再描画のたびに新しいDOM要素として生成される。判定を鮮度だけに頼ると
+// 翻訳到着のたびに走るrequestRender()(1.2秒間隔)や自動更新のたびに同じカードの
+// 入場アニメーションが繰り返し再生され、画面全体が脈打つように見えてしまう。
+// 一度アニメーションさせた記事はここに記録し、以後の再描画では再生しないようにする
+const animatedKeys = new Set();
 
 // ---- 表示ヘルパー ----
 // タイムスタンプを「◯分前」形式の相対時刻にする
@@ -57,7 +63,12 @@ function visibleItems(){
 // ---- 記事カード ----
 function buildCard(item, jaTitle, jaDesc){
   const isNew = isNewItem(item);
-  const card = el('a', 'card' + (isNew ? ' is-new' : ''));  // is-new: style.css側の入場アニメーション対象
+  // NEWバッジは鮮度(60分以内)だけで判定するが、入場アニメーションは「このセッションで
+  // 初めて描画される記事」の時だけ再生する(animatedKeysで再生済みを記録)
+  const key = item.link || item.title;
+  const shouldAnimate = isNew && key && !animatedKeys.has(key);
+  if(shouldAnimate) animatedKeys.add(key);
+  const card = el('a', 'card' + (shouldAnimate ? ' is-new' : ''));  // is-new: style.css側の入場アニメーション対象
   card.href = item.link || '#';               // linkはfeed.jsのsanitizeItemsで検証済み(不正なら空)
   card.target = '_blank';
   card.rel = 'noopener noreferrer';
