@@ -56,10 +56,18 @@ function buildKeywordRe(cjkWords, latinWords, flags){
   );
 }
 
-// キーワード判定(トピック絞り込み・センチメント判定)で共通して使う「判定対象テキスト」を作る。
-// 原文(title・desc)と、翻訳が届いていればその訳文も対象に含める
+// キーワード判定(トピック絞り込み・ジャンル絞込・センチメント判定)で共通して使う
+// 「判定対象テキスト」を作る。原文(title・desc)と、翻訳が届いていればその訳文も対象に含める。
+// ハッシュタグ(X投稿に付く"#経済教室"のような定型の連載名タグ)は本文の内容と無関係に
+// キーワードの部分文字列を含んでしまうことがある(例: サッカーの記事が"#経済教室"というタグの
+// せいで経済ニュースと誤判定された実例あり)ため、判定対象からは除外する。
+// 画面表示にはitem.title/descの原文をそのまま使うため、カード上のハッシュタグ表示自体には影響しない
+function stripHashtagsForMatch(text){
+  return (text || '').replace(/[#＃]\S+/g, ' ');
+}
 function keywordSearchText(item){
-  return item.title + ' ' + item.desc + ' ' + (trGet(item.title) || '') + ' ' + (trGet(item.desc) || '');
+  return stripHashtagsForMatch(item.title) + ' ' + stripHashtagsForMatch(item.desc) + ' '
+    + stripHashtagsForMatch(trGet(item.title)) + ' ' + stripHashtagsForMatch(trGet(item.desc));
 }
 
 // ---- localStorageの安全なラッパー ----
