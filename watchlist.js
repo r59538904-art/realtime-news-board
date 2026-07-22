@@ -128,9 +128,9 @@ async function buildWatchlist(silent){
     const data = await fetchViaProxy('/quote', {symbol: wlSymbol}, controller.signal);
     const meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
     if(!meta || meta.regularMarketPrice == null) throw new Error('quote meta missing');
-    const openSeries = data.chart.result[0].indicators && data.chart.result[0].indicators.quote
-      && data.chart.result[0].indicators.quote[0] && data.chart.result[0].indicators.quote[0].open;
-    renderWlQuote(meta, lastValidNumber(openSeries));
+    const quoteSeries = data.chart.result[0].indicators && data.chart.result[0].indicators.quote
+      && data.chart.result[0].indicators.quote[0];
+    renderWlQuote(meta, lastValidNumber(quoteSeries && quoteSeries.open), previousCloseFromSeries(quoteSeries && quoteSeries.close));
   }catch(e){
     if(e.name === 'AbortError') return;  // より新しい選択に追い越された。古い結果は描画しない
     console.error('現在値の取得に失敗:', e);
@@ -154,6 +154,26 @@ function lastValidNumber(series){
   return null;
 }
 
+// 前日終値をindicators.quote[0].close(日足の終値系列)の「直近有効値の1つ前の有効値」から求める。
+// meta.chartPreviousCloseは使わない: これはrange=5dで取得した5日分の窓の「さらに1日前」の
+// 終値を指しており、直近に取引停止・連休等で日が飛んでいる銘柄(実際にKIOXIA HD/285A.Tで
+// 発生・確認済み)では「昨日の終値」ではなく「1週間近く前の終値」になってしまい、
+// 実際は値上がりしている日でも大幅下落したかのような誤った騰落率が表示される不具合があった。
+// closeの末尾は当日分(regularMarketPriceとほぼ同値、取引時間中は変動しうる)のため、
+// その1つ前の有効値こそが正しい「直近の取引日の終値」になる
+function previousCloseFromSeries(series){
+  if(!Array.isArray(series)) return null;
+  let lastIdx = -1;
+  for(let i = series.length - 1; i >= 0; i--){
+    if(typeof series[i] === 'number'){ lastIdx = i; break; }
+  }
+  if(lastIdx <= 0) return null;
+  for(let i = lastIdx - 1; i >= 0; i--){
+    if(typeof series[i] === 'number') return series[i];
+  }
+  return null;
+}
+
 function formatPrice(value, currency){
   if(value == null || Number.isNaN(value)) return '─';
   return value.toLocaleString('ja-JP', {maximumFractionDigits: 2}) + (currency ? ' ' + currency : '');
@@ -166,7 +186,7 @@ function formatVolume(value){
   if(value >= 1e3) return (value / 1e3).toLocaleString('ja-JP', {maximumFractionDigits: 1}) + 'K';
   return String(value);
 }
-function renderWlQuote(meta, openPrice){
+function renderWlQuote(meta, openPrice, prevCloseOverride){
   const container = document.getElementById('wlWidget');
   if(!container) return;
   container.textContent = '';
@@ -190,7 +210,9 @@ function renderWlQuote(meta, openPrice){
 
   card.appendChild(el('div', 'wl-quote-price', formatPrice(meta.regularMarketPrice, meta.currency)));
 
-  const prevClose = meta.chartPreviousClose;
+  // prevCloseOverrideを優先(indicators.close系列から直近取引日の終値を正しく求めた値)。
+  // 系列が取得できなかった場合だけmeta.chartPreviousCloseへフォールバックする
+  const prevClose = typeof prevCloseOverride === 'number' ? prevCloseOverride : meta.chartPreviousClose;
   if(typeof prevClose === 'number' && prevClose > 0){
     const diff = meta.regularMarketPrice - prevClose;
     const diffPct = diff / prevClose * 100;
@@ -262,15 +284,21 @@ async function buildWlPinnedList(silent){
   container.textContent = '';
   wlPinned.forEach((item, index) => {
     const result = results[index];
-    const meta = result.status === 'fulfilled' && result.value && result.value.chart
-      && result.value.chart.result && result.value.chart.result[0] && result.value.chart.result[0].meta;
+    const chartResult = result.status === 'fulfilled' && result.value && result.value.chart
+      && result.value.chart.result && result.value.chart.result[0];
+    const meta = chartResult && chartResult.meta;
+    const closeSeries = chartResult && chartResult.indicators && chartResult.indicators.quote
+      && chartResult.indicators.quote[0] && chartResult.indicators.quote[0].close;
 
     const row = el('button', 'wl-pinned-row' + (item.symbol === wlSymbol ? ' active' : ''));
     row.type = 'button';
     row.appendChild(el('span', 'wl-pinned-name', item.name));
     if(meta && meta.regularMarketPrice != null){
       row.appendChild(el('span', 'wl-pinned-price', formatPrice(meta.regularMarketPrice, meta.currency)));
-      const prevClose = meta.chartPreviousClose;
+      // メインカードと同じ理由でmeta.chartPreviousCloseではなくclose系列から直近終値を求める
+      // (previousCloseFromSeriesのコメント参照)
+      const prevCloseFromSeries = previousCloseFromSeries(closeSeries);
+      const prevClose = typeof prevCloseFromSeries === 'number' ? prevCloseFromSeries : meta.chartPreviousClose;
       if(typeof prevClose === 'number' && prevClose > 0){
         const diffPct = (meta.regularMarketPrice - prevClose) / prevClose * 100;
         const isUp = diffPct >= 0;
