@@ -151,20 +151,7 @@ function buildChips(){
   const chipsEl = document.getElementById('chips');
   chipsEl.textContent = '';
 
-  const allOn = activeFilters.size === SOURCES.length;
-  const allChip = el('button', 'chip' + (allOn ? ' on' : ''), 'すべて');
-  allChip.type = 'button';
-  allChip.setAttribute('aria-pressed', String(allOn));
-  allChip.onclick = () => { activeFilters = new Set(SOURCES.map(source => source.id)); buildChips(); render(); };
-  chipsEl.appendChild(allChip);
-
-  const noneOn = activeFilters.size === 0;
-  const noneChip = el('button', 'chip' + (noneOn ? ' on' : ''), 'すべて解除');
-  noneChip.type = 'button';
-  noneChip.setAttribute('aria-pressed', String(noneOn));
-  noneChip.onclick = () => { activeFilters = new Set(); buildChips(); render(); };
-  chipsEl.appendChild(noneChip);
-
+  // 配信元チップ(すべて・すべて解除は末尾にまとめて配置。並び順はsources.jsonの配列順)
   sourceGroups().forEach(group => {
     const isOn = group.ids.every(id => activeFilters.has(id));
     const chip = el('button', 'chip' + (isOn ? ' on' : ''), group.label);
@@ -179,6 +166,20 @@ function buildChips(){
     };
     chipsEl.appendChild(chip);
   });
+
+  const allOn = activeFilters.size === SOURCES.length;
+  const allChip = el('button', 'chip' + (allOn ? ' on' : ''), 'すべて');
+  allChip.type = 'button';
+  allChip.setAttribute('aria-pressed', String(allOn));
+  allChip.onclick = () => { activeFilters = new Set(SOURCES.map(source => source.id)); buildChips(); render(); };
+  chipsEl.appendChild(allChip);
+
+  const noneOn = activeFilters.size === 0;
+  const noneChip = el('button', 'chip' + (noneOn ? ' on' : ''), 'すべて解除');
+  noneChip.type = 'button';
+  noneChip.setAttribute('aria-pressed', String(noneOn));
+  noneChip.onclick = () => { activeFilters = new Set(); buildChips(); render(); };
+  chipsEl.appendChild(noneChip);
 }
 
 // ---- 自動再描画の遅延(スマホでのスクロール中断防止) ----
