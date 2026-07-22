@@ -364,14 +364,15 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
   max-width:1800px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px);
   display:flex; flex-direction:column; gap:28px;
 }
-/* grid+auto-fillにした理由: flexのflex-growは「その行に残った余白」を
-   その行のチップ「だけ」に配分するため、行によってチップ数が違うと
-   (例: 12個並ぶ行 vs 最終行に5個だけ)伸び幅がバラつき、チップの大きさが
-   行ごとに不揃いに見える問題があった。gridなら列幅は全行で共通の1本の
-   トラック定義(auto-fill+minmax)で決まるため、どの行のチップも常に同じ幅になる。
-   入りきらない分は自動的に次の行へ折り返され、最終行に満たない列はただの
-   空きスペースとして残る(チップ自体が伸びて不揃いになることはない) */
-.chips{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:8px;}
+/* grid化した理由: flexのflex-growは「その行に残った余白」をその行のチップ「だけ」に
+   配分するため、行によってチップ数が違うと(例: 12個並ぶ行 vs 最終行に2個だけ)伸び幅が
+   バラつき、チップの大きさが行ごとに不揃いに見える問題があった。
+   列数は12を直接指定している(以前はrepeat(auto-fill, minmax(130px,1fr))だったが、
+   最終行など列が余る行だけ幅がわずかに揃わないという報告が繰り返しあり、原因を
+   ブラウザ側の丸め誤差と判断して、計算に依存しない確定的な列数指定に変更した。
+   このサイトは#scaleWrap(幅1900px固定)をzoomで拡大縮小する設計のため、
+   .controls(max-width:1800px)の実効幅は常に一定で、12列固定で運用上問題ない) */
+.chips{display:grid; grid-template-columns:repeat(12, 1fr); gap:8px;}
 /* button要素化に伴い、ブラウザ既定の見た目(ネイティブ枠線・背景・行高)を打ち消す */
 .chip{
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
