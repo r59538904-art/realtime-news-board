@@ -50,7 +50,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4 5; do
-            git add news.json sources.js status.json
+            git add news.json js/sources.js status.json
             if git diff --staged --quiet; then
               echo "No changes to commit."
               exit 0
