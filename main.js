@@ -13,12 +13,8 @@ document.getElementById('topicBtn').addEventListener('click', () => {
   updateTopicBtn();
   render();
 });
-let searchDebounceTimer = null;
-document.getElementById('search').addEventListener('input', e => {
-  const value = e.target.value.trim();
-  clearTimeout(searchDebounceTimer);
-  searchDebounceTimer = setTimeout(() => { searchTerm = value; render(); }, 150);
-});
+const debouncedSearch = debounce(value => { searchTerm = value; render(); }, 150);
+document.getElementById('search').addEventListener('input', e => debouncedSearch(e.target.value.trim()));
 document.getElementById('genreSelect').addEventListener('change', e => {
   selectedGenre = e.target.value || null;
   storageSet(GENRE_PREF_KEY, selectedGenre || '');

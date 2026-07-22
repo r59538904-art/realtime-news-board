@@ -11,7 +11,6 @@ const WL_PINNED_MAX = 10;
 let watchlistOpen = true;
 let wlSymbol = 'AAPL';
 let wlPinned = [];
-let wlSearchTimer = null;
 let wlSearchAbort = null;
 let wlQuoteAbort = null;
 let wlPinnedAbort = null;
@@ -324,11 +323,11 @@ async function searchWlSymbol(query){
     if(e.name !== 'AbortError') console.error('銘柄検索に失敗:', e);
   }
 }
+const debouncedWlSearch = debounce(searchWlSymbol, WL_SEARCH_DEBOUNCE_MS);
 function handleWlSearchInput(value){
-  clearTimeout(wlSearchTimer);
   const query = value.trim();
-  if(query.length < WL_SEARCH_MIN_LEN){ hideWlResults(); return; }
-  wlSearchTimer = setTimeout(() => searchWlSymbol(query), WL_SEARCH_DEBOUNCE_MS);
+  if(query.length < WL_SEARCH_MIN_LEN){ debouncedWlSearch.cancel(); hideWlResults(); return; }
+  debouncedWlSearch(query);
 }
 
 setInterval(() => {

@@ -54,7 +54,7 @@
 :root[data-theme="light"] .skip-link{ background:color-mix(in srgb, var(--gold) 80%, black); }
 
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth; overflow-x:hidden;}
+html{scroll-behavior:smooth; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:var(--line) transparent}
 body{
   background:var(--body-bg);
   color:var(--ink); font-family:var(--sans); min-height:100vh;
@@ -63,7 +63,6 @@ body{
   transition:background-color .2s, color .2s;
 }
 ::selection{background:var(--gold); color:var(--gold-ink)}
-html{scrollbar-width:thin; scrollbar-color:var(--line) transparent}
 ::-webkit-scrollbar{width:10px; height:10px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--line); border-radius:8px; border:2px solid var(--bg0)}

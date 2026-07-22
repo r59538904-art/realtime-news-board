@@ -34,6 +34,24 @@ function updateCollapseBtn(btnId, isOpen, controlsId){
   btn.setAttribute('aria-controls', controlsId);
 }
 
+function debounce(fn, delayMs){
+  let timer = null;
+  const debounced = (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delayMs);
+  };
+  debounced.cancel = () => clearTimeout(timer);
+  return debounced;
+}
+
+function coalesce(fn, delayMs){
+  let timer = null;
+  return () => {
+    if(timer) return;
+    timer = setTimeout(() => { timer = null; fn(); }, delayMs);
+  };
+}
+
 function buildKeywordRe(cjkWords, latinWords, flags){
   return new RegExp(
     '(?:' + cjkWords.map(escapeRe).join('|') + ')' +

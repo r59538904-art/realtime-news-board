@@ -16,8 +16,6 @@ let trQueue = [];
 let trQueued = new Set();
 let trRunning = false;
 let trQuotaHitUntil = 0;
-let trSaveTimer = null;
-let trRenderTimer = null;
 
 function loadTranslate(){
   translateOn = storageGet(TR_PREF_KEY) !== 'off';
@@ -44,10 +42,7 @@ function saveTrCache(){
     localStorage.setItem(TR_CACHE_KEY, JSON.stringify({v: 1, map: trCache}));
   }catch(e){}
 }
-function saveTrCacheDebounced(){
-  if(trSaveTimer) return;
-  trSaveTimer = setTimeout(() => { trSaveTimer = null; saveTrCache(); }, 1500);
-}
+const saveTrCacheDebounced = coalesce(saveTrCache, 1500);
 function trGet(text){
   const cached = text && trCache[text];
   return cached ? cached.ja : null;
@@ -106,10 +101,7 @@ async function translateQueryToEnglish(text){
   return null;
 }
 
-function scheduleRender(){
-  if(trRenderTimer) return;
-  trRenderTimer = setTimeout(() => { trRenderTimer = null; requestRender(); }, 1200);
-}
+const scheduleRender = coalesce(() => requestRender(), 1200);
 async function trPump(){
   if(trRunning) return;
   trRunning = true;

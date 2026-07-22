@@ -3,7 +3,7 @@
 const REFRESH_MS = 60 * 1000;
 const MAX_DISPLAY = 500;
 const MAX_AGE_MS = 4 * 24 * 60 * 60 * 1000;
-const STORAGE_KEY = 'news-board-cache-v1';
+const NEWS_CACHE_KEY = 'news-board-cache-v1';
 const NEWS_JSON_PATH = 'news.json';
 const CACHE_MAX_PER_SOURCE = 100;
 const CACHE_MIN_PER_SOURCE = 30;
@@ -41,14 +41,14 @@ function trimForCache(maxPerSource){
 }
 function saveCache(){
   try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimForCache(CACHE_MAX_PER_SOURCE)));
+    localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(trimForCache(CACHE_MAX_PER_SOURCE)));
   }catch(e){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(trimForCache(CACHE_MIN_PER_SOURCE))); }catch(e2){}
+    try{ localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(trimForCache(CACHE_MIN_PER_SOURCE))); }catch(e2){}
   }
 }
 function loadCache(){
   try{
-    const cachedJson = localStorage.getItem(STORAGE_KEY);
+    const cachedJson = localStorage.getItem(NEWS_CACHE_KEY);
     if(!cachedJson) return;
     const parsed = JSON.parse(cachedJson);
     for(const sourceId of Object.keys(parsed || {})){
