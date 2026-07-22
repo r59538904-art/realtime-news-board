@@ -362,7 +362,7 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
    縦積みにすることでチップの行数に関係なく検索欄は常にチップの下に独立して収まる */
 .controls{
   max-width:1800px; margin:16px auto 0; padding:0 clamp(16px,4vw,48px);
-  display:flex; flex-direction:column; gap:10px;
+  display:flex; flex-direction:column; gap:28px;
 }
 /* grid+auto-fillにした理由: flexのflex-growは「その行に残った余白」を
    その行のチップ「だけ」に配分するため、行によってチップ数が違うと
