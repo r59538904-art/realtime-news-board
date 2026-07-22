@@ -1,6 +1,6 @@
 # 世界ニュース速報 — リアルタイム経済ニュースボード
 
-Financial Times、CNBC、NHK、Investing.com、FXStreet など約33の投資/金融専門ソースを集約する経済ニュースボードです。RSS取得はGitHub Actions上のPythonが定期的に行い、結果を静的JSONとしてコミットする方式のため、ブラウザ側(`index.html`)はビルド不要のまま動作します。
+Financial Times、CNBC、NHK、Bloomberg、Investing.com、FXStreet など約34の投資/金融専門ソースを集約する経済ニュースボードです。RSS取得はGitHub Actions上のPythonが定期的に行い、結果を静的JSONとしてコミットする方式のため、ブラウザ側(`index.html`)はビルド不要のまま動作します。
 
 公開URL: https://r59538904-art.github.io/realtime-news-board/
 
@@ -60,7 +60,7 @@ Financial Times、CNBC、NHK、Investing.com、FXStreet など約33の投資/金
 | `status.json` | 外部API死活監視の結果(自動生成・自動コミットされる静的JSON。`health.js`が読む) |
 | `health.js` | `status.json`を読み、異常時にヘッダー下へ警告バナーを表示する |
 
-## 対応ニュースソース(約33)
+## 対応ニュースソース(約34)
 
 為替・政策金利・商品・国際情勢に強いソースを重視して横断収集しています。
 
@@ -71,9 +71,10 @@ Financial Times、CNBC、NHK、Investing.com、FXStreet など約33の投資/金
 - **為替/商品/経済指標**: Investing.com(株式・為替・経済指標・商品の4フィード、1チップに統合)、FXStreet、OilPrice.com、CoinDesk
 - **市況/市場データ配信**: WSJ Markets(MarketWatchと同じDow Jones配信基盤経由で取得)、Seeking Alpha
 - **政治/戦争・地政学**: Politico、Foreign Policy、Defense News
+- **Bloomberg**: `bloomberg.com`本体はボット検知(PerimeterX等)により自動取得を一律拒否するため、Googleニュースの公式サイト内検索RSS(`site:`検索)経由でBloomberg Japan関連記事を取得しています。記事へのリンクはGoogle Newsのリダイレクト経由になります(詳細は`sources.json`の`bloomberg-jp`エントリの`note`を参照)
 - **IT/テクノロジー**: ITmedia(ビジネス・AI+)
 
-投資/金融特化の方針のもと、一般ニュース/ライフスタイル系(Newsweek、Business Insider、Digiday、VentureBeat、GeekWire、Japan Times、ITmedia NEWS、CNET Japan、Tech in Asia等)は収載を見送っています。WSJ公式RSS・CNNは配信が長期間停止/廃止済みで代替経由でも安定取得できなかったため、Nikkei Asiaは公開RSSが日時情報を含まないため、Bank of England(BOE)公式発表は更新頻度が低く表示対象期間(4日以内)に記事が無い期間が長かったため、それぞれ収載していません。The Economist・Federal Reserve(FRB)・European Central Bank(ECB)・日本銀行(日銀)の4ソースも、更新頻度が低く表示対象期間(4日以内)に記事が無い状態が続いていたため撤去しました。Bloomberg.com本体はボット検知(PerimeterX等)により自動取得を一律拒否しており、以前はGoogleニュース検索RSS経由での代替取得を行っていましたが、配信元の意図(ボット検知による取得拒否)に反する取得方法である点を踏まえ撤去しました。
+投資/金融特化の方針のもと、一般ニュース/ライフスタイル系(Newsweek、Business Insider、Digiday、VentureBeat、GeekWire、Japan Times、ITmedia NEWS、CNET Japan、Tech in Asia等)は収載を見送っています。WSJ公式RSS・CNNは配信が長期間停止/廃止済みで代替経由でも安定取得できなかったため、Nikkei Asiaは公開RSSが日時情報を含まないため、Bank of England(BOE)公式発表は更新頻度が低く表示対象期間(4日以内)に記事が無い期間が長かったため、それぞれ収載していません。The Economist・Federal Reserve(FRB)・European Central Bank(ECB)・日本銀行(日銀)の4ソースも、更新頻度が低く表示対象期間(4日以内)に記事が無い状態が続いていたため撤去しました。
 
 ## 主な機能
 
@@ -228,4 +229,4 @@ Worker側にはセキュリティのため、`cloudflare-worker/yahoo-finance-pr
 
 ## 免責事項
 
-本ボードは情報提供を目的としており、投資勧誘または投資助言を目的とするものではありません。記事の見出し・要約は各配信元の公開RSSフィードから取得し、原文へのリンクを掲載しています。機械翻訳およびセンチメント判定は簡易的な自動処理であるため、内容の正確性は必ず原文でご確認ください。取引および投資に関する最終的な判断は、ご自身の責任で行ってください。
+本ボードは情報提供を目的としており、投資勧誘または投資助言を目的とするものではありません。記事の見出し・要約は各配信元の公開RSSフィード(Bloombergのみ例外的にGoogleニュース検索RSS)から取得し、原文へのリンクを掲載しています。機械翻訳およびセンチメント判定は簡易的な自動処理であるため、内容の正確性は必ず原文でご確認ください。取引および投資に関する最終的な判断は、ご自身の責任で行ってください。
