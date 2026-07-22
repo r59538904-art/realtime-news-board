@@ -24,6 +24,11 @@ document.getElementById('search').addEventListener('input', e => {
   // 高速に連続入力された時、1文字ごとの全件再描画(最大500件)を避けるため軽く間引く
   searchDebounceTimer = setTimeout(() => { searchTerm = value; render(); }, 150);
 });
+document.getElementById('genreSelect').addEventListener('change', e => {
+  selectedGenre = e.target.value || null;
+  storageSet(GENRE_PREF_KEY, selectedGenre || '');
+  render();
+});
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 document.getElementById('calBtn').addEventListener('click', toggleCalendar);
 document.getElementById('calImpBtn').addEventListener('click', toggleCalImportance);
@@ -57,6 +62,8 @@ loadTranslate();
 updateTrBtn();
 loadTopicPref();
 updateTopicBtn();
+loadGenrePref();
+buildGenreSelect();
 buildChips();
 buildFootLinks();
 tickerTape();

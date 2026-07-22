@@ -403,8 +403,9 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 }
 /* align-self:flex-endで縦積みになった.controls内でも右寄せ・内容幅のまま保つ
    (.controlsがdisplay:flex; flex-direction:columnになったため、既定のstretchのままだと
-   幅いっぱいに広がってしまう) */
-.searchwrap{align-self:flex-end; position:relative;}
+   幅いっぱいに広がってしまう)。検索欄とジャンル絞込プルダウンをこの行にまとめて横並びにする */
+.search-row{align-self:flex-end; display:flex; align-items:center; gap:10px;}
+.searchwrap{position:relative;}
 .searchwrap::before{
   content:'⌕'; position:absolute; left:11px; top:50%; transform:translateY(-50%);
   color:var(--ink-3); font-size:14px; pointer-events:none;
@@ -418,6 +419,17 @@ h1 .sub::before{content:''; width:22px; height:1px; background:var(--gold); flex
 #search::placeholder{color:var(--ink-3);}
 #search:focus{
   outline:none; border-color:var(--gold-dim); width:320px;
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
+}
+.genre-select{
+  background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  color:var(--ink); font-family:var(--sans); font-size:13px;
+  padding:8px 32px 8px 12px; cursor:pointer; max-width:180px;
+  transition:background-color .2s, border-color .15s, box-shadow .15s;
+}
+.genre-select:hover{border-color:var(--gold-dim);}
+.genre-select:focus{
+  outline:none; border-color:var(--gold-dim);
   box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 15%, transparent);
 }
 
@@ -553,9 +565,11 @@ footer .links{display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px; font-f
   /* チップも同様にタップ領域を拡大(密なフィルター一覧のため44pxまでは広げず、
      視認性とレイアウト密度のバランスを見て段階的に拡大) */
   .chip{padding:10px 10px;}
-  .searchwrap{align-self:stretch; width:100%;}
+  .search-row{align-self:stretch; width:100%; flex-direction:column; gap:8px;}
+  .searchwrap{width:100%;}
   #search{width:100%; padding-top:11px; padding-bottom:11px;}
   #search:focus{width:100%;}
+  .genre-select{width:100%; max-width:100%; min-height:44px;}
   #calImpBtn{padding:8px 12px;}
   /* サイドバーはニュース一覧の上下に全幅ブロックとして積む(左右固定は幅が足りない) */
   main{flex-direction:column;}

@@ -117,7 +117,10 @@
 
 <div class="controls">
   <div class="chips" id="chips" role="group" aria-label="配信元フィルター"></div>
-  <div class="searchwrap"><input id="search" type="text" placeholder="キーワードで絞り込み…" aria-label="キーワードで絞り込み"></div>
+  <div class="search-row">
+    <div class="searchwrap"><input id="search" type="text" placeholder="キーワードで絞り込み…" aria-label="キーワードで絞り込み"></div>
+    <select id="genreSelect" class="genre-select" aria-label="ジャンルで絞り込み" title="株価・戦争・半導体などジャンルで記事を絞り込みます"></select>
+  </div>
 </div>
 
 <main>
@@ -154,12 +157,14 @@
 <script src="sources.js?v=12"></script>
 <script src="topic-keywords.js?v=4"></script>
 <script src="sentiment-keywords.js?v=4"></script>
+<script src="genre-keywords.js?v=1"></script>
 <script src="market-sessions.js?v=3"></script>
 <script src="utils.js?v=7"></script>
 <script src="theme.js?v=11"></script>
 <script src="feed.js?v=8"></script>
 <script src="translate.js?v=10"></script>
 <script src="topic-filter.js?v=6"></script>
+<script src="genre-filter.js?v=1"></script>
 <script src="sentiment.js?v=6"></script>
 <script src="render.js?v=9"></script>
 <script src="ticker.js?v=3"></script>

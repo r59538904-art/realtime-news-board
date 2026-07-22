@@ -26,7 +26,7 @@ function isNewItem(item){
 }
 
 // ---- 表示対象の選別 ----
-// 全ソースの記事を「重複排除 → 鮮度 → トピック → 検索語」の順で絞り込み、新しい順に並べる
+// 全ソースの記事を「重複排除 → 鮮度 → トピック → ジャンル → 検索語」の順で絞り込み、新しい順に並べる
 function visibleItems(){
   const merged = [];
   const seen = new Set();
@@ -42,6 +42,7 @@ function visibleItems(){
   // 鮮度上限は既定MAX_AGE_MS(4日)。高頻度ソースはsources.json側のmaxAgeMsで個別に短縮できる
   let filtered = merged.filter(item => !item.pubDate || (Date.now() - item.pubDate) <= (item.source.maxAgeMs || MAX_AGE_MS));
   if(topicFilterOn) filtered = filtered.filter(matchesTopic);
+  if(selectedGenre) filtered = filtered.filter(matchesGenre);
   if(searchTerm){
     const query = searchTerm.toLowerCase();
     filtered = filtered.filter(item => {
