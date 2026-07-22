@@ -82,16 +82,19 @@ function toggleWlPin(symbol, name){
   buildWlPinnedList();
 }
 function updateWlBtn(){
-  const btn = document.getElementById('wlBtn');
-  if(!btn) return;
-  btn.textContent = watchlistOpen ? '折りたたむ ▲' : '表示する ▼';
-  btn.setAttribute('aria-expanded', String(watchlistOpen));
-  btn.setAttribute('aria-controls', 'wlWidget');
+  updateCollapseBtn('wlBtn', watchlistOpen, 'wlWidget');
 }
 function toggleWatchlist(){
   watchlistOpen = !watchlistOpen;
   storageSet(WL_PREF_KEY, watchlistOpen ? 'open' : 'closed');
   buildWatchlist();
+}
+
+// 進行中の同種リクエストがあれば中断してから新しいAbortControllerを作る、という
+// 定型処理(現在値カード・ピン留めリスト・銘柄検索の3箇所で共通)をまとめたもの
+function freshAbortController(previous){
+  if(previous) previous.abort();
+  return new AbortController();
 }
 
 // ---- プロキシ呼び出しの共通ヘルパー ----
@@ -121,9 +124,8 @@ async function buildWatchlist(silent){
     container.appendChild(el('div', 'wl-result-note', '読み込み中…'));
   }
 
-  if(wlQuoteAbort) wlQuoteAbort.abort();
-  const controller = new AbortController();
-  wlQuoteAbort = controller;
+  wlQuoteAbort = freshAbortController(wlQuoteAbort);
+  const controller = wlQuoteAbort;
   try{
     const data = await fetchViaProxy('/quote', {symbol: wlSymbol}, controller.signal);
     const meta = data && data.chart && data.chart.result && data.chart.result[0] && data.chart.result[0].meta;
@@ -271,9 +273,8 @@ async function buildWlPinnedList(silent){
   if(!wlPinned.length){ container.textContent = ''; return; }
   if(!silent) container.textContent = '';
 
-  if(wlPinnedAbort) wlPinnedAbort.abort();
-  const controller = new AbortController();
-  wlPinnedAbort = controller;
+  wlPinnedAbort = freshAbortController(wlPinnedAbort);
+  const controller = wlPinnedAbort;
 
   // 1銘柄の取得失敗が他の銘柄の表示を巻き込まないよう、Promise.allSettledで個別に処理する
   const results = await Promise.allSettled(
@@ -368,9 +369,8 @@ async function searchWlSymbol(query){
     setWlResultsVisible(true);
     return;
   }
-  if(wlSearchAbort) wlSearchAbort.abort();
-  const controller = new AbortController();
-  wlSearchAbort = controller;
+  wlSearchAbort = freshAbortController(wlSearchAbort);
+  const controller = wlSearchAbort;
   try{
     // Yahoo Financeの検索APIは非ASCII文字を含むクエリを一律拒否する
     // ({"error":{"code":"Bad Request","description":"Invalid Search Query"}}、実機確認済み)。

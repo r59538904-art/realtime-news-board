@@ -19,13 +19,7 @@ function loadCalendarPref(){
   calHighOnly = storageGet(CAL_IMP_KEY) === 'high';
 }
 function updateCalBtn(){
-  const btn = document.getElementById('calBtn');
-  if(btn){
-    btn.textContent = calendarOpen ? '折りたたむ ▲' : '表示する ▼';
-    // aria-expanded/aria-controlsで「calWidgetの開閉を制御するボタン」であることを明示する
-    btn.setAttribute('aria-expanded', String(calendarOpen));
-    btn.setAttribute('aria-controls', 'calWidget');
-  }
+  updateCollapseBtn('calBtn', calendarOpen, 'calWidget');
   const impBtn = document.getElementById('calImpBtn');
   if(impBtn){
     impBtn.textContent = calHighOnly ? '重要度: ★★★のみ' : '重要度: ★★以上';

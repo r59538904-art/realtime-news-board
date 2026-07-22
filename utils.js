@@ -36,6 +36,16 @@ function el(tag, className, text){
   return node;
 }
 
+// 折りたたみ切り替えボタンの表示更新(テキスト+aria-expanded+aria-controls)。
+// calendar.js(カレンダー)・watchlist.js(株価パネル)で全く同じパターンだったため共通化した
+function updateCollapseBtn(btnId, isOpen, controlsId){
+  const btn = document.getElementById(btnId);
+  if(!btn) return;
+  btn.textContent = isOpen ? '折りたたむ ▲' : '表示する ▼';
+  btn.setAttribute('aria-expanded', String(isOpen));
+  btn.setAttribute('aria-controls', controlsId);
+}
+
 // 日英キーワードリストから一致判定用の正規表現を組み立てる。
 // 日本語は部分一致、英字は誤爆防止のため単語境界(\b)付きで一致させる。
 function buildKeywordRe(cjkWords, latinWords, flags){
