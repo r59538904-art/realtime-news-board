@@ -1,20 +1,9 @@
 'use strict';
-// 記事一覧・ソースフィルターチップ・フッターリンクの描画。
-// XSS対策: 記事データ(RSS由来・翻訳結果)は一切innerHTMLに通さず、
-// すべてcreateElement+textContent(utils.jsのel)で組み立てる。
 
-// ---- 状態 ----
-let activeFilters = new Set(SOURCES.map(source => source.id));  // 初期状態は全ソースON
+let activeFilters = new Set(SOURCES.map(source => source.id));
 let searchTerm = '';
-// render()は毎回グリッド全体を作り直すため、is-new対象(公開60分以内)の記事は
-// 同じ記事でも再描画のたびに新しいDOM要素として生成される。判定を鮮度だけに頼ると
-// 翻訳到着のたびに走るrequestRender()(1.2秒間隔)や自動更新のたびに同じカードの
-// 入場アニメーションが繰り返し再生され、画面全体が脈打つように見えてしまう。
-// 一度アニメーションさせた記事はここに記録し、以後の再描画では再生しないようにする
 const animatedKeys = new Set();
 
-// ---- 表示ヘルパー ----
-// タイムスタンプを「◯分前」形式の相対時刻にする
 function relTime(ts){
   if(!ts) return '時刻不明';
   const diffMin = Math.round((Date.now() - ts) / 60000);
@@ -25,14 +14,11 @@ function relTime(ts){
   return `${Math.round(diffH / 24)}日前`;
 }
 
-// 公開から60分以内の記事にNEWバッジを付ける
 const NEW_WINDOW_MS = 60 * 60 * 1000;
 function isNewItem(item){
   return !!item.pubDate && (Date.now() - item.pubDate) <= NEW_WINDOW_MS;
 }
 
-// ---- 表示対象の選別 ----
-// 全ソースの記事を「重複排除 → 鮮度 → トピック → ジャンル → 検索語」の順で絞り込み、新しい順に並べる
 function visibleItems(){
   const merged = [];
   const seen = new Set();
@@ -45,7 +31,6 @@ function visibleItems(){
       merged.push({...item, source});
     });
   });
-  // 鮮度上限は既定MAX_AGE_MS(4日)。高頻度ソースはsources.json側のmaxAgeMsで個別に短縮できる
   let filtered = merged.filter(item => !item.pubDate || (Date.now() - item.pubDate) <= (item.source.maxAgeMs || MAX_AGE_MS));
   if(topicFilterOn) filtered = filtered.filter(matchesTopic);
   if(selectedGenre) filtered = filtered.filter(matchesGenre);
@@ -60,19 +45,15 @@ function visibleItems(){
   return filtered.sort((itemA, itemB) => (itemB.pubDate || 0) - (itemA.pubDate || 0));
 }
 
-// ---- 記事カード ----
 function buildCard(item, jaTitle, jaDesc){
   const isNew = isNewItem(item);
-  // NEWバッジは鮮度(60分以内)だけで判定するが、入場アニメーションは「このセッションで
-  // 初めて描画される記事」の時だけ再生する(animatedKeysで再生済みを記録)
   const key = item.link || item.title;
   const shouldAnimate = isNew && key && !animatedKeys.has(key);
   if(shouldAnimate) animatedKeys.add(key);
-  const card = el('a', 'card' + (shouldAnimate ? ' is-new' : ''));  // is-new: style.css側の入場アニメーション対象
-  card.href = item.link || '#';               // linkはfeed.jsのsanitizeItemsで検証済み(不正なら空)
+  const card = el('a', 'card' + (shouldAnimate ? ' is-new' : ''));
+  card.href = item.link || '#';
   card.target = '_blank';
   card.rel = 'noopener noreferrer';
-  // 配信元カラーは検証済みの16進コードだけを--src変数として渡す(不正値はCSS側の既定色になる)
   if(isSafeColor(item.source.color)) card.style.setProperty('--src', item.source.color);
 
   const metaLeft = el('div', 'meta-left');
@@ -84,7 +65,6 @@ function buildCard(item, jaTitle, jaDesc){
   const metaRight = el('div', 'meta-right');
   const sentiment = getSentiment(item);
   if(sentiment){
-    // ▲/▼はスクリーンリーダーには意味が伝わらないため、読み上げ用のラベルを別途付ける
     const sentimentEl = el('span', 'sentiment ' + sentiment, sentiment === 'pos' ? '▲' : '▼');
     sentimentEl.setAttribute('aria-label', sentiment === 'pos' ? 'ポジティブ判定' : 'ネガティブ判定');
     metaRight.appendChild(sentimentEl);
@@ -96,18 +76,14 @@ function buildCard(item, jaTitle, jaDesc){
 
   card.appendChild(meta);
   card.appendChild(el('h3', null, jaTitle || item.title));
-  if(jaTitle) card.appendChild(el('div', 'orig', item.title));  // 翻訳表示時は原文も小さく併記
+  if(jaTitle) card.appendChild(el('div', 'orig', item.title));
   card.appendChild(el('p', null, jaDesc || item.desc));
   card.appendChild(el('span', 'lang', item.source.lang === 'EN' ? (jaTitle ? 'EN → JA 自動翻訳' : 'EN') : 'JA'));
   return card;
 }
 
-// ---- 一覧描画 ----
 function render(){
   const grid = document.getElementById('grid');
-  // grid全体を作り直すとスクロール位置が先頭側へずれることがあるため、前後で保存・復元する。
-  // ただし実際にずれていない限りscrollTo自体を呼ばない(モバイルでは位置が変わらない
-  // scrollTo呼び出しでも慣性スクロールが打ち切られてしまうため、無駄な呼び出しを避ける)
   const scrollYBeforeRebuild = window.scrollY;
   const restoreScroll = () => {
     if(window.scrollY !== scrollYBeforeRebuild) window.scrollTo({top: scrollYBeforeRebuild, left: 0, behavior: 'instant'});
@@ -133,18 +109,15 @@ function render(){
       if(!jaDesc && item.desc && enCount < TR_DESC_LIMIT) wantDesc.push(item.desc);
       enCount++;
     }
-    // 1件のカード生成で例外が起きても残り数百件の描画を止めないよう、ここで局所的に捕捉する
     try{ fragment.appendChild(buildCard(item, jaTitle, jaDesc)); }
     catch(e){ console.error('カード描画に失敗:', item && item.link, e); }
   });
   grid.appendChild(fragment);
   restoreScroll();
-  wantTitle.forEach(trEnqueue);               // 見出しを優先して翻訳キューへ
+  wantTitle.forEach(trEnqueue);
   wantDesc.forEach(trEnqueue);
 }
 
-// ---- ソースフィルターチップ ----
-// 同じgroupのソースを1つのチップにまとめる(表示順はSOURCESの定義順)
 function sourceGroups(){
   const order = [];
   const byGroup = {};
@@ -157,20 +130,16 @@ function sourceGroups(){
   });
   return order;
 }
-// チップはbutton要素にする(キーボード操作・スクリーンリーダーでの読み上げに対応するため。
-// <div onclick>はタブ移動できずEnter/Spaceでも押せない)。aria-pressedでON/OFF状態も明示する
 function buildChips(){
   const chipsEl = document.getElementById('chips');
   chipsEl.textContent = '';
 
-  // 配信元チップ(すべて・すべて解除は末尾にまとめて配置。並び順はsources.jsonの配列順)
   sourceGroups().forEach(group => {
     const isOn = group.ids.every(id => activeFilters.has(id));
     const chip = el('button', 'chip' + (isOn ? ' on' : ''), group.label);
     chip.type = 'button';
     chip.setAttribute('aria-pressed', String(isOn));
     chip.onclick = () => {
-      // ONのグループはOFFへ、OFFのグループはONへ(空集合も意味のある状態として扱う)
       if(group.ids.every(id => activeFilters.has(id))) group.ids.forEach(id => activeFilters.delete(id));
       else group.ids.forEach(id => activeFilters.add(id));
       buildChips();
@@ -194,13 +163,6 @@ function buildChips(){
   chipsEl.appendChild(noneChip);
 }
 
-// ---- 自動再描画の遅延(スマホでのスクロール中断防止) ----
-// render()は毎回scrollToで位置を復元するため、翻訳結果の反映や自動更新など
-// 「ユーザー操作によらない」再描画がスワイプ中・指を離した直後の慣性スクロール中に
-// 割り込むと、スクロールが強制的に打ち切られ「かくかく」「ロールバックする」ように感じる。
-// 自動系の再描画はrequestRender()を経由させ、タッチ中・スクロール中は保留して
-// 落ち着いてから1回だけ反映する。ボタン操作や検索など直接の操作はrender()を直接呼び、
-// 従来通り即座に反映させる(スワイプ中に同時操作されることは実質ないため)。
 let userTouching = false;
 let userScrolling = false;
 let scrollSettleTimer = null;
@@ -209,10 +171,6 @@ let renderPending = false;
 function flushPendingRender(){
   if(renderPending){ renderPending = false; render(); }
 }
-// e.touches.lengthで「残っている指の本数」を見る(2本指ピンチ等で片方だけ離れても
-// touchendは発火するため、単純にtrue/falseを決め打ちすると誤って離した扱いになる)。
-// touchSafetyTimerは、何らかの理由でtouchend/touchcancelが来ないまま指が離れた場合の保険
-// (通常発生しないが、保留され続けると自動更新が永久に反映されなくなるため上限を設ける)
 function updateTouchState(e){
   userTouching = e.touches.length > 0;
   clearTimeout(touchSafetyTimer);
@@ -228,7 +186,6 @@ document.addEventListener('touchcancel', updateTouchState, {passive: true});
 window.addEventListener('scroll', () => {
   userScrolling = true;
   clearTimeout(scrollSettleTimer);
-  // スクロールイベントが150ms止まったら「慣性スクロールも含めて止まった」とみなす
   scrollSettleTimer = setTimeout(() => {
     userScrolling = false;
     if(!userTouching) flushPendingRender();
@@ -239,8 +196,6 @@ function requestRender(){
   render();
 }
 
-// ---- フッターリンク ----
-// 同じ配信元ホームは1回だけ載せる
 function buildFootLinks(){
   const footLinksEl = document.getElementById('footLinks');
   const seen = new Set();

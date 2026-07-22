@@ -1,12 +1,4 @@
 'use strict';
-// ジャンル絞込プルダウン(genre-filter.js)用のデータ。初心者にも分かりやすい大まかな
-// カテゴリ単位に絞っており、topic-keywords.js(トピック絞込ON/OFF用の網羅的な単語リスト)
-// とは目的が異なるため、あえて分離した専用の単語リストを持つ(topic-keywords.jsは
-// 「金融/ビジネス関連かどうか」の大きな網、こちらは「その中でも具体的にどのジャンルか」
-// を見分けるための少数精鋭の単語リスト)。
-//
-// 各ジャンルはid・表示名(絵文字付きで直感的に)・CJK/LATIN単語リストを持つ。
-// 一致判定ロジックはgenre-filter.js側(buildKeywordRe/keywordSearchTextを再利用)。
 
 const GENRES = [
   {

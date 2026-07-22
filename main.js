@@ -1,9 +1,5 @@
 'use strict';
-// イベント登録・自動更新・Service Worker登録・起動処理。
-// 厳格なContent-Security-Policy(script-src 'self')に対応するため、
-// index.html末尾のインラインscriptだったものを外部ファイル化している。
 
-// ---- イベント登録 ----
 document.getElementById('refreshBtn').addEventListener('click', () => fetchAll());
 document.getElementById('trBtn').addEventListener('click', () => {
   translateOn = !translateOn;
@@ -21,7 +17,6 @@ let searchDebounceTimer = null;
 document.getElementById('search').addEventListener('input', e => {
   const value = e.target.value.trim();
   clearTimeout(searchDebounceTimer);
-  // 高速に連続入力された時、1文字ごとの全件再描画(最大500件)を避けるため軽く間引く
   searchDebounceTimer = setTimeout(() => { searchTerm = value; render(); }, 150);
 });
 document.getElementById('genreSelect').addEventListener('change', e => {
@@ -34,14 +29,8 @@ document.getElementById('calBtn').addEventListener('click', toggleCalendar);
 document.getElementById('calImpBtn').addEventListener('click', toggleCalImportance);
 document.getElementById('wlBtn').addEventListener('click', toggleWatchlist);
 document.getElementById('wlSearch').addEventListener('input', e => handleWlSearchInput(e.target.value));
-// blurは結果ボタンのmousedown(preventDefault)より後に発火するよう設計しているが、
-// 念のため短い遅延を挟んで確実にクリックを拾ってから閉じる
 document.getElementById('wlSearch').addEventListener('blur', () => setTimeout(hideWlResults, 150));
 
-// ---- 自動更新(5秒ごとに再取得時刻をチェック) ----
-// バックグラウンドタブ(他タブ表示中・最小化中など)では取得を止め、通信量とバッテリーを節約する。
-// フォアグラウンドに戻った瞬間は再取得時刻を過ぎていれば即座に取得し直し、
-// 古い表示のままユーザーが気づかず放置される事態を防ぐ
 setInterval(() => {
   if(document.hidden) return;
   if(Date.now() >= nextRefreshAt) fetchAll();
@@ -50,12 +39,10 @@ document.addEventListener('visibilitychange', () => {
   if(!document.hidden && Date.now() >= nextRefreshAt) fetchAll();
 });
 
-// ---- Service Worker登録(PWA: ホーム画面追加・オフライン表示) ----
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(e => {});  // file://等の非対応環境では黙って諦める
+  navigator.serviceWorker.register('sw.js').catch(e => {});
 }
 
-// ---- 起動 ----
 loadTheme();
 loadCache();
 loadTranslate();

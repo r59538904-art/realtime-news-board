@@ -1,61 +1,26 @@
 'use strict';
-// 銘柄検索・現在値カード。記事一覧の左のサイドバー。
-// データはYahoo Financeを、自前デプロイのCloudflare Worker(cloudflare-worker/
-// yahoo-finance-proxy.js)経由で取得する。TradingViewには一切依存しない。
-//
-// なぜCloudflare Workerを経由するか:
-//   Yahoo Finance(query1.finance.yahoo.com)はAccess-Control-Allow-Originヘッダーを
-//   返さないため、ブラウザから直接fetch()できない(実機確認済み)。このサイトは
-//   ビルド不要の静的サイトでサーバー側コードを持たないため、CORSを解決できる
-//   軽量な中継サーバー(Cloudflare Workers、無料枠で十分)を別途デプロイして間に挟んでいる。
-// なぜFinnhub(旧実装)をやめたか:
-//   Finnhub・Twelve Data(いずれも実機確認済み)は無料プランが米国上場銘柄限定で、
-//   東証等の海外取引所の現在値を返さない仕様だった。Yahoo Financeはこの制限が無く
-//   日本株を含め幅広く取得できるため、CORSさえ解決できればこちらの方が適している。
-// なお過去の値動き(ローソク足チャート)は実装していない(現在値カードのみ)。
-// Yahoo Financeのchart APIは技術的には時系列データを持っているが、まずは
-// 現在値表示のみに絞ってシンプルに構成している。
-// 日本語での検索: Yahoo Financeの検索APIは非ASCII文字を含むクエリを一律拒否するため
-// (実機確認済み)、日本語入力はtranslate.jsの翻訳基盤(MyMemory→Google翻訳)で
-// 英語に変換してから検索する(searchWlSymbol内で実施)。
-// 自動更新: 30秒ごとに現在値を再取得する(末尾のsetInterval参照)。バックグラウンドタブ・
-// 折りたたみ中はスキップし、自動更新時は表示中のカードをチラつかせず静かに差し替える。
 
-// ---- Cloudflare Workerプロキシの設定 ----
-// cloudflare-worker/yahoo-finance-proxy.js をCloudflare Workers(無料)へデプロイし、
-// 発行されたURL(例: https://yahoo-finance-proxy.your-name.workers.dev)をここに設定する。
-// デプロイ手順はREADME「株価現在値カード(Cloudflare Workerプロキシ)のセットアップ」を参照。
-// 未設定のままでも壊れない: カードが「設定が必要です」と案内を出すだけで、他の機能には影響しない。
 const WL_PROXY_BASE_URL = 'https://yahoo-finance-proxy.r59538904.workers.dev';
-const WL_SEARCH_DEBOUNCE_MS = 350;  // 連続入力のたびのAPI呼び出しを間引く
-const WL_SEARCH_MIN_LEN = 2;        // 1文字だけでは結果が多すぎる/意味が薄いため検索しない
-const WL_REFRESH_MS = 30 * 1000;    // 現在値の自動更新間隔。Workerプロキシ側のCache-Control
-                                     // (yahoo-finance-proxy.jsのCACHE_SECONDS)と同じ30秒にして、
-                                     // 更新のたびに古いキャッシュを引いてしまう無駄を避けている
+const WL_SEARCH_DEBOUNCE_MS = 350;
+const WL_SEARCH_MIN_LEN = 2;
+const WL_REFRESH_MS = 30 * 1000;
 
 const WL_PREF_KEY = 'news-board-wl-pref-v1';
-const WL_PINNED_KEY = 'news-board-wl-pinned-v1';  // ピン留め銘柄(ミニウォッチリスト)の保存先
-const WL_PINNED_MAX = 10;           // ピン留めできる銘柄数の上限(無制限にすると自動更新時の
-                                     // 並列リクエスト数が際限なく増えるため上限を設ける)
+const WL_PINNED_KEY = 'news-board-wl-pinned-v1';
+const WL_PINNED_MAX = 10;
 let watchlistOpen = true;
-let wlSymbol = 'AAPL';          // 現在値カードに表示中の銘柄(Yahoo Financeのシンボル表記)
-let wlPinned = [];               // ピン留め銘柄一覧。{symbol, name}の配列
+let wlSymbol = 'AAPL';
+let wlPinned = [];
 let wlSearchTimer = null;
-let wlSearchAbort = null;       // 前回の検索が終わる前に次を打ち始めた場合、古い方を中断する
-let wlQuoteAbort = null;        // 同上。銘柄選択を連続で切り替えた場合の古いリクエストを中断する
-let wlPinnedAbort = null;       // 同上。ピン留めリスト再取得を連続で走らせた場合の古いリクエストを中断する
+let wlSearchAbort = null;
+let wlQuoteAbort = null;
+let wlPinnedAbort = null;
 
-// カレンダーと同じ理由(狭い画面では最初は情報量を絞りたい)で、
-// 狭い画面かつ初回訪問時に限り初期状態を折りたたみにする
 function loadWatchlistPref(){
   const saved = storageGet(WL_PREF_KEY);
   watchlistOpen = saved ? saved !== 'closed' : window.innerWidth > 1100;
 }
 
-// ---- ピン留め銘柄(ミニウォッチリスト)の保存・読み込み ----
-// JSON.parseが失敗する可能性がある(壊れた値・他バージョンの形式等)ため、
-// 他のlocalStorage読み込み処理(feed.js・translate.js)と同じくtry/catchで自前防御する
-// (storageGetは文字列の読み書きだけを保証するラッパーのため、JSON化はここで行う)
 function loadWlPinned(){
   try{
     const parsed = JSON.parse(storageGet(WL_PINNED_KEY, '[]'));
@@ -74,11 +39,11 @@ function toggleWlPin(symbol, name){
   if(isWlPinned(symbol)){
     wlPinned = wlPinned.filter(item => item.symbol !== symbol);
   }else{
-    if(wlPinned.length >= WL_PINNED_MAX) wlPinned.shift();  // 上限到達時は最も古いものを外して追加する
+    if(wlPinned.length >= WL_PINNED_MAX) wlPinned.shift();
     wlPinned.push({symbol, name});
   }
   saveWlPinned();
-  buildWatchlist(true);      // ★/☆表示の切り替えのため現在値カードを静かに再構築
+  buildWatchlist(true);
   buildWlPinnedList();
 }
 function updateWlBtn(){
@@ -90,14 +55,11 @@ function toggleWatchlist(){
   buildWatchlist();
 }
 
-// 進行中の同種リクエストがあれば中断してから新しいAbortControllerを作る、という
-// 定型処理(現在値カード・ピン留めリスト・銘柄検索の3箇所で共通)をまとめたもの
 function freshAbortController(previous){
   if(previous) previous.abort();
   return new AbortController();
 }
 
-// ---- プロキシ呼び出しの共通ヘルパー ----
 async function fetchViaProxy(path, params, signal){
   const query = new URLSearchParams(params);
   const response = await fetch(WL_PROXY_BASE_URL + path + '?' + query.toString(), {signal});
@@ -105,15 +67,11 @@ async function fetchViaProxy(path, params, signal){
   return response.json();
 }
 
-// ---- 現在値カードの構築 ----
-// silent=trueの場合(30秒ごとの自動更新)は「読み込み中…」を挟まず、取得できるまで
-// 今表示中のカードをそのまま残す(自動更新のたびにチラつくのを防ぐ)。
-// 銘柄を切り替えた時・手動で開いた時はsilent=false(既定)で、すぐに読み込み中を表示する
 async function buildWatchlist(silent){
   const container = document.getElementById('wlWidget');
   if(!container) return;
   updateWlBtn();
-  if(!watchlistOpen){ container.textContent = ''; return; }  // 折りたたみ中は取得自体を行わない(通信節約)
+  if(!watchlistOpen){ container.textContent = ''; return; }
   if(!WL_PROXY_BASE_URL){
     container.textContent = '';
     container.appendChild(el('div', 'wl-result-note', '株価表示にはCloudflare Workerプロキシの設定が必要です(README参照)'));
@@ -134,11 +92,8 @@ async function buildWatchlist(silent){
       && data.chart.result[0].indicators.quote[0];
     renderWlQuote(meta, lastValidNumber(quoteSeries && quoteSeries.open), previousCloseFromSeries(quoteSeries && quoteSeries.close));
   }catch(e){
-    if(e.name === 'AbortError') return;  // より新しい選択に追い越された。古い結果は描画しない
+    if(e.name === 'AbortError') return;
     console.error('現在値の取得に失敗:', e);
-    // 自動更新(silent)の一時的な失敗では、今表示中のカード(直前の正常な値)を
-    // 消さずに残す(数秒後の次回更新で回復することが多いため)。手動操作(silent=false)の
-    // 失敗時だけエラー表示に置き換える
     if(!silent){
       container.textContent = '';
       container.appendChild(el('div', 'wl-result-note', '現在値を取得できませんでした'));
@@ -146,8 +101,6 @@ async function buildWatchlist(silent){
   }
 }
 
-// 配列の末尾から辿って最初に見つかった有効な数値を返す(当日分がまだnullの場合に備え、
-// 直近の取引日の始値を拾うためのフォールバック)
 function lastValidNumber(series){
   if(!Array.isArray(series)) return null;
   for(let i = series.length - 1; i >= 0; i--){
@@ -156,13 +109,6 @@ function lastValidNumber(series){
   return null;
 }
 
-// 前日終値をindicators.quote[0].close(日足の終値系列)の「直近有効値の1つ前の有効値」から求める。
-// meta.chartPreviousCloseは使わない: これはrange=5dで取得した5日分の窓の「さらに1日前」の
-// 終値を指しており、直近に取引停止・連休等で日が飛んでいる銘柄(実際にKIOXIA HD/285A.Tで
-// 発生・確認済み)では「昨日の終値」ではなく「1週間近く前の終値」になってしまい、
-// 実際は値上がりしている日でも大幅下落したかのような誤った騰落率が表示される不具合があった。
-// closeの末尾は当日分(regularMarketPriceとほぼ同値、取引時間中は変動しうる)のため、
-// その1つ前の有効値こそが正しい「直近の取引日の終値」になる
 function previousCloseFromSeries(series){
   if(!Array.isArray(series)) return null;
   let lastIdx = -1;
@@ -180,8 +126,6 @@ function formatPrice(value, currency){
   if(value == null || Number.isNaN(value)) return '─';
   return value.toLocaleString('ja-JP', {maximumFractionDigits: 2}) + (currency ? ' ' + currency : '');
 }
-// 出来高は生の数値だと桁が多く読みにくいため、百万(M)単位に丸めて表示する
-// (十分な情報量を保ちつつ、狭いカード内のセルでも折り返さない長さに収めるため)
 function formatVolume(value){
   if(value == null || Number.isNaN(value)) return '─';
   if(value >= 1e6) return (value / 1e6).toLocaleString('ja-JP', {maximumFractionDigits: 1}) + 'M';
@@ -212,8 +156,6 @@ function renderWlQuote(meta, openPrice, prevCloseOverride){
 
   card.appendChild(el('div', 'wl-quote-price', formatPrice(meta.regularMarketPrice, meta.currency)));
 
-  // prevCloseOverrideを優先(indicators.close系列から直近取引日の終値を正しく求めた値)。
-  // 系列が取得できなかった場合だけmeta.chartPreviousCloseへフォールバックする
   const prevClose = typeof prevCloseOverride === 'number' ? prevCloseOverride : meta.chartPreviousClose;
   if(typeof prevClose === 'number' && prevClose > 0){
     const diff = meta.regularMarketPrice - prevClose;
@@ -224,7 +166,6 @@ function renderWlQuote(meta, openPrice, prevCloseOverride){
     card.appendChild(change);
   }
 
-  // 当日値幅バー: 安値〜高値のレンジの中で現在値がどこに位置するかを視覚化する
   const high = meta.regularMarketDayHigh, low = meta.regularMarketDayLow;
   if(typeof high === 'number' && typeof low === 'number' && high > low){
     const range = el('div', 'wl-quote-range');
@@ -263,10 +204,6 @@ function renderWlQuote(meta, openPrice, prevCloseOverride){
   container.appendChild(card);
 }
 
-// ---- ピン留め銘柄(ミニウォッチリスト)の描画 ----
-// メインの現在値カードとは別に、ピン留めした銘柄を「銘柄名・価格・騰落率」だけの
-// コンパクトな行で複数同時に表示する。クリックでメインカードにその銘柄を読み込む。
-// silent=trueなら取得完了まで既存表示を残す(buildWatchlistのsilent引数と同じ考え方)
 async function buildWlPinnedList(silent){
   const container = document.getElementById('wlPinned');
   if(!container) return;
@@ -276,7 +213,6 @@ async function buildWlPinnedList(silent){
   wlPinnedAbort = freshAbortController(wlPinnedAbort);
   const controller = wlPinnedAbort;
 
-  // 1銘柄の取得失敗が他の銘柄の表示を巻き込まないよう、Promise.allSettledで個別に処理する
   const results = await Promise.allSettled(
     wlPinned.map(item => fetchViaProxy('/quote', {symbol: item.symbol}, controller.signal))
   );
@@ -296,8 +232,6 @@ async function buildWlPinnedList(silent){
     row.appendChild(el('span', 'wl-pinned-name', item.name));
     if(meta && meta.regularMarketPrice != null){
       row.appendChild(el('span', 'wl-pinned-price', formatPrice(meta.regularMarketPrice, meta.currency)));
-      // メインカードと同じ理由でmeta.chartPreviousCloseではなくclose系列から直近終値を求める
-      // (previousCloseFromSeriesのコメント参照)
       const prevCloseFromSeries = previousCloseFromSeries(closeSeries);
       const prevClose = typeof prevCloseFromSeries === 'number' ? prevCloseFromSeries : meta.chartPreviousClose;
       if(typeof prevClose === 'number' && prevClose > 0){
@@ -314,9 +248,6 @@ async function buildWlPinnedList(silent){
   });
 }
 
-// ---- 銘柄検索(Yahoo Finance search、プロキシ経由) ----
-// #wlSearchはrole=comboboxのため、候補一覧(#wlResults)の表示状態と
-// aria-expandedを必ず連動させる(スクリーンリーダーが開閉を認識できるようにするため)
 function setWlResultsVisible(visible){
   const listEl = document.getElementById('wlResults');
   const input = document.getElementById('wlSearch');
@@ -343,8 +274,6 @@ function renderWlResults(items){
     optionBtn.setAttribute('role', 'option');
     optionBtn.appendChild(el('span', 'wl-result-name', item.longname || item.shortname || item.symbol));
     optionBtn.appendChild(el('span', 'wl-result-sym', item.symbol + (item.exchDisp ? ' ・ ' + item.exchDisp : '')));
-    // mousedownはinputのblurより先に発火するため、blur側のhideWlResultsで
-    // クリックが握りつぶされる事故を防げる(clickだと間に合わないことがある)
     optionBtn.addEventListener('mousedown', e => { e.preventDefault(); selectWlSymbol(item.symbol, item.longname || item.shortname); });
     listEl.appendChild(optionBtn);
   });
@@ -355,9 +284,9 @@ function selectWlSymbol(symbol, description){
   const input = document.getElementById('wlSearch');
   if(input) input.value = description || symbol;
   hideWlResults();
-  if(!watchlistOpen) toggleWatchlist();  // 折りたたみ中に選んだ場合は結果が見えるよう自動展開する
+  if(!watchlistOpen) toggleWatchlist();
   else buildWatchlist();
-  buildWlPinnedList(true);  // ピン留めリスト側の「選択中」ハイライトを更新する
+  buildWlPinnedList(true);
 }
 async function searchWlSymbol(query){
   if(!WL_PROXY_BASE_URL){
@@ -372,10 +301,6 @@ async function searchWlSymbol(query){
   wlSearchAbort = freshAbortController(wlSearchAbort);
   const controller = wlSearchAbort;
   try{
-    // Yahoo Financeの検索APIは非ASCII文字を含むクエリを一律拒否する
-    // ({"error":{"code":"Bad Request","description":"Invalid Search Query"}}、実機確認済み)。
-    // 日本語(非ASCII)が含まれる場合は、translate.jsの翻訳基盤(MyMemory→Google翻訳の
-    // フォールバック)を再利用して英語に変換してから検索する
     let englishQuery = query;
     if(/[^\x00-\x7F]/.test(query)){
       const translated = await translateQueryToEnglish(query);
@@ -406,10 +331,6 @@ function handleWlSearchInput(value){
   wlSearchTimer = setTimeout(() => searchWlSymbol(query), WL_SEARCH_DEBOUNCE_MS);
 }
 
-// ---- 現在値の自動更新 ----
-// 折りたたみ中・バックグラウンドタブでは取得しない(main.jsの自動更新と同じ節約方針)。
-// 検索候補を選んでいる最中(#wlResultsが開いている)に更新でカードが作り直されても
-// 検索欄・候補一覧はwlWidgetの外にあるため操作を妨げない
 setInterval(() => {
   if(document.hidden || !watchlistOpen) return;
   buildWatchlist(true);

@@ -1,11 +1,7 @@
 'use strict';
-// 外部API死活監視バナー。scripts/health_check.py(GitHub Actions側)が生成する
-// status.jsonを読み、株価プロキシ・翻訳APIのいずれかが異常な場合はヘッダー直下に
-// 警告バナーを表示する。正常時・status.json自体が取得できない時は何も表示しない
-// (このバナー機能自体の不調でページ本体の利用を妨げないようにするため)。
 
 const HEALTH_JSON_PATH = 'status.json';
-const HEALTH_RECHECK_MS = 5 * 60 * 1000;  // 長時間開いたタブでも復旧/新規異常を反映するための再チェック間隔
+const HEALTH_RECHECK_MS = 5 * 60 * 1000;
 
 const HEALTH_SERVICE_LABELS = {
   stockQuote: '株価現在値カード',
@@ -41,7 +37,6 @@ async function checkSiteHealth(){
     const data = await response.json();
     renderHealthBanner(data);
   }catch(e){
-    // ネットワーク不調等で取得できないだけの可能性が高く、致命的ではないため静かに諦める
   }
 }
 

@@ -1,10 +1,8 @@
 'use strict';
-// ヘッダー上部のTradingView相場ティッカー(為替・株価指数・商品・BTCの帯)。
 
-// TradingViewウィジェットは設定を後から変えられないため、テーマ切替時も毎回作り直す
 function tickerTape(){
   const container = document.getElementById('tape');
-  container.classList.add('tape-loading');    // 再構築中は薄く表示して待ち時間の印象を和らげる
+  container.classList.add('tape-loading');
   container.textContent = '';
 
   const widgetWrap = el('div', 'tradingview-widget-container');
@@ -13,7 +11,6 @@ function tickerTape(){
   const widgetScript = document.createElement('script');
   widgetScript.async = true;
   widgetScript.src = 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js';
-  // TradingViewの仕様: 表示設定はscriptタグの中身にJSONで書く(自前の静的データのみ)
   widgetScript.text = JSON.stringify({
     symbols: [
       {proName: 'FX:USDJPY', title: 'ドル/円'},

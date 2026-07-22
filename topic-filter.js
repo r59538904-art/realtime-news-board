@@ -1,6 +1,4 @@
 'use strict';
-// トピック絞り込み: 投資/金融/政治/軍事系キーワードを含む記事だけを表示する。
-// 単語リストはtopic-keywords.jsに分離。デフォルトON(ヘッダーのボタンで切替・保存)。
 
 const TOPIC_PREF_KEY = 'news-board-topic-pref-v1';
 const TOPIC_RE = buildKeywordRe(TOPIC_KEYWORDS_CJK, TOPIC_KEYWORDS_LATIN, 'i');
@@ -13,9 +11,8 @@ function updateTopicBtn(){
   const btn = document.getElementById('topicBtn');
   btn.textContent = topicFilterOn ? 'トピック絞込 ON' : 'トピック絞込 OFF';
   btn.classList.toggle('off', !topicFilterOn);
-  btn.setAttribute('aria-pressed', String(topicFilterOn));  // ラベル自体が現在状態(ON/OFF)を表す典型的なトグルボタンのため
+  btn.setAttribute('aria-pressed', String(topicFilterOn));
 }
-// タイトル+要約(原文・翻訳文の両方)のどこかにキーワードがあれば通す
 function matchesTopic(item){
   if(!topicFilterOn) return true;
   return TOPIC_RE.test(keywordSearchText(item));

@@ -1,10 +1,4 @@
 'use strict';
-// PWA用Service Worker。方針:
-//   ・同一オリジンのGETのみ扱う(TradingView・翻訳API等の外部リクエストには関与しない)
-//   ・常にネットワーク優先。成功したらキャッシュへ保存し、オフライン時だけキャッシュで応答する
-//     (オンライン時の表示は非PWAと完全に同じ = 古いデプロイを掴む事故が起きない)
-//   ・キャッシュのキーはクエリを取り除いたURLにする。news.json?t=タイムスタンプ や ?v=バージョン の
-//     クエリをキーに含めると同じファイルが別エントリとして無限に溜まってしまうため
 
 const CACHE_VERSION = 'v1';
 const CACHE_NAME = `news-board-${CACHE_VERSION}`;
@@ -46,7 +40,6 @@ const CORE_ASSETS = [
   './icons/apple-touch-icon.png',
 ];
 
-// クエリを除いたURLをキャッシュキーにする
 function cacheKeyFor(requestUrl){
   const url = new URL(requestUrl, self.location.href);
   return url.origin + url.pathname;
@@ -59,7 +52,7 @@ self.addEventListener('install', (event) => {
         CORE_ASSETS.map(asset =>
           fetch(asset).then(response => {
             if(response.ok) return cache.put(cacheKeyFor(asset), response);
-          }).catch(() => {})   // 1件の失敗で全体を止めない
+          }).catch(() => {})
         )
       ))
       .then(() => self.skipWaiting())

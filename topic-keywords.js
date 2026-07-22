@@ -1,14 +1,6 @@
 'use strict';
-// トピック絞り込み用の単語リスト(判定ロジックはtopic-filter.js)。
-// 雑多なフィードから事件・芸能・スポーツ等を弾き、金融/ビジネス/政治/軍事系の記事だけを残す。
-// ルール:
-//   ・日本語(CJK)は部分一致、英字(LATIN)は単語境界(\b)付きで一致させる
-//   ・英字略語(PER/EPS/ROE/FX等)は部分一致だと"heroes"→ROEのように誤爆するため必ずLATIN側に置く
-//   ・一般語すぎる単語(options/correction/surge等)は複合語に具体化して採用する
-//   ・キーワードの追加/削除はこのファイルだけ編集すればよい
 
 const TOPIC_KEYWORDS_CJK = [
-  // 株式・企業・金融の基本語
   '株','株式','株価','相場','為替','円安','円高','決算','業績','増収','減収','増益','減益','黒字','赤字',
   '買収','合併','提携','出資','上場','自社株買い','配当','格付け','レーティング','投資判断','目標株価',
   'アナリスト','ファンド','機関投資家','金利','利上げ','利下げ','日銀','インフレ','景気','関税','半導体',
@@ -23,44 +15,31 @@ const TOPIC_KEYWORDS_CJK = [
   'リストラ','人員削減','破産','民事再生','上場廃止','不正会計','行政処分','訴訟',
   'ドル円','ドル高','ドル安','ユーロ円','原油','金価格','データセンター','クラウドサービス','サイバーセキュリティ',
   '電池','再生可能エネルギー','防衛関連','バイオ','医薬品','制裁','輸出規制','地政学リスク','台湾有事','中東','紅海',
-  // 世界の主要株価指数
   '日経225','コスピ','ハンセン指数','上海総合指数','深セン総合指数','ユーロストックス','ラッセル2000',
-  // マクロ経済指標(CPI/PPI/PMI等の略語はLATIN側、ここは正式名称のみ)
   '雇用統計','失業率','賃金','消費者物価指数','生産者物価指数','小売売上高','鉱工業生産','住宅着工',
   '貿易収支','経常収支','財政赤字','政府債務','購買担当者景気指数',
-  // 金融政策・為替
   '政策金利','実質金利','イールドカーブ','逆イールド','利回り曲線','為替介入','キャリートレード',
   '通貨安','通貨高','信用スプレッド','社債','ジャンク債',
-  // 株式・企業(財務・ガバナンス)
   'フリーキャッシュフロー','自己資本比率','有利子負債','ネットキャッシュ','配当性向',
   'アクティビスト投資家','物言う株主','コーポレートガバナンス','PBR改革','インサイダー取引',
-  // 市場動向
   '先物','オプション取引','空売り','踏み上げ','信用取引','出来高','年初来高値','年初来安値',
   '株価調整','急騰','急落','暴落','強気相場','弱気相場','バブル','ショートカバー',
-  // 国際・資源
   '貿易摩擦','保護主義','サプライチェーン','レアアース','銅価格','天然ガス','穀物価格',
   '海運','海上運賃','脱中国','ニアショアリング',
-  // テーマ投資
   'ロボティクス','量子コンピュータ','フィンテック','ブロックチェーン','暗号資産','ステーブルコイン',
   '宇宙開発','インバウンド','電力不足','送電網',
-  // 政治(市場を動かす政局・外交ニュース向け)
   '大統領','首相','政権','選挙','議会','外交','国連','首脳会談','内閣','与党','野党','政局',
   'ホワイトハウス','安全保障','G7','G20','首脳会議',
-  // 戦争・軍事・地政学
   '軍事','侵攻','停戦','ミサイル','核兵器','テロ','クーデター','空爆','武力衝突','紛争','交戦',
   '軍事演習','防衛費','革命防衛隊','核合意',
   'ウクライナ','ロシア','イスラエル','ガザ','北朝鮮','イラン','中東情勢',
-  // 為替(主要通貨ペア)
   '外国為替','通貨ペア','ポンド円','豪ドル','人民元','ユーロドル','ポンドドル','スイスフラン','元安','元高',
-  // 各国の中央銀行・金融政策
   '中央銀行','中国人民銀行','カナダ銀行','豪準備銀行','スイス国立銀行','韓国銀行','ニュージーランド準備銀行',
   'インド準備銀行','金融政策決定会合','金融政策委員会',
-  // 政治・暗号資産・資源の補強('日本銀行'は'日銀'に部分一致しないため別途必要)
   '日本銀行','国会','衆議院','参議院','衆院','参院','法案','消費税','減税','増税',
   'ビットコイン','イーサリアム','仮想通貨','石油',
 ];
 const TOPIC_KEYWORDS_LATIN = [
-  // 株式・企業・金融の基本語
   'stock','shares','equity','equities','earnings','revenue','profit','merger','acquisition',
   'ipo','buyback','dividend','rating','ratings','upgrade','downgrade','price target','analyst',
   'hedge fund','investor','rate hike','rate cut','fed','frb','inflation','gdp','tariff','chip',
@@ -77,44 +56,31 @@ const TOPIC_KEYWORDS_LATIN = [
   'data center','cloud computing','cybersecurity','ev','ev battery','renewable energy','defense stocks','biotech',
   'sanctions','export controls','geopolitical risk','taiwan strait','red sea',
   'share price','shares outstanding','share buyback',
-  // 世界の主要株価指数
   'kospi','hang seng','shanghai composite','ftse','dax','cac 40','russell 2000','msci',
-  // マクロ経済指標(略語+正式名称の両方)
   'employment report','unemployment rate','wages','consumer price index','cpi',
   'producer price index','ppi','retail sales','industrial production','housing starts',
   'trade balance','current account balance','fiscal deficit','government debt',
   'purchasing managers index','pmi',
-  // 金融政策・為替
   'policy interest rate','real interest rate','yield curve','inverted yield curve','fx intervention',
   'carry trade','currency depreciation','currency appreciation','credit spread','corporate bonds','junk bonds',
-  // 株式・企業(財務・ガバナンス)
   'return on assets','roa','free cash flow','fcf','equity ratio','interest-bearing debt','net cash',
   'dividend payout ratio','dividend on equity','activist investor','shareholder activist',
   'corporate governance','pbr reform','insider trading',
-  // 市場動向
   'futures','options trading','short selling','short squeeze','margin trading','trading volume',
   'year-to-date high','year-to-date low','market correction','price surge','price plunge','market crash',
   'bull market','bear market','asset bubble','short covering',
-  // 国際・資源('shipping'単独はEC通販の配送と紛れるため具体化)
   'trade friction','protectionism','supply chain','rare earths','copper prices','natural gas','grain prices',
   'container shipping','freight rates','de-risking from china','nearshoring',
-  // テーマ投資
   'robotics','quantum computing','fintech','blockchain','crypto assets','stablecoins',
   'space development','inbound tourism','power shortage','power grid',
-  // 政治(市場を動かす政局・外交ニュース向け)
   'president','prime minister','parliament','election','diplomacy','white house','cabinet',
   'geopolitics','national security','summit',
-  // 戦争・軍事・地政学
   'military','invasion','ceasefire','missile','nuclear weapons','terrorism','coup','airstrike',
   'armed conflict','war games','defense spending','revolutionary guard','nuclear deal',
   'ukraine','russia','israel','gaza','north korea','iran',
-  // 為替(主要通貨ペア)
   'fx','forex','currency pair','gbp/usd','eur/usd','aud/usd','chinese yuan','swiss franc','pound sterling',
-  // 各国の中央銀行・金融政策(英語記事はBank of Japan/BOJ表記が多い)
   'central bank','boj','bank of japan','pboc','peoples bank of china','rba','reserve bank of australia',
   'snb','swiss national bank','rbnz','bank of canada','bank of korea','monetary policy meeting','rate decision',
-  // 暗号資産・エネルギー・軍事の補強(単数形は複数形に一致しないため頻出の複数形も明示。
-  // 'defence'は英国綴りのBBC/Guardian対応)
   'bitcoin','ethereum','crypto','stablecoin',
   'oil prices','oil production','oil exports','oil and gas','oilfield','shale','refinery','uranium','nuclear power',
   'missiles','airstrikes','deals','defence spending','defence stocks',

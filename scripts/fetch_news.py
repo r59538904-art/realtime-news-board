@@ -138,9 +138,6 @@ def generate_sources_js(sources: list[dict]) -> None:
     body = json.dumps(sources, ensure_ascii=False, indent=2)
     js = (
         "'use strict';\n"
-        "// このファイルは「ニュース取得元(RSSフィード)の一覧データ」を定義する。ロジックは持たない。\n"
-        "// 自動生成ファイル — 手編集しないこと。配信元を追加/変更したい場合は sources.json を編集し、\n"
-        "// scripts/fetch_news.py を実行して再生成する(GitHub Actionsが定期的に自動実行・再生成もする)。\n"
         "\n\n\n"
         "const SOURCES = " + body + ";\n"
     )
@@ -236,6 +233,9 @@ def fetch_x_items(source: dict) -> list[dict]:
     data = json.loads(match.group(1))
     entries = data["props"]["pageProps"]["timeline"]["entries"]
     now_ms = datetime.now(timezone.utc).timestamp() * 1000
+    max_age = source.get("maxAgeMs", X_MAX_AGE_MS)  # merge_x_items側と同じ基準を使う(食い違うと
+                                                      # source側の設定を大きくしても後段のmerge_x_items
+                                                      # に届く前にここで削られ、蓄積が48時間で頭打ちになる)
     items = []
     for entry in entries:
         if entry.get("type") != "tweet":
@@ -244,8 +244,8 @@ def fetch_x_items(source: dict) -> list[dict]:
         if tweet.get("retweeted_status") is not None:
             continue  # リツイートは表示しない(本人の発信ではないため)
         item = normalize_tweet(tweet)
-        if item["pubDate"] is not None and (now_ms - item["pubDate"]) > X_MAX_AGE_MS:
-            continue  # X_MAX_AGE_MS(48時間)より古い投稿は保存しない(通常は無意味 -- 単発の取得は
+        if item["pubDate"] is not None and (now_ms - item["pubDate"]) > max_age:
+            continue  # maxAgeMsより古い投稿は保存しない(通常は無意味 -- 単発の取得は
                       # 常に直近3〜4時間分しか返らないため -- だが保険として残している)
         items.append(item)
     items.sort(key=lambda it: it["pubDate"] or 0, reverse=True)  # ピン留め投稿が先頭に来るのを正規の時系列順に戻す
