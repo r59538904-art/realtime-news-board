@@ -1,14 +1,14 @@
 {
-  "checkedAt": "2026-08-22T09:05:42.887474+00:00",
-  "ok": true,
+  "checkedAt": "2026-08-22T09:26:20.855817+00:00",
+  "ok": false,
   "services": {
     "stockQuote": {
       "ok": true,
       "error": null
     },
     "translate": {
-      "ok": true,
-      "error": null
+      "ok": false,
+      "error": "mymemory: status=200 / google: HTTPError: 500 Server Error: Internal Server Error for url: https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=hello"
     }
   }
 }
