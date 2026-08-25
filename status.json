@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-25T21:24:25.754701+00:00",
+  "checkedAt": "2026-08-25T21:45:36.881737+00:00",
   "ok": false,
   "services": {
     "stockQuote": {
@@ -8,7 +8,7 @@
     },
     "translate": {
       "ok": false,
-      "error": "mymemory: status=200 / google: HTTPError: 429 Client Error: Too Many Requests for url: https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=hello"
+      "error": "mymemory: status=429 / google: HTTPError: 429 Client Error: Too Many Requests for url: https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=hello"
     }
   }
 }
