@@ -1,10 +1,10 @@
 {
-  "checkedAt": "2026-08-26T08:08:23.033167+00:00",
+  "checkedAt": "2026-08-26T08:29:28.943130+00:00",
   "ok": false,
   "services": {
     "stockQuote": {
-      "ok": false,
-      "error": "HTTPError: 429 Client Error: Too Many Requests for url: https://yahoo-finance-proxy.r59538904.workers.dev/quote?symbol=AAPL"
+      "ok": true,
+      "error": null
     },
     "translate": {
       "ok": false,
