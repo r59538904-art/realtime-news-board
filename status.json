@@ -1,14 +1,14 @@
 {
-  "checkedAt": "2026-08-28T06:15:39.339670+00:00",
-  "ok": true,
+  "checkedAt": "2026-08-28T06:36:23.337707+00:00",
+  "ok": false,
   "services": {
     "stockQuote": {
       "ok": true,
       "error": null
     },
     "translate": {
-      "ok": true,
-      "error": null
+      "ok": false,
+      "error": "mymemory: status=200 / google: HTTPError: 429 Client Error: Too Many Requests for url: https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ja&dt=t&q=hello"
     }
   }
 }
